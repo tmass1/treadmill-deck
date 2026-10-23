@@ -1642,6 +1642,8 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 [data-finish="lit"] .raised:active{box-shadow:var(--shadow-pressed)}
 .well{background:var(--muted)}
 [data-finish="lit"] .well{background:var(--background);box-shadow:var(--shadow-well)}
+/* A lighter inset than Cabin's well: a hint of depth, not a trench. */
+[data-finish="lit"] .well,.app[data-photo] .home .seg.well{box-shadow:inset 0 1px 2px var(--scrim)}
 .fill{background:var(--primary)}
 [data-finish="lit"] .fill{background:var(--glow-fill);box-shadow:var(--shadow-glow)}
 .cta{background:var(--primary);color:var(--primary-foreground);transition:transform .1s ease}
