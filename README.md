@@ -100,6 +100,10 @@ Each finished run goes to `<site>/runs`. An iPhone Shortcut picks up new ones an
 If you also wear an Apple Watch, broadcast heart rate with an app like BlueHeart or HeartCast and turn
 off that app's own workout saving, or each run counts twice.
 
+## License
+
+MIT (see `LICENSE`). The Home photos keep the Unsplash License, and the libraries their own.
+
 ## Credits
 
 The first motor client was adapted from
