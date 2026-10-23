@@ -1848,6 +1848,9 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 #dZonesWrap{display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid var(--border)}
 @media (max-width:900px){ .dialog.done.has-detail{grid-template-columns:minmax(0,1fr)} }
 .actions.one{grid-template-columns:1fr}
+/* Gym lights and TV on the Paused card. A margin, not gap, beside the icon: Chrome 80 has no flex gap. */
+.gymrow .pill{height:64px;font-size:18px;gap:0}
+.gymrow .pill .ico{width:24px;height:24px;margin-right:12px}
 .count b{font-size:220px;font-weight:200;line-height:1;letter-spacing:-.05em}
 .count .wrap{display:flex;flex-direction:column;align-items:center;gap:18px}
 .count p{margin:0;font-size:20px;color:var(--foreground)}
@@ -2043,6 +2046,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
         <div><b class="tnum" id="pPace">--:--</b><span class="eyebrow">Avg /mi</span></div>
         <div><b class="tnum" id="pHr" style="color:var(--heat)">--</b><span class="eyebrow">Avg bpm</span></div>
       </div>
+      <div class="actions gymrow" id="pHome" hidden><button class="pill raised" id="pGymBtn" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><span class="gymText">Gym lights</span></button><button class="pill raised" id="pTvBtn" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="m17 2-5 5-5-5"/></svg>Gym TV</button></div>
       <div class="actions"><button class="pill lg raised" id="endBtn" type="button">End workout</button><button class="pill lg cta" id="resumeBtn" type="button">Resume</button></div>
     </div>
   </div>
@@ -3184,7 +3188,7 @@ function dragToClose(sheet, handle){
   handle.addEventListener('pointerup', end); handle.addEventListener('pointercancel', end);
 }
 if(NATIVE && NATIVE.homeCall){
-  ['gymBadge', 'gymRunBtn', 'gymRow', 'tvBadge', 'tvRunBtn'].forEach(id => $(id).hidden = false);
+  ['gymBadge', 'gymRunBtn', 'gymRow', 'tvBadge', 'tvRunBtn', 'pHome'].forEach(id => $(id).hidden = false);
   $('haAddr').value = store.get('deck.ha') || '';
   $('haAddr').addEventListener('change', () => store.set('deck.ha', $('haAddr').value.trim()));
   $('haTest').addEventListener('click', () => { store.set('deck.ha', $('haAddr').value.trim()); gymPress(); });
@@ -3192,6 +3196,8 @@ if(NATIVE && NATIVE.homeCall){
   $('gymRunBtn').addEventListener('click', gymPress);
   $('tvBadge').addEventListener('click', openTv);
   $('tvRunBtn').addEventListener('click', openTv);
+  $('pGymBtn').addEventListener('click', gymPress);
+  $('pTvBtn').addEventListener('click', openTv);
   $('tvDone').addEventListener('click', closeSheets);
   dragToClose($('tvSheet').querySelector('.sheet'), $('tvSheet').querySelector('.sheet'));
   // Arrows and volume repeat while held, like a real remote; the rest send once.
