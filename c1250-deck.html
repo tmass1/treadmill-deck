@@ -1901,6 +1901,9 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
   .metric:nth-child(3){border-left:0}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ?demo=tour: where a finger lands */
+.tourtap{position:fixed;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:var(--foreground);opacity:0;pointer-events:none;z-index:99;animation:tourtap .7s ease-out}
+@keyframes tourtap{0%{transform:scale(.4);opacity:.32}100%{transform:scale(1.5);opacity:0}}
 </style>
 
 <div class="app" id="app">
@@ -2891,7 +2894,7 @@ function finish(stopped){
   if(S.state === 'done') return;
   S.state = 'done'; drv().stop(); S.tKph = 0; holdScreen(false);
   const sum = summary();
-  if(PROGRAMS[S.prog].segs.length && sum.secs > 60){
+  if(PROGRAMS[S.prog].segs.length && sum.secs > 60 && !TOUR){
     store.set('deck.lastProg', S.prog); S.pick = S.prog;
     store.set('deck.last.' + S.prog, JSON.stringify({ at:Date.now(), miles:sum.miles, pace:sum.pace }));
   }
@@ -3216,9 +3219,11 @@ const photoOn = () => (store.get('deck.bg') || 'photo') === 'photo';
 let photoName = '';
 function nextPhoto(){
   // A new photo each time Home opens, in turn.
+  // ?photo=<name> holds one (the project page's tour).
+  const pin = (location.search.match(/[?&]photo=([\w-]+)/) || [])[1];
   const i = ((parseInt(store.get('deck.bg.i') || '-1', 10) + 1) % PHOTOS.length + PHOTOS.length) % PHOTOS.length;
-  store.set('deck.bg.i', String(i));
-  const name = PHOTOS[i], img = new Image();
+  if(!PHOTOS.includes(pin)) store.set('deck.bg.i', String(i));
+  const name = PHOTOS.includes(pin) ? pin : PHOTOS[i], img = new Image();
   img.onload = () => { photoName = name; $('bgPhoto').style.backgroundImage = 'url(bg/' + name + '.webp)'; applyPhoto(); };
   img.onerror = () => { photoName = ''; applyPhoto(); };   // missing file: stay plain
   img.src = 'bg/' + name + '.webp';
@@ -3474,10 +3479,11 @@ lapPath.setAttribute('stroke-dasharray', '0 ' + lapLen.toFixed(1));
 /* ---------- loop ---------- */
 let last = performance.now(), lastClock = '';
 function tick(now){
-  const dt = Math.min(1, (now - last)/1000); last = now;
+  const rdt = Math.min(1, (now - last)/1000); last = now;
+  const dt = rdt*(S.warp || 1);   // ?demo=tour runs the clock fast; speed and incline still ramp in real time
   const running = S.state === 'running';
   if(S.driver === 'demo'){
-    const sp = 0.8*dt, ip = 0.6*dt;
+    const sp = 0.8*rdt*(TOUR ? 3 : 1), ip = 0.6*rdt*(TOUR ? 3 : 1);   // the tour's belt gets up to speed quicker
     S.kph += clamp(S.tKph - S.kph, -sp*1.6, sp);
     S.incline += clamp(S.tInc - S.incline, -ip, ip);
     if(Math.abs(S.kph) < 0.02 && S.tKph === 0) S.kph = 0;
@@ -3632,8 +3638,62 @@ function seedDemo(kind){
   }
 }
 
+/* ---------- ?demo=tour: the project page's hero ----------
+   A loop through Home, an incline walk, its summary, then Intervals from the end of the warm-up, with a
+   tap drawn where a finger would land. The belt's clock runs fast so the numbers move. Nothing is saved. */
+const TOUR = /[?&]demo=tour\b/.test(location.search);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+function tap(el){
+  if(typeof el === 'string') el = $(el);
+  if(!el) return;
+  const r = el.getBoundingClientRect(), d = document.createElement('div');
+  d.className = 'tourtap'; d.style.left = (r.left + r.width/2) + 'px'; d.style.top = (r.top + r.height/2) + 'px';
+  document.body.appendChild(d); setTimeout(() => d.remove(), 800);
+}
+const until = async f => { while(!f()) await wait(100); };
+const press = async (id, gap) => { tap(id); await wait(140); $(id).click(); await wait(gap || 0); };
+function pickQuick(id){ S.quick = id; [...$('qsSeg').children].forEach((c, i) => c.setAttribute('aria-checked', String(QUICK[i].id === id))); paintHome(); }
+// Jump a program to time t, as if it had run until then (speed, heart rate and the trace for Done).
+function skipTo(t){
+  const p = PROGRAMS[S.prog]; let hr = 76, d = 0;
+  S.trace = []; S.zoneT = [0,0,0,0,0]; S.hrSum = S.hrN = 0;
+  for(let k = 0; k <= t; k += 5){
+    const at = segAt(p, k); hr += (72 + at.seg.mph*12.5 + at.seg.inc*2.2 - hr)*(1 - Math.exp(-5/28));
+    S.trace.push({ t:k, mph:at.seg.mph, inc:at.seg.inc, hr:Math.round(hr) });
+    if(k){ S.hrSum += hr*5; S.hrN += 5; S.zoneT[zoneOf(hr) - 1] += 5; d += at.seg.mph*MPH/3.6*5; }
+  }
+  const at = segAt(p, t);
+  Object.assign(S, { progT:t, elapsed:t, nextSample:t + 5, distM:d, progDist:d, kcal:t/60*5.5, hr, segIdx:at.i,
+    kph:at.seg.mph*MPH, tKph:at.seg.mph*MPH, incline:at.seg.inc, tInc:at.seg.inc });
+}
+async function runTour(){
+  ['gymBadge', 'tvBadge', 'gymRunBtn', 'tvRunBtn'].forEach(id => $(id).hidden = false);
+  HR.name = 'Polar H10'; HR.state = 'connected'; paintHr();
+  setConn('live', 'Treadmill');
+  // A strap that reads the simulated heart rate, so the screens say Heart rate rather than (sim).
+  setInterval(() => { HR.bpm = Math.round(S.hr || 74); HR.at = performance.now(); }, 500);
+  S.pick = 'intervals';
+  for(;;){
+    S.warp = 1; pickQuick('walk'); await wait(1600);
+    tap($('qsSeg').children[3]); pickQuick('incline'); await wait(1400);
+    await press('qsStart', 3300);                                 // 3, 2, 1
+    await until(() => S.state === 'running' && Math.abs(S.kph - S.tKph) < 0.05 && Math.abs(S.incline - S.tInc) < 0.1);
+    S.warp = 14; await wait(3000);
+    await press('spdUp', 220); await press('spdUp', 220); await press('spdUp', 2600);
+    await press('incUp', 260); await press('incUp', 3200);
+    S.warp = 1; await press('stopBtn', 5200);                      // the summary
+    await press('doneBtn', 1600);
+    await press('wStart', 3300);
+    skipTo(PROGRAMS.intervals.segs[0].d - 7);                       // the end of the warm-up
+    S.warp = 3; await wait(9000);
+    S.warp = 1; await press('stopBtn', 5200);
+    await press('doneBtn', 600);
+  }
+}
+
 paintHr(); paintHome(); setConn('demo', 'Demo · simulated');
 if(NATIVE) initNative();
+else if(TOUR) runTour();
 else { const k = (location.search.match(/[?&]demo=(\w+)/) || [])[1]; seedDemo(k); }
 if(/[?&]history=sample\b/.test(location.search) && !loadHist().length) seedHistory();
 render();
