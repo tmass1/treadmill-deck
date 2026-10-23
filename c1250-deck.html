@@ -1774,8 +1774,9 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .sheethead .pill{height:64px;padding:0 36px;font-size:19px}
 .tvbody{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:48px;align-items:stretch}
 .tvside{display:flex;flex-direction:column;gap:16px}
-.tvside .pill{flex:1;height:auto;min-height:96px;font-size:21px;justify-content:flex-start;padding:0 32px;gap:16px}
-.tvside .pill .ico{width:30px;height:30px}
+/* Icon held to the left edge, label centred. Positioned rather than gapped: the console's Chrome 80 has no flex gap. */
+.tvside .pill{position:relative;flex:1;height:auto;min-height:96px;font-size:21px;justify-content:center;padding:0 72px}
+.tvside .pill .ico{position:absolute;left:32px;top:50%;width:30px;height:30px;margin-top:-15px}
 .dpad{display:grid;grid-template-columns:repeat(3,128px);grid-template-rows:repeat(3,128px);gap:16px}
 .dpad .round{width:128px;height:128px}
 .dpad .round .ico{width:44px;height:44px;stroke-width:2}
