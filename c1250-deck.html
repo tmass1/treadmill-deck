@@ -3086,8 +3086,17 @@ $('toastClose').addEventListener('click', () => $('toast').hidden = true);
 
 /* ---------- sheets ---------- */
 const SHEETS = ['settings', 'upSheet', 'hrSheet', 'help', 'diagSheet', 'tvSheet', 'histSheet', 'meSheet'];
-function openSheet(id){ SHEETS.forEach(s => show(s, s === id)); const b = $(id).querySelector('button'); if(b) b.focus(); }
-function closeSheets(){ SHEETS.forEach(s => show(s, false)); }
+function openSheet(id){ SHEETS.forEach(s => show(s, s === id)); const b = $(id).querySelector('button'); if(b) b.focus({ preventScroll:true }); }
+function closeSheets(){ SHEETS.forEach(s => show(s, false)); unscroll(); }
+// The page never scrolls, but Android's keyboard (and focusing a field) can push the whole screen up inside
+// its overflow:hidden root and leave it there: the run screen loses its top row. Put it back.
+function unscroll(){
+  if(document.activeElement && document.activeElement.tagName === 'INPUT') return;   // still typing
+  [document.scrollingElement, document.body, $('app')].forEach(el => { if(el && el.scrollTop) el.scrollTop = 0; });
+  if(window.scrollY) window.scrollTo(0, 0);
+}
+addEventListener('resize', () => setTimeout(unscroll, 150));   // the keyboard going away resizes the WebView
+document.addEventListener('focusout', () => setTimeout(unscroll, 300));
 SHEETS.forEach(id => $(id).addEventListener('click', e => { if(e.target.id === id) closeSheets(); }));
 $('settingsBtn').addEventListener('click', () => { paintSettings(); openSheet('settings'); });
 $('setDone').addEventListener('click', closeSheets);
@@ -3545,7 +3554,7 @@ function render(){
   const now = new Date(); const ck = fmtClock(now);
   if(ck !== lastClock){ lastClock = ck; setText('clock', ck); setText('runClock', ck); setText('day', DAYS[now.getDay()]); }
   const screen = S.state === 'idle' ? 'home' : 'run';
-  if(screen !== lastScreen){ lastScreen = screen; show('home', screen === 'home'); show('run', screen === 'run'); if(screen === 'home'){ paintHome(); if(photoOn()) nextPhoto(); } applyPhoto(); }
+  if(screen !== lastScreen){ lastScreen = screen; unscroll(); show('home', screen === 'home'); show('run', screen === 'run'); if(screen === 'home'){ paintHome(); if(photoOn()) nextPhoto(); } applyPhoto(); }
   show('paused', S.state === 'paused');
   show('done', S.state === 'done' || !!S.viewing);
   if(screen !== 'run') return;
