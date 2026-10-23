@@ -1658,7 +1658,8 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .round{width:52px;height:52px;border-radius:9999px;display:grid;place-items:center;flex-shrink:0}
 .ico{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
 
-.badge{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:9999px;font-size:14px;font-weight:600;white-space:nowrap;background:var(--secondary);color:var(--secondary-foreground)}
+.badge{display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 18px;border-radius:9999px;font-size:16px;font-weight:600;white-space:nowrap;background:var(--secondary);color:var(--secondary-foreground)}
+.badge .ico{width:20px;height:20px}
 .badge .dot{width:8px;height:8px;border-radius:50%;background:var(--muted-foreground)}
 .badge[data-s="ok"] .dot{background:var(--success)}
 .badge[data-s="warn"] .dot{background:var(--warning)}
@@ -1694,6 +1695,20 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .startdisc .ico{width:44px;height:44px;stroke-width:2}
 .go b{display:block;font-size:22px;font-weight:600}
 .go span{font-size:16px;color:var(--muted-foreground)}
+.whead{display:flex;align-items:center;justify-content:space-between;min-height:24px;margin:-10px 0}
+.whead .pill{height:48px;padding:0 20px;font-size:16px}
+.whead .pill .ico{width:20px;height:20px}
+/* Adjust Intervals: two columns of steppers, the profile it makes underneath. */
+.ivgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-gap:0 48px}
+.ivcell{display:flex;align-items:center;justify-content:space-between;min-height:88px;border-bottom:1px solid var(--border)}
+.ivcell .t{display:flex;flex-direction:column}
+.ivcell .t b{font-size:19px;font-weight:600}
+.ivcell .t span{font-size:15px;color:var(--muted-foreground)}
+.ivcell .stepper .round{width:64px;height:64px}
+.ivcell .stepper .round .ico{width:26px;height:26px}
+.ivcell .stepper b{min-width:104px;font-size:28px}
+.ivsum{margin:0;flex:1;font-size:17px;color:var(--muted-foreground)}
+.sheet .profile{height:64px}
 .profile{height:clamp(84px,15vh,128px);display:flex;align-items:flex-end;gap:4px}
 .profile i{display:block;min-width:0;border-radius:6px;background:var(--secondary)}
 .profile i.easy{background:var(--muted)}
@@ -1737,15 +1752,14 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .run .title{display:flex;flex-direction:column;align-items:center;gap:6px}
 .zonebadge{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:9999px;font-size:15px;font-weight:600;background:var(--cb-zone,var(--zone-1));color:var(--zone-foreground)}
 .zonebadge[hidden]{display:none}
-.mid{flex:1;min-height:0;display:grid;grid-template-columns:150px minmax(0,1fr) 220px;gap:20px;align-items:stretch}
+.mid{flex:1;min-height:0;display:grid;grid-template-columns:236px minmax(0,1fr) 236px;gap:20px;align-items:stretch}
 .col{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
 .col .round{width:96px;height:96px}
 .col .round .ico{width:36px;height:36px;stroke-width:2}
 .val{display:flex;flex-direction:column;align-items:center}
 .val b{font-weight:300;line-height:1;letter-spacing:-.04em}
 .val small{margin-top:6px;font-size:14px;font-weight:600;letter-spacing:.08em;color:var(--muted-foreground)}
-.col.speed .val b{font-size:clamp(84px,16vh,124px)}
-.col.incline .val b{font-size:clamp(52px,9vh,72px)}
+.col.speed .val b,.col.incline .val b{font-size:clamp(80px,14.5vh,116px)}
 .center{position:relative;display:flex;flex-direction:column;align-items:center;min-height:0}
 .elapsed{font-size:clamp(64px,13vh,104px);font-weight:300;line-height:1;letter-spacing:-.04em}
 /* Just run: time and distance side by side, the two numbers a free run is about. */
@@ -1810,21 +1824,32 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .runctl .pill{height:80px;min-width:min(240px,45%);padding:0 32px;font-size:22px;gap:12px}
 .runctl .ico{width:30px;height:30px}
 .runctl .ico.stop{fill:var(--destructive);stroke:var(--destructive)}
-.track3d{width:min(100%,640px);-webkit-transform:perspective(900px) rotateX(58deg);transform:perspective(900px) rotateX(58deg);margin-top:-4%}
+.track3d{width:min(100%,700px);-webkit-transform:perspective(1000px) rotateX(48deg);transform:perspective(1000px) rotateX(48deg);margin-top:-3%}
 .track3d svg{display:block;width:100%;height:auto;overflow:visible}
+/* A running track seen from the stands: an infield, three lanes, 100 m marks, the lap so far glowing in
+   the middle lane, and you as a bright dot with a ring that breathes. No blur: wide soft strokes instead. */
+.t-field{fill:var(--card);opacity:.6}
 .t-band{fill:none;stroke:var(--secondary);stroke-width:46}
-.t-line{fill:none;stroke:var(--scene-line);stroke-width:2;opacity:.6}
-.t-lane{fill:none;stroke:var(--scene-line);stroke-width:1.5;stroke-dasharray:10 14;opacity:.45}
-.t-done{fill:none;stroke:var(--info);stroke-width:8;stroke-linecap:round}
-[data-finish="lit"] .t-done{stroke:var(--glow)}
-.t-start{stroke:var(--foreground);stroke-width:4;opacity:.7}
-.t-runner{fill:var(--self)}
-.t-halo{fill:var(--info);opacity:.28}
-[data-finish="lit"] .t-halo{fill:var(--glow);opacity:.35}
+.t-lanes{fill:none;stroke:var(--scene-line);stroke-width:1.5;opacity:.3}
+.t-line{fill:none;stroke:var(--scene-line);stroke-width:2.5;opacity:.75}
+.t-tick{stroke:var(--scene-line);stroke-width:2;opacity:.55}
+.t-glow{fill:none;stroke:var(--info);stroke-width:30;stroke-linecap:round;opacity:.18}
+.t-done{fill:none;stroke:var(--info);stroke-width:10;stroke-linecap:round}
+[data-finish="lit"] .t-done,[data-finish="lit"] .t-glow{stroke:var(--glow)}
+.t-start{stroke:var(--foreground);stroke-width:6;opacity:.9}
+.t-runner{fill:var(--foreground)}
+.t-ring{fill:none;stroke:var(--info);stroke-width:5}
+.t-halo{fill:var(--info);opacity:.25;transform-box:fill-box;transform-origin:center;animation:breathe 2.4s ease-in-out infinite}
+[data-finish="lit"] .t-ring{stroke:var(--glow)}
+[data-finish="lit"] .t-halo{fill:var(--glow)}
+@keyframes breathe{0%,100%{transform:scale(.8);opacity:.32}50%{transform:scale(1.15);opacity:.12}}
+@media (prefers-reduced-motion:reduce){.t-halo{animation:none}}
 .lap{position:absolute;left:0;right:0;top:50%;margin-top:-6px;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none}
-.lap b{font-size:28px;font-weight:600}
+.lap b{font-size:34px;font-weight:600;letter-spacing:-.01em}
 .lap span{font-size:16px;color:var(--muted-foreground)}
 .metrics{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:16px 8px}
+.run .panel.metrics{background:none;box-shadow:none;border-radius:0;border-top:1px solid var(--border);padding:18px 0 4px}
+.run .metrics .metric:first-child{padding-left:8px}
 .metric{display:flex;flex-direction:column;gap:4px;padding:0 22px;min-width:0;text-align:left}
 .metric + .metric{border-left:1px solid var(--border)}
 .metric b{font-size:clamp(28px,5.4vh,40px);font-weight:400;letter-spacing:-.02em;line-height:1.05;white-space:nowrap}
@@ -1839,6 +1864,15 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 /* ---------- overlays: countdown, paused, done, sheets ---------- */
 /* `hidden` must win over the overlays' display:flex (and every other display set here), or every sheet shows at once. */
 [hidden]{display:none !important}
+/* The console's WebView (Chrome 80) has no flex gap; the page adds no-flexgap to <html> when it's missing. */
+.no-flexgap .pill > .ico,.no-flexgap .badge > .ico,.no-flexgap .badge > .dot{margin-right:10px}
+.no-flexgap .runctl .pill > .ico{margin-right:12px}
+.no-flexgap .tvside .pill > .ico{margin-right:0}
+.no-flexgap .topbar .left > * + *{margin-left:12px}
+.no-flexgap .topbar .right > * + *,.no-flexgap .btns > * + *,.no-flexgap .stepper > * + *{margin-left:10px}
+.no-flexgap .runctl > * + *{margin-left:16px}
+.no-flexgap .sheethead > * + *{margin-left:16px}
+.no-flexgap .profile > i + i{margin-left:4px}
 /* Cabin's scrim assumes a backdrop blur, which the console can't afford; two layers of it (64% dark, 42% light) do the blur's job of pushing the screen back. */
 .overlay{position:absolute;top:0;right:0;bottom:0;left:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(var(--scrim),var(--scrim)),var(--scrim)}
 .dialog{width:min(520px,100%);padding:32px;display:flex;flex-direction:column;gap:22px;max-height:100%;overflow:auto}
@@ -1913,6 +1947,9 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .app[data-photo] .home .profile{height:clamp(56px,9vh,76px)}
 .app[data-photo] .home .stat b{font-size:26px}
 .app[data-photo] .home .go{margin-top:4px}
+.app[data-photo] .home .profile i{background:linear-gradient(var(--scrim),var(--scrim)),linear-gradient(var(--scrim),var(--scrim))}
+.app[data-photo] .home .profile i.easy{background:linear-gradient(var(--scrim),var(--scrim))}
+.app[data-photo] .home .profile i.hot{background:var(--cta-fill)}
 .app[data-photo] .home .panel{background-color:transparent;background-repeat:no-repeat;box-shadow:var(--shadow-glass)}
 .app[data-photo] .home .seg.well,.app[data-photo] .home .badge{background:linear-gradient(var(--scrim),var(--scrim))}
 
@@ -1941,10 +1978,10 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
       <div class="right">
         <button class="badge" id="connBadge" type="button" data-s="info" hidden><i class="dot"></i><span id="connBadgeText">Demo</span></button>
         <button class="badge" id="upBadge" type="button" data-s="info" hidden><i class="dot"></i><span id="upBadgeText">Update ready</span></button>
-        <button class="badge" id="gymBadge" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><span class="gymText">Gym lights</span></button>
-        <button class="badge" id="tvBadge" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="m17 2-5 5-5-5"/></svg><span>Gym TV</span></button>
-        <button class="badge" id="camBadge" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><path d="m16 13 5.2 3.5a.5.5 0 0 0 .8-.4V7.9a.5.5 0 0 0-.8-.4L16 11"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg><span>Cameras</span></button>
-        <button class="badge" id="hrBadge" type="button" data-s="none"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><span id="hrBadgeText">Connect heart rate</span></button>
+        <button class="badge" id="gymBadge" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><span class="gymText">Gym lights</span></button>
+        <button class="badge" id="tvBadge" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="m17 2-5 5-5-5"/></svg><span>Gym TV</span></button>
+        <button class="badge" id="camBadge" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 13 5.2 3.5a.5.5 0 0 0 .8-.4V7.9a.5.5 0 0 0-.8-.4L16 11"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg><span>Cameras</span></button>
+        <button class="badge" id="hrBadge" type="button" data-s="none"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><span id="hrBadgeText">Connect heart rate</span></button>
         <button class="round raised" id="settingsBtn" type="button" aria-label="Settings"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
       </div>
     </div>
@@ -1967,7 +2004,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
       </div>
 
       <div class="panel card">
-        <span class="eyebrow" id="wEyebrow">Last workout</span>
+        <div class="whead"><span class="eyebrow" id="wEyebrow">Last workout</span><button class="pill raised" id="wAdjust" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></svg>Adjust</button></div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <h2 id="wName">Intervals</h2>
           <p id="wSummary">25 min · 6 × 7.0 mph at 1%</p>
@@ -2015,15 +2052,20 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
         </div>
         <div class="trackwrap">
           <div class="track3d">
-            <svg viewBox="-30 -30 820 460" aria-hidden="true">
+            <svg viewBox="-40 -40 840 480" aria-hidden="true">
+              <path class="t-field" d="M200 43 H560 A157 157 0 0 1 560 357 H200 A157 157 0 0 1 200 43 Z"></path>
               <path class="t-band" d="M200 20 H560 A180 180 0 0 1 560 380 H200 A180 180 0 0 1 200 20 Z"></path>
+              <path class="t-lanes" d="M200 27.69999999999999 H560 A172.3 172.3 0 0 1 560 372.3 H200 A172.3 172.3 0 0 1 200 27.69999999999999 Z"></path>
+              <path class="t-lanes" d="M200 12.300000000000011 H560 A187.7 187.7 0 0 1 560 387.7 H200 A187.7 187.7 0 0 1 200 12.300000000000011 Z"></path>
               <path class="t-line" d="M200 -3 H560 A203 203 0 0 1 560 403 H200 A203 203 0 0 1 200 -3 Z"></path>
               <path class="t-line" d="M200 43 H560 A157 157 0 0 1 560 357 H200 A157 157 0 0 1 200 43 Z"></path>
-              <path class="t-lane" d="M200 20 H560 A180 180 0 0 1 560 380 H200 A180 180 0 0 1 200 20 Z"></path>
+              <g id="lapTicks"></g>
+              <path class="t-glow" id="lapGlow" d="M380 380 H200 A180 180 0 0 1 200 20 H560 A180 180 0 0 1 560 380 H380"></path>
               <path class="t-done" id="lapDone" d="M380 380 H200 A180 180 0 0 1 200 20 H560 A180 180 0 0 1 560 380 H380"></path>
-              <line class="t-start" x1="380" y1="357" x2="380" y2="403"></line>
-              <circle class="t-halo" id="runnerHalo" r="26" cx="380" cy="380"></circle>
-              <circle class="t-runner" id="runner" r="13" cx="380" cy="380"></circle>
+              <line class="t-start" x1="380" y1="355" x2="380" y2="405"></line>
+              <circle class="t-halo" id="runnerHalo" r="28" cx="380" cy="380"></circle>
+              <circle class="t-ring" id="runnerRing" r="17" cx="380" cy="380"></circle>
+              <circle class="t-runner" id="runner" r="10" cx="380" cy="380"></circle>
             </svg>
           </div>
           <div class="lap"><b class="tnum" id="lapNum">Lap 1</b><span class="tnum" id="lapToGo">400 m to go</span></div>
@@ -2184,6 +2226,16 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
       </div>
       <div class="tvapps"><button class="pill appbtn" id="tvNetflix" type="button" data-app="netflix">Netflix</button><button class="pill appbtn" id="tvPrime" type="button" data-app="prime">Prime Video</button><button class="pill appbtn" id="tvSpotify" type="button" data-app="spotify">Spotify</button></div>
       <p class="tvnote" id="tvNote" hidden></p>
+    </div>
+  </div>
+
+  <!-- Adjust Intervals: reps, run and recover speed and length, incline, warm-up and cool-down (deck.intervals) -->
+  <div class="overlay bottom" id="ivSheet" hidden>
+    <div class="panel sheet" role="dialog" aria-modal="true" aria-labelledby="ivTitle" data-density="touch">
+      <div class="grab" aria-hidden="true"></div>
+      <div class="sheethead"><h2 id="ivTitle" style="flex:none">Intervals</h2><p class="ivsum tnum" id="ivSum"></p><button class="pill ghost" id="ivReset" type="button">Reset</button><button class="pill raised" id="ivDone" type="button">Done</button></div>
+      <div class="ivgrid" id="ivGrid"></div>
+      <div class="profile" id="ivProfile" aria-hidden="true"></div>
     </div>
   </div>
 
@@ -2749,6 +2801,23 @@ const PROGRAMS = {
   ]},
   free: { name:'Just run', short:'Just run', summary:'', segs:[] },
 };
+/* Intervals is yours to set (Home → the workout card → Adjust): kept in deck.intervals and rebuilt into
+   PROGRAMS.intervals. A recovery follows every rep, then the cool-down. */
+const IV_DEF = { reps:6, runMph:7.0, runSec:60, recMph:3.8, recSec:120, inc:1, warm:4, cool:3 };
+let IV = (() => { try{ return Object.assign({}, IV_DEF, JSON.parse(store.get('deck.intervals') || '{}')); }catch(_){ return Object.assign({}, IV_DEF); } })();
+const numStr = v => String(Math.round(v*10)/10);
+function buildIntervals(c){
+  const segs = [];
+  if(c.warm) segs.push({ d:m(c.warm), mph:Math.min(3.5, c.recMph), inc:c.inc, label:'Warm up', ph:'warm' });
+  for(let i = 0; i < c.reps; i++){
+    segs.push({ d:c.runSec, mph:c.runMph, inc:c.inc, label:'Rep ' + (i + 1) + ' of ' + c.reps, ph:'run' });
+    segs.push({ d:c.recSec, mph:c.recMph, inc:c.inc, label:'Recover', ph:'rec' });
+  }
+  if(c.cool) segs.push({ d:m(c.cool), mph:Math.min(3.2, c.recMph), inc:0, label:'Cool down', ph:'cool' });
+  const T = segs.reduce((a, x) => a + x.d, 0);
+  return { segs, summary:Math.round(T/60) + ' min · ' + c.reps + ' × ' + c.runMph.toFixed(1) + ' mph at ' + numStr(c.inc) + '%' };
+}
+Object.assign(PROGRAMS.intervals, buildIntervals(IV));
 // Quick starts: a pace (and for Incline, a grade) to begin at, then free running. A named one titles the run and Done.
 const QUICK = [{ id:'walk', label:'Walk', mph:3.0 }, { id:'jog', label:'Jog', mph:5.0 }, { id:'run', label:'Run', mph:7.0 },
   { id:'incline', label:'Incline', mph:3.8, inc:10, name:'Incline Workout' }];
@@ -3128,7 +3197,7 @@ function toast(html, withHelp, stay){
 $('toastClose').addEventListener('click', () => $('toast').hidden = true);
 
 /* ---------- sheets ---------- */
-const SHEETS = ['settings', 'upSheet', 'hrSheet', 'help', 'diagSheet', 'tvSheet', 'histSheet', 'meSheet', 'camSheet', 'camLive'];
+const SHEETS = ['settings', 'upSheet', 'hrSheet', 'help', 'diagSheet', 'tvSheet', 'histSheet', 'meSheet', 'camSheet', 'camLive', 'ivSheet'];
 function openSheet(id){ SHEETS.forEach(s => show(s, s === id)); const b = $(id).querySelector('button'); if(b) b.focus({ preventScroll:true }); }
 function closeSheets(){ SHEETS.forEach(s => show(s, false)); unscroll(); }
 // The page never scrolls, but Android's keyboard (and focusing a field) can push the whole screen up inside
@@ -3495,9 +3564,9 @@ function placeFrost(on){
     if(!on){ el.style.backgroundImage = el.style.backgroundSize = el.style.backgroundPosition = ''; return; }
     let x = 0, y = 0, n = el;
     while(n && n !== app){ x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
-    el.style.backgroundImage = 'linear-gradient(var(--scrim),var(--scrim)), linear-gradient(var(--scrim),var(--scrim)), url(bg/' + photoName + '-blur.webp)';
-    el.style.backgroundSize = 'auto, auto, ' + W + 'px ' + H + 'px';
-    el.style.backgroundPosition = '0 0, 0 0, ' + (-x) + 'px ' + (-y) + 'px';
+    el.style.backgroundImage = 'linear-gradient(var(--scrim),var(--scrim)), url(bg/' + photoName + '-blur.webp)';
+    el.style.backgroundSize = 'auto, ' + W + 'px ' + H + 'px';
+    el.style.backgroundPosition = '0 0, ' + (-x) + 'px ' + (-y) + 'px';
   });
 }
 addEventListener('resize', () => { if($('app').hasAttribute('data-photo')) requestAnimationFrame(() => placeFrost(true)); });
@@ -3697,6 +3766,7 @@ function paintHome(){
   $('wStats').hidden = !last;
   if(last){ setHTML('wDist', last.miles.toFixed(1) + '<small>mi</small>'); setHTML('wPace', (last.pace ? fmtTime(last.pace) : '--:--') + '<small>/mi</small>'); }
   setText('wStartText', isLast && last ? 'Repeat workout' : 'Start workout');
+  $('wAdjust').hidden = S.pick !== 'intervals';
   // more
   const more = $('more'); const key = S.pick;
   if(more.__k !== key){
@@ -3712,6 +3782,49 @@ function paintHome(){
 }
 seg('qsSeg', QUICK.map(q => ({ value:q.id, html:esc(q.label) + '<b class="tnum">' + q.mph.toFixed(1) + '</b>' })), S.quick, v => { S.quick = v; store.set('deck.quick', v); paintHome(); });
 $('qsStart').addEventListener('click', () => begin('free'));
+/* Adjust Intervals */
+const IV_ROWS = [
+  { k:'reps', label:'Reps', note:'How many', step:1, min:1, max:12, fmt:v => String(v) },
+  { k:'inc', label:'Incline', note:'The whole workout', step:0.5, min:0, max:12, fmt:v => numStr(v) + '%' },
+  { k:'runMph', label:'Run speed', note:'Each rep', step:0.1, min:1, max:12, fmt:v => v.toFixed(1) },
+  { k:'runSec', label:'Run for', note:'Each rep', step:15, min:15, max:600, fmt:fmtTime },
+  { k:'recMph', label:'Recover speed', note:'Between reps', step:0.1, min:1, max:12, fmt:v => v.toFixed(1) },
+  { k:'recSec', label:'Recover for', note:'Between reps', step:15, min:15, max:600, fmt:fmtTime },
+  { k:'warm', label:'Warm up', note:'Minutes, at an easy walk', step:1, min:0, max:15, fmt:v => v + ' min' },
+  { k:'cool', label:'Cool down', note:'Minutes, at an easy walk', step:1, min:0, max:15, fmt:v => v + ' min' },
+];
+function paintIv(){
+  IV_ROWS.forEach(r => setText('iv_' + r.k, r.fmt(IV[r.k])));
+  const b = buildIntervals(IV);
+  setText('ivSum', b.summary);
+  setHTML('ivProfile', profileBars({ segs:b.segs }));
+}
+function setIv(k, v){
+  const r = IV_ROWS.find(x => x.k === k);
+  IV[k] = clamp(Math.round(v/r.step)*r.step, r.min, r.max);
+  if(r.step < 1) IV[k] = Math.round(IV[k]*10)/10;
+  store.set('deck.intervals', JSON.stringify(IV));
+  Object.assign(PROGRAMS.intervals, buildIntervals(IV));
+  paintIv(); paintHome();
+}
+(function(){
+  const grid = $('ivGrid');
+  const minus = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>', plus = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>';
+  IV_ROWS.forEach(r => {
+    const c = document.createElement('div'); c.className = 'ivcell';
+    c.innerHTML = '<div class="t"><b></b><span></span></div><div class="stepper"><button class="round raised" type="button" id="ivd_' + r.k + '">' + minus + '</button><b class="tnum" id="iv_' + r.k + '"></b><button class="round raised" type="button" id="ivu_' + r.k + '">' + plus + '</button></div>';
+    c.querySelector('.t b').textContent = r.label; c.querySelector('.t span').textContent = r.note;
+    c.querySelector('#ivd_' + r.k).setAttribute('aria-label', 'Less ' + r.label.toLowerCase());
+    c.querySelector('#ivu_' + r.k).setAttribute('aria-label', 'More ' + r.label.toLowerCase());
+    grid.appendChild(c);
+    holdRepeat('ivd_' + r.k, () => setIv(r.k, IV[r.k] - r.step));
+    holdRepeat('ivu_' + r.k, () => setIv(r.k, IV[r.k] + r.step));
+  });
+})();
+$('wAdjust').addEventListener('click', () => { paintIv(); openSheet('ivSheet'); });
+$('ivDone').addEventListener('click', closeSheets);
+{ const ivPanel = $('ivSheet').querySelector('.sheet'); dragToClose(ivPanel, ivPanel); }
+$('ivReset').addEventListener('click', () => { IV = Object.assign({}, IV_DEF); setIv('reps', IV.reps); });
 $('wStart').addEventListener('click', () => begin(S.pick));
 
 /* ---------- Run ---------- */
@@ -3732,8 +3845,19 @@ $('endBtn').addEventListener('click', stop);
 $('stopBtn').addEventListener('click', stop);
 $('doneBtn').addEventListener('click', () => { const back = S.viewing; S.viewing = false; resetSession(); paintHome(); if(back) openHistory(); });
 
-const lapPath = $('lapDone'), lapLen = lapPath.getTotalLength();
+const lapPath = $('lapDone'), lapGlow = $('lapGlow'), lapLen = lapPath.getTotalLength();
 lapPath.setAttribute('stroke-dasharray', '0 ' + lapLen.toFixed(1));
+lapGlow.setAttribute('stroke-dasharray', '0 ' + lapLen.toFixed(1));
+// 100, 200 and 300 m marks across the band, square to the track where they fall.
+[0.25, 0.5, 0.75].forEach(f => {
+  const a = lapPath.getPointAtLength(f*lapLen), b = lapPath.getPointAtLength(f*lapLen + 1);
+  const dx = b.x - a.x, dy = b.y - a.y, k = Math.sqrt(dx*dx + dy*dy) || 1, nx = -dy/k*23, ny = dx/k*23;
+  const t = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  t.setAttribute('class', 't-tick');
+  t.setAttribute('x1', (a.x - nx).toFixed(1)); t.setAttribute('y1', (a.y - ny).toFixed(1));
+  t.setAttribute('x2', (a.x + nx).toFixed(1)); t.setAttribute('y2', (a.y + ny).toFixed(1));
+  $('lapTicks').appendChild(t);
+});
 
 /* ---------- loop ---------- */
 let last = performance.now(), lastClock = '';
@@ -3827,9 +3951,11 @@ function render(){
   const distM = S.devDist ?? S.distM;
   const f = (distM % LAP_M)/LAP_M, L = f*lapLen;
   lapPath.setAttribute('stroke-dasharray', L.toFixed(1) + ' ' + lapLen.toFixed(1));
+  lapGlow.setAttribute('stroke-dasharray', L.toFixed(1) + ' ' + lapLen.toFixed(1));
   const pt = lapPath.getPointAtLength(L);
   $('runner').setAttribute('cx', pt.x.toFixed(1)); $('runner').setAttribute('cy', pt.y.toFixed(1));
   $('runnerHalo').setAttribute('cx', pt.x.toFixed(1)); $('runnerHalo').setAttribute('cy', pt.y.toFixed(1));
+  $('runnerRing').setAttribute('cx', pt.x.toFixed(1)); $('runnerRing').setAttribute('cy', pt.y.toFixed(1));
   setText('lapNum', 'Lap ' + (Math.floor(distM/LAP_M) + 1));
   setText('lapToGo', Math.max(1, Math.round(LAP_M - distM % LAP_M)) + ' m to go');
 
@@ -3951,6 +4077,13 @@ async function runTour(){
 }
 
 paintHr(); paintHome(); setConn('demo', 'Demo · simulated');
+// Flex gap (Chrome 84+): measure it once, and fall back to margins on the console's older WebView.
+(function(){
+  const d = document.createElement('div'); d.style.cssText = 'display:flex;flex-direction:column;row-gap:1px;position:absolute;visibility:hidden';
+  d.appendChild(document.createElement('div')); d.appendChild(document.createElement('div'));
+  document.body.appendChild(d); const ok = d.scrollHeight === 1; d.parentNode.removeChild(d);
+  if(!ok) docEl.classList.add('no-flexgap');
+})();
 if(NATIVE) initNative();
 else if(TOUR) runTour();
 else { const k = (location.search.match(/[?&]demo=(\w+)/) || [])[1]; seedDemo(k); }
