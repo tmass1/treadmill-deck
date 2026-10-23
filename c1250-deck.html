@@ -1761,22 +1761,28 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .bar i{display:block;height:100%;width:0;border-radius:inherit;transition:width .3s linear}
 .trackwrap{position:relative;flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
 /* Pause and End while running: big enough to hit mid-stride. End stops the belt at once, as the console's STOP does. */
-.dialog.tv{width:min(560px,100%);gap:20px}
-.tvhead{display:flex;align-items:center;justify-content:space-between}
-.tvbody{display:flex;align-items:center;justify-content:center;gap:40px}
-.dpad{display:grid;grid-template-columns:repeat(3,88px);grid-template-rows:repeat(3,88px);gap:8px}
-.dpad .round{width:88px;height:88px}
-.dpad .round .ico{width:34px;height:34px;stroke-width:2}
-.dpad .ok{font-size:20px;font-weight:600}
-.vol{display:flex;flex-direction:column;align-items:center;gap:10px}
-.vol .round{width:72px;height:72px}
-.vol .pill{height:48px;padding:0 20px;font-size:15px;margin-top:6px}
-.tvrow{display:flex;gap:12px;justify-content:center}
-.tvrow .pill{flex:1;height:60px}
+/* Gym TV: a sheet up from the bottom, full width, for hitting mid-stride. Arrows in the middle, the
+   moves either side, apps along the foot. Every target is at least 96px, with room between them. */
+.overlay.bottom{align-items:flex-end;padding:0}
+.sheet{width:100%;border-radius:28px 28px 0 0;padding:12px 40px 32px;display:flex;flex-direction:column;gap:24px;animation:sheetup .26s cubic-bezier(.2,.8,.2,1);touch-action:none}
+@keyframes sheetup{from{transform:translateY(100%)}to{transform:none}}
+.grab{width:64px;height:6px;border-radius:9999px;background:var(--muted-foreground);opacity:.45;margin:0 auto -8px}
+.sheethead{display:flex;align-items:center;gap:16px}
+.sheethead h2{margin:0;flex:1;font-size:28px;font-weight:600;letter-spacing:-.01em}
+.sheethead .round{width:64px;height:64px}
+.sheethead .round .ico{width:28px;height:28px}
+.sheethead .pill{height:64px;padding:0 36px;font-size:19px}
+.tvbody{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:48px;align-items:stretch}
+.tvside{display:flex;flex-direction:column;gap:16px}
+.tvside .pill{flex:1;height:auto;min-height:96px;font-size:21px;justify-content:flex-start;padding:0 32px;gap:16px}
+.tvside .pill .ico{width:30px;height:30px}
+.dpad{display:grid;grid-template-columns:repeat(3,128px);grid-template-rows:repeat(3,128px);gap:16px}
+.dpad .round{width:128px;height:128px}
+.dpad .round .ico{width:44px;height:44px;stroke-width:2}
+.dpad .ok{font-size:26px;font-weight:600}
 .tvnote{text-align:center}
-.tvapps{display:flex;align-items:center;gap:12px;padding-top:16px;border-top:1px solid var(--border)}
-.tvapps .eyebrow{width:52px;flex:none}
-.tvapps .pill{flex:1;height:56px;padding:0 12px}
+.tvapps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.tvapps .pill{height:88px;font-size:22px}
 /* The apps' own colours: third-party brand paints, like a favicon, not UI colours. Names only, no logos. */
 .tvapps{--paint-netflix:#e50914;--paint-netflix-ink:#ffffff;--paint-prime:#00a8e1;--paint-prime-ink:#0f171e;--paint-spotify:#1ed760;--paint-spotify-ink:#000000}
 .pill.appbtn{font-weight:700;letter-spacing:-.01em;transition:transform .1s ease}
@@ -2132,30 +2138,29 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
   </div>
 
   <!-- Gym TV remote (console only): each button is a Home Assistant webhook (c1250-deck-tv) -->
-  <div class="overlay" id="tvSheet" hidden>
-    <div class="panel dialog tv" role="dialog" aria-modal="true" aria-labelledby="tvTitle" data-density="touch">
-      <div class="tvhead"><h2 id="tvTitle">Gym TV</h2><button class="round raised" id="tvPower" type="button" aria-label="Turn the Apple TV on or off"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg></button></div>
+  <div class="overlay bottom" id="tvSheet" hidden>
+    <div class="panel sheet tv" role="dialog" aria-modal="true" aria-labelledby="tvTitle" data-density="touch">
+      <div class="grab" aria-hidden="true"></div>
+      <div class="sheethead" id="tvHead"><h2 id="tvTitle">Gym TV</h2><button class="round raised" id="tvPower" type="button" aria-label="Turn the Apple TV on or off"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg></button><button class="pill raised" id="tvDone" type="button">Done</button></div>
       <div class="tvbody">
+        <div class="tvside">
+          <button class="pill raised" id="tvBack" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Back</button>
+          <button class="pill raised" id="tvHome" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="m17 2-5 5-5-5"/></svg>Home</button>
+          <button class="pill raised" id="tvPlay" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16l9-8z"/><path d="M17 5v14"/><path d="M21 5v14"/></svg>Play/Pause</button>
+        </div>
         <div class="dpad">
           <span></span><button class="round raised" id="tvUp" type="button" aria-label="Up"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg></button><span></span>
           <button class="round raised" id="tvLeft" type="button" aria-label="Left"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><button class="round cta ok" id="tvSelect" type="button">OK</button><button class="round raised" id="tvRight" type="button" aria-label="Right"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
           <span></span><button class="round raised" id="tvDown" type="button" aria-label="Down"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><span></span>
         </div>
-        <div class="vol">
-          <button class="round raised" id="tvVolUp" type="button" aria-label="Volume up"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
-          <span class="eyebrow">Volume</span>
-          <button class="round raised" id="tvVolDown" type="button" aria-label="Volume down"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
-          <button class="pill raised" id="tvMute" type="button">Mute</button>
+        <div class="tvside">
+          <button class="pill raised" id="tvVolUp" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Volume up</button>
+          <button class="pill raised" id="tvVolDown" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>Volume down</button>
+          <button class="pill raised" id="tvMute" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>Mute</button>
         </div>
       </div>
-      <div class="tvrow">
-        <button class="pill raised" id="tvBack" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Back</button>
-        <button class="pill raised" id="tvHome" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="m17 2-5 5-5-5"/></svg>Home</button>
-        <button class="pill raised" id="tvPlay" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16l9-8z"/><path d="M17 5v14"/><path d="M21 5v14"/></svg>Play/Pause</button>
-      </div>
-      <div class="tvapps"><span class="eyebrow">Open</span><button class="pill appbtn" id="tvNetflix" type="button" data-app="netflix">Netflix</button><button class="pill appbtn" id="tvPrime" type="button" data-app="prime">Prime Video</button><button class="pill appbtn" id="tvSpotify" type="button" data-app="spotify">Spotify</button></div>
+      <div class="tvapps"><button class="pill appbtn" id="tvNetflix" type="button" data-app="netflix">Netflix</button><button class="pill appbtn" id="tvPrime" type="button" data-app="prime">Prime Video</button><button class="pill appbtn" id="tvSpotify" type="button" data-app="spotify">Spotify</button></div>
       <p class="tvnote" id="tvNote" hidden></p>
-      <div class="actions one"><button class="pill lg raised" id="tvDone" type="button">Done</button></div>
     </div>
   </div>
 
@@ -3155,6 +3160,19 @@ function gymPress(){
 }
 function tvSend(cmd){ if(haReady()) NATIVE.homeCall(haUrl(HOOKS.tv), JSON.stringify({ cmd }), 'tv'); }
 function openTv(){ if(haReady()){ $('tvNote').hidden = true; openSheet('tvSheet'); } }
+// A bottom sheet comes down the way it went up: drag the grabber or the header down past a third of it.
+function dragToClose(sheet, handle){
+  let y0 = null;
+  handle.addEventListener('pointerdown', e => { if(e.target.closest('button')) return; y0 = e.clientY; sheet.style.transition = 'none'; handle.setPointerCapture(e.pointerId); });
+  handle.addEventListener('pointermove', e => { if(y0 != null) sheet.style.transform = 'translateY(' + Math.max(0, e.clientY - y0) + 'px)'; });
+  const end = e => {
+    if(y0 == null) return;
+    const dy = e.clientY - y0; y0 = null;
+    sheet.style.transition = 'transform .2s ease'; sheet.style.transform = dy > sheet.offsetHeight/3 ? 'translateY(100%)' : '';
+    if(dy > sheet.offsetHeight/3) setTimeout(() => { closeSheets(); sheet.style.transition = sheet.style.transform = ''; }, 200);
+  };
+  handle.addEventListener('pointerup', end); handle.addEventListener('pointercancel', end);
+}
 if(NATIVE && NATIVE.homeCall){
   ['gymBadge', 'gymRunBtn', 'gymRow', 'tvBadge', 'tvRunBtn'].forEach(id => $(id).hidden = false);
   $('haAddr').value = store.get('deck.ha') || '';
@@ -3165,6 +3183,7 @@ if(NATIVE && NATIVE.homeCall){
   $('tvBadge').addEventListener('click', openTv);
   $('tvRunBtn').addEventListener('click', openTv);
   $('tvDone').addEventListener('click', closeSheets);
+  dragToClose($('tvSheet').querySelector('.sheet'), $('tvSheet').querySelector('.sheet'));
   // Arrows and volume repeat while held, like a real remote; the rest send once.
   [['tvUp','up'], ['tvDown','down'], ['tvLeft','left'], ['tvRight','right'], ['tvVolUp','volume_up'], ['tvVolDown','volume_down']]
     .forEach(([id, cmd]) => holdRepeat(id, () => tvSend(cmd)));
