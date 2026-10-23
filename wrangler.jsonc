@@ -1,0 +1,13 @@
+{
+  // Treadmill Deck site: the project page at /, the web console at /console/, and the private parts
+  // in worker/index.js: the update channel (/update/), the report box (/diag/) and runs (/runs), all in KV.
+  // The deck key is a secret: `npx wrangler secret put DECK_KEY`.
+  "name": "treadmill-deck",
+  "compatibility_date": "2026-10-01",
+  "main": "worker/index.js",
+  "build": { "command": "node tools/make-site.mjs" },
+  "assets": { "directory": "./site", "binding": "ASSETS" },
+  // 1 while consoles older than 1.9.3 (which don't send the key for updates) may still be out there.
+  "vars": { "UPDATE_OPEN": "1" },
+  "kv_namespaces": [{ "binding": "REPORTS", "id": "0f3bc3000fd14253b335906700bc53a9" }]
+}
