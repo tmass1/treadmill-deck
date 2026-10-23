@@ -35,6 +35,7 @@ public class MainActivity extends Activity {
     private String lastError = null;
     private HeartRate hr;
     private Updater updater;
+    private HomeAuth ha;
     private boolean hrResumed = false;
 
     @Override
@@ -51,6 +52,7 @@ public class MainActivity extends Activity {
         s.setAllowFileAccess(true);
         hr = new HeartRate(this, this::pushHr);
         updater = new Updater(this, this::pushHr);
+        ha = new HomeAuth(this, this::pushHr);
         web.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView v, String url) {
                 if (!hrResumed) { hrResumed = true; hr.resume(); updater.startup(); }
@@ -305,6 +307,14 @@ public class MainActivity extends Activity {
                 try { a.pushHr(new JSONObject().put("type", "runSent").put("id", id).put("ok", why == null).put("why", why == null ? "" : why)); } catch (Exception ignored) {}
             }, "deck-run").start();
         }
+
+        /** Cameras: Home Assistant's own sign-in (HomeAuth). base is like http://192.168.4.31:80. */
+        @JavascriptInterface public void haSignIn(String base) { a.ha.signIn(base); }
+        @JavascriptInterface public boolean haSignedIn() { return a.ha.signedIn(); }
+        @JavascriptInterface public String haBase() { return a.ha.base(); }
+        /** A current access token for Home Assistant's websocket, or "" (may take a moment: it refreshes when due). */
+        @JavascriptInterface public String haToken() { return a.ha.token(); }
+        @JavascriptInterface public void haSignOut() { a.ha.signOut(); }
 
         @JavascriptInterface public String shareApps(boolean on) {
             if (!on) { Diagnostics.stopShare(); return ""; }

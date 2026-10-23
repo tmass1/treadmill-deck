@@ -1782,6 +1782,21 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .dpad .round .ico{width:44px;height:44px;stroke-width:2}
 .dpad .ok{font-size:26px;font-weight:600}
 .tvnote{text-align:center}
+/* Cameras: three across, each picture 16:9 (padding, not aspect-ratio: Chrome 80). */
+.camgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-gap:16px}
+.camtile{display:flex;flex-direction:column;padding:0;border:0;text-align:left;border-radius:20px;overflow:hidden;background:var(--secondary);color:var(--foreground);box-shadow:var(--shadow-raised, none);transition:transform .1s ease}
+.camtile:active{transform:scale(.98)}
+.camtile .shot{position:relative;display:block;padding-top:56.25%;background:var(--muted)}
+.camtile .shot img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+.camtile .name{display:block;padding:14px 18px;font-size:19px;font-weight:600}
+.camnote{text-align:center;font-size:17px;color:var(--muted-foreground)}
+.overlay.live{padding:0;background:var(--background)}
+.overlay.live video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain}
+.livebar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;padding:20px 24px;background:linear-gradient(var(--scrim),transparent)}
+.livename{flex:1;display:flex;flex-direction:column}
+.livename h2{margin:2px 0 0;font-size:26px;font-weight:600}
+.livebar .pill{height:64px;padding:0 32px;font-size:19px;margin-left:12px}
+.livenote{position:absolute;left:0;right:0;top:50%;margin:0;text-align:center;font-size:19px;color:var(--muted-foreground)}
 .tvapps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .tvapps .pill{height:88px;font-size:22px}
 /* The apps' own colours: third-party brand paints, like a favicon, not UI colours. Names only, no logos. */
@@ -1849,7 +1864,8 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 @media (max-width:900px){ .dialog.done.has-detail{grid-template-columns:minmax(0,1fr)} }
 .actions.one{grid-template-columns:1fr}
 /* Gym lights and TV on the Paused card. A margin, not gap, beside the icon: Chrome 80 has no flex gap. */
-.gymrow .pill{height:64px;font-size:18px;gap:0}
+.gymrow{grid-template-columns:repeat(auto-fit,minmax(0,1fr))}
+.gymrow .pill{height:64px;font-size:18px;gap:0;padding:0 16px}
 .gymrow .pill .ico{width:24px;height:24px;margin-right:12px}
 .count b{font-size:220px;font-weight:200;line-height:1;letter-spacing:-.05em}
 .count .wrap{display:flex;flex-direction:column;align-items:center;gap:18px}
@@ -1927,6 +1943,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
         <button class="badge" id="upBadge" type="button" data-s="info" hidden><i class="dot"></i><span id="upBadgeText">Update ready</span></button>
         <button class="badge" id="gymBadge" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><span class="gymText">Gym lights</span></button>
         <button class="badge" id="tvBadge" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="m17 2-5 5-5-5"/></svg><span>Gym TV</span></button>
+        <button class="badge" id="camBadge" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><path d="m16 13 5.2 3.5a.5.5 0 0 0 .8-.4V7.9a.5.5 0 0 0-.8-.4L16 11"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg><span>Cameras</span></button>
         <button class="badge" id="hrBadge" type="button" data-s="none"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><span id="hrBadgeText">Connect heart rate</span></button>
         <button class="round raised" id="settingsBtn" type="button" aria-label="Settings"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
       </div>
@@ -1974,7 +1991,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
   <section class="screen run" id="run" data-density="glance" data-zone="1" aria-label="Workout" hidden>
     <div class="cb-zone-glow" aria-hidden="true"></div>
     <div class="topbar">
-      <div class="left"><button class="pill raised" id="gymRunBtn" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" ><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><span class="gymText">Gym lights</span></button><button class="pill raised" id="tvRunBtn" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="m17 2-5 5-5-5"/></svg>TV</button></div>
+      <div class="left"><button class="pill raised" id="gymRunBtn" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" ><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><span class="gymText">Gym lights</span></button><button class="pill raised" id="tvRunBtn" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="m17 2-5 5-5-5"/></svg>TV</button><button class="pill raised" id="camRunBtn" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 13 5.2 3.5a.5.5 0 0 0 .8-.4V7.9a.5.5 0 0 0-.8-.4L16 11"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>Cameras</button></div>
       <div class="title"><span class="eyebrow" id="runTitle">Just run</span></div>
       <div class="right"><span class="zonebadge tnum" id="runZone" hidden></span><span class="clock tnum" id="runClock" style="font-size:22px">--:--</span></div>
     </div>
@@ -2046,7 +2063,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
         <div><b class="tnum" id="pPace">--:--</b><span class="eyebrow">Avg /mi</span></div>
         <div><b class="tnum" id="pHr" style="color:var(--heat)">--</b><span class="eyebrow">Avg bpm</span></div>
       </div>
-      <div class="actions gymrow" id="pHome" hidden><button class="pill raised" id="pGymBtn" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><span class="gymText">Gym lights</span></button><button class="pill raised" id="pTvBtn" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="m17 2-5 5-5-5"/></svg>Gym TV</button></div>
+      <div class="actions gymrow" id="pHome" hidden><button class="pill raised" id="pGymBtn" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><span class="gymText">Gym lights</span></button><button class="pill raised" id="pTvBtn" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="m17 2-5 5-5-5"/></svg>Gym TV</button><button class="pill raised" id="pCamBtn" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 13 5.2 3.5a.5.5 0 0 0 .8-.4V7.9a.5.5 0 0 0-.8-.4L16 11"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>Cameras</button></div>
       <div class="actions"><button class="pill lg raised" id="endBtn" type="button">End workout</button><button class="pill lg cta" id="resumeBtn" type="button">Resume</button></div>
     </div>
   </div>
@@ -2083,6 +2100,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
         <div class="srow"><div class="t"><b>You</b><span id="setMe">Weight not set · calories use 176 lb</span></div><button class="pill raised" id="setMeBtn" type="button">Edit</button></div>
         <div class="srow" id="gymRow" hidden><div class="t"><b>Home Assistant</b><span>For Gym lights and the TV remote. Address and port, like 192.168.1.20:8123</span></div>
           <div class="btns" style="flex-wrap:nowrap;flex:none"><input class="cb-input" id="haAddr" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="192.168.1.20:8123" style="width:190px"><button class="pill raised" id="haTest" type="button">Try it</button></div></div>
+        <div class="srow" id="camRow" hidden><div class="t"><b>Cameras</b><span id="camText">Sign in to Home Assistant to see your Ring cameras here.</span></div><button class="pill raised" id="camSignBtn" type="button">Sign in</button></div>
         <div class="srow" id="homeRow" hidden><div class="t"><b>Start on power-up</b><span id="homeText">Make C1250 Deck the home screen so the treadmill opens here, not iFit.</span></div><button class="pill raised" id="homeBtn" type="button">Set up</button></div>
         <div class="srow"><div class="t"><b>Software</b><span id="setUp">C1250 Deck</span></div><button class="pill raised" id="setUpBtn" type="button">Check for updates</button></div>
         <div class="srow"><div class="t"><b>Appearance</b><span>Dark is easiest on the eyes mid-run.</span></div><div class="seg well" id="themeSeg" role="radiogroup" aria-label="Appearance"></div></div>
@@ -2167,6 +2185,27 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
       <div class="tvapps"><button class="pill appbtn" id="tvNetflix" type="button" data-app="netflix">Netflix</button><button class="pill appbtn" id="tvPrime" type="button" data-app="prime">Prime Video</button><button class="pill appbtn" id="tvSpotify" type="button" data-app="spotify">Spotify</button></div>
       <p class="tvnote" id="tvNote" hidden></p>
     </div>
+  </div>
+
+  <!-- Cameras (console only): Ring through Home Assistant, signed in (HomeAuth.java) -->
+  <div class="overlay bottom" id="camSheet" hidden>
+    <div class="panel sheet" role="dialog" aria-modal="true" aria-labelledby="camTitle" data-density="touch">
+      <div class="grab" aria-hidden="true"></div>
+      <div class="sheethead"><h2 id="camTitle">Cameras</h2><button class="pill raised" id="camDone" type="button">Done</button></div>
+      <div class="camgrid" id="camGrid"></div>
+      <p class="camnote" id="camNote" hidden></p>
+    </div>
+  </div>
+
+  <!-- A camera live, full screen: from the Cameras sheet, or by itself when the doorbell rings -->
+  <div class="overlay live" id="camLive" hidden>
+    <video id="camVideo" autoplay playsinline muted></video>
+    <div class="livebar">
+      <div class="livename"><span class="eyebrow" id="liveEyebrow">Live</span><h2 id="liveName">Camera</h2></div>
+      <button class="pill raised" id="liveSound" type="button">Sound on</button>
+      <button class="pill raised" id="liveDone" type="button">Done</button>
+    </div>
+    <p class="livenote" id="liveNote">Starting live view…</p>
   </div>
 
   <!-- Diagnostics (console only) -->
@@ -3089,7 +3128,7 @@ function toast(html, withHelp, stay){
 $('toastClose').addEventListener('click', () => $('toast').hidden = true);
 
 /* ---------- sheets ---------- */
-const SHEETS = ['settings', 'upSheet', 'hrSheet', 'help', 'diagSheet', 'tvSheet', 'histSheet', 'meSheet'];
+const SHEETS = ['settings', 'upSheet', 'hrSheet', 'help', 'diagSheet', 'tvSheet', 'histSheet', 'meSheet', 'camSheet', 'camLive'];
 function openSheet(id){ SHEETS.forEach(s => show(s, s === id)); const b = $(id).querySelector('button'); if(b) b.focus({ preventScroll:true }); }
 function closeSheets(){ SHEETS.forEach(s => show(s, false)); unscroll(); }
 // The page never scrolls, but Android's keyboard (and focusing a field) can push the whole screen up inside
@@ -3208,6 +3247,185 @@ if(NATIVE && NATIVE.homeCall){
   [['tvSelect','select'], ['tvBack','menu'], ['tvHome','home'], ['tvPlay','play_pause'], ['tvMute','mute'], ['tvPower','power']]
     .forEach(([id, cmd]) => $(id).addEventListener('click', () => tvSend(cmd)));
 }
+/* ---------- Cameras: Ring through Home Assistant ----------
+   Webhooks need no sign-in; pictures and live video do. Settings → Cameras signs in with Home Assistant's own
+   login (HomeAuth.java keeps the token). The page holds one websocket to Home Assistant while signed in: the
+   Cameras sheet's pictures, live view over WebRTC (the way Home Assistant's own app plays Ring), and the
+   doorbell, which opens its camera live wherever you are. The belt is never touched by any of it. */
+const HA = { ws:null, up:false, n:0, wait:{}, subs:{}, tries:0, t:0, cams:[], base:'' };
+const haCan = () => !!(NATIVE && NATIVE.haSignIn);
+const haIn = () => haCan() && NATIVE.haSignedIn();
+function haBase(){
+  let a = (store.get('deck.ha') || '').trim();
+  if(!a) return '';
+  if(!/^https?:\/\//.test(a)) a = 'http://' + a;
+  if(!/:\d+$/.test(a.replace(/^https?:\/\//, '').replace(/\/.*$/, ''))) a += ':8123';
+  return a.replace(/\/+$/, '');
+}
+function haConnect(){
+  if(!haIn() || HA.ws) return;
+  HA.base = NATIVE.haBase() || haBase();
+  if(!HA.base) return;
+  let ws;
+  try{ ws = new WebSocket(HA.base.replace(/^http/, 'ws') + '/api/websocket'); }catch(_){ return haRetry(); }
+  HA.ws = ws;
+  ws.onmessage = e => {
+    let m; try{ m = JSON.parse(e.data); }catch(_){ return; }
+    if(m.type === 'auth_required'){
+      const t = NATIVE.haToken();
+      if(t) ws.send(JSON.stringify({ type:'auth', access_token:t })); else ws.close();
+    } else if(m.type === 'auth_ok'){ HA.up = true; HA.tries = 0; haOnline(); }
+    else if(m.type === 'auth_invalid') ws.close();
+    else if(m.type === 'result'){ const w = HA.wait[m.id]; if(w){ delete HA.wait[m.id]; if(m.success) w.ok(m.result); else w.no(m.error || {}); } }
+    else if(m.type === 'event'){ const f = HA.subs[m.id]; if(f) f(m.event); }
+  };
+  ws.onclose = () => {
+    HA.ws = null; HA.up = false;
+    Object.keys(HA.wait).forEach(k => HA.wait[k].no({ message:'Lost Home Assistant.' }));
+    HA.wait = {}; HA.subs = {};
+    haRetry();
+  };
+}
+function haRetry(){ clearTimeout(HA.t); if(!haIn()) return; HA.tries++; HA.t = setTimeout(haConnect, Math.min(60000, 3000*HA.tries)); }
+function haSend(msg){
+  return new Promise((ok, no) => {
+    if(!HA.up) return no({ message:'Not connected to Home Assistant.' });
+    const id = ++HA.n; HA.wait[id] = { ok, no }; msg.id = id; HA.ws.send(JSON.stringify(msg));
+  });
+}
+/** A subscription: fn gets each event; resolves to a function that ends it. */
+function haSub(msg, fn){
+  return new Promise((ok, no) => {
+    if(!HA.up) return no({ message:'Not connected to Home Assistant.' });
+    const id = ++HA.n; HA.subs[id] = fn; msg.id = id;
+    HA.wait[id] = { ok:() => ok(() => { delete HA.subs[id]; if(HA.up) haSend({ type:'unsubscribe_events', subscription:id }).catch(() => {}); }), no:e => { delete HA.subs[id]; no(e); } };
+    HA.ws.send(JSON.stringify(msg));
+  });
+}
+const camName = s => (s.attributes.friendly_name || s.entity_id).replace(/\s*live view$/i, '');
+async function haOnline(){
+  try{
+    const st = await haSend({ type:'get_states' });
+    haTakeCams(st);
+    // The doorbell: Ring's ding events. Its camera opens live, wherever you are.
+    const dings = st.filter(x => /^event\./.test(x.entity_id) && (x.attributes.event_types || []).indexOf('ring') >= 0).map(x => x.entity_id);
+    if(dings.length) await haSub({ type:'subscribe_trigger', trigger:{ trigger:'state', entity_id:dings } }, onDing);
+  }catch(_){}
+}
+function haTakeCams(st){
+  HA.cams = st.filter(x => /^camera\./.test(x.entity_id) && x.state !== 'unavailable')
+    .map(x => ({ id:x.entity_id, name:camName(x), pic:x.attributes.entity_picture || '' }))
+    .sort((a, b) => (/front door/i.test(b.name) - /front door/i.test(a.name)) || (/old/i.test(a.name) - /old/i.test(b.name)) || a.name.localeCompare(b.name));
+  if(!$('camSheet').hidden) paintCams(true);
+}
+function onDing(ev){
+  const t = ev && ev.variables && ev.variables.trigger; if(!t) return;
+  const from = t.from_state, to = t.to_state;
+  if(!from || !to || from.state === to.state || /unavailable|unknown/.test(from.state) || to.state === 'unavailable') return;
+  openLive(t.entity_id.replace(/^event\./, 'camera.').replace(/_ding$/, '_live_view'), true);
+}
+
+/* The sheet: a picture per camera, refreshed every 15 s while it's open (the picture links carry a token that
+   Home Assistant rotates, so the list itself is read again every 3 minutes). Tap one for live. */
+let camTimer = 0, camListTimer = 0;
+function paintCams(fresh){
+  const grid = $('camGrid'), note = $('camNote');
+  if(!HA.up){ grid.innerHTML = ''; note.hidden = false; note.textContent = HA.tries > 1 ? 'Can’t reach Home Assistant. Check the address in Settings.' : 'Connecting to Home Assistant…'; return; }
+  if(!HA.cams.length){ grid.innerHTML = ''; note.hidden = false; note.textContent = 'Home Assistant has no cameras to show.'; return; }
+  note.hidden = true;
+  if(fresh || grid.children.length !== HA.cams.length){
+    grid.innerHTML = '';
+    HA.cams.forEach(c => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'camtile';
+      b.innerHTML = '<span class="shot"><img alt=""></span><span class="name"></span>';
+      b.querySelector('.name').textContent = c.name;
+      b.addEventListener('click', () => openLive(c.id, false));
+      grid.appendChild(b);
+    });
+  }
+  HA.cams.forEach((c, i) => { const img = grid.children[i].querySelector('img'); if(c.pic) img.src = HA.base + c.pic + (c.pic.indexOf('?') < 0 ? '?' : '&') + '_=' + Date.now(); });
+}
+function openCams(){
+  if(!haIn()){ paintSettings(); openSheet('settings'); toast('<b>Sign in to Home Assistant</b> to see your cameras: Settings → Cameras.'); return; }
+  haConnect();
+  openSheet('camSheet'); paintCams(true);
+  clearInterval(camTimer); clearInterval(camListTimer);
+  camTimer = setInterval(() => { if($('camSheet').hidden){ clearInterval(camTimer); clearInterval(camListTimer); return; } paintCams(false); }, 15000);
+  camListTimer = setInterval(() => { if(HA.up) haSend({ type:'get_states' }).then(haTakeCams).catch(() => {}); }, 180000);
+  if(!HA.up){ const w = setInterval(() => { if($('camSheet').hidden){ clearInterval(w); return; } if(HA.up){ clearInterval(w); paintCams(true); } else paintCams(false); }, 1000); }
+}
+
+/* Live: WebRTC through Home Assistant, as its own app does it. Muted until you ask for sound. */
+const LIVE = { pc:null, end:null, session:null, q:[], timer:0, from:'' };
+function liveSay(text){ $('liveNote').hidden = !text; $('liveNote').textContent = text || ''; }
+async function openLive(id, ding){
+  stopLive();
+  if(!HA.up){ if(ding) return; liveSay('Not connected to Home Assistant.'); }
+  const cam = HA.cams.find(c => c.id === id) || { id, name:id.replace(/^camera\./, '').replace(/_live_view$/, '').replace(/_/g, ' ') };
+  LIVE.from = $('camSheet').hidden ? '' : 'camSheet';
+  setText('liveName', cam.name); setText('liveEyebrow', ding ? 'Someone’s at the door' : 'Live');
+  const v = $('camVideo'); v.muted = true; setText('liveSound', 'Sound on');
+  liveSay('Starting live view…');
+  openSheet('camLive');
+  if(ding) LIVE.timer = setTimeout(closeLive, 120000);   // a doorbell view puts itself away after two minutes
+  if(!HA.up) return;
+  try{
+    const cfg = await haSend({ type:'camera/webrtc/get_client_config', entity_id:id });
+    const pc = LIVE.pc = new RTCPeerConnection(cfg.configuration || {});
+    if(cfg.dataChannel) pc.createDataChannel(cfg.dataChannel);
+    pc.addTransceiver('audio', { direction:'recvonly' });
+    pc.addTransceiver('video', { direction:'recvonly' });
+    pc.ontrack = e => { if(pc === LIVE.pc && e.streams[0]) v.srcObject = e.streams[0]; };
+    const send = c => haSend({ type:'camera/webrtc/candidate', entity_id:id, session_id:LIVE.session, candidate:c }).catch(() => {});
+    pc.onicecandidate = e => { if(!e.candidate || pc !== LIVE.pc) return; const c = e.candidate.toJSON(); if(LIVE.session) send(c); else LIVE.q.push(c); };
+    pc.oniceconnectionstatechange = () => { if(pc === LIVE.pc && pc.iceConnectionState === 'failed') liveSay('The camera stopped sending. Close and try again.'); };
+    const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
+    const end = await haSub({ type:'camera/webrtc/offer', entity_id:id, offer:offer.sdp }, ev => {
+      if(pc !== LIVE.pc) return;
+      if(ev.type === 'session'){ LIVE.session = ev.session_id; LIVE.q.splice(0).forEach(send); }
+      else if(ev.type === 'answer') pc.setRemoteDescription({ type:'answer', sdp:ev.answer }).catch(() => liveSay('Live view didn’t start.'));
+      else if(ev.type === 'candidate' && ev.candidate) pc.addIceCandidate(ev.candidate).catch(() => {});
+      else if(ev.type === 'error') liveSay('Live view didn’t start: ' + (ev.message || ev.code || ''));
+    });
+    if(pc !== LIVE.pc){ end(); return; }
+    LIVE.end = end;
+    setTimeout(() => { if(pc === LIVE.pc && !v.videoWidth) liveSay('Still waiting for the camera…'); }, 15000);
+  }catch(e){ liveSay('Live view didn’t start. ' + ((e && e.message) || '')); }
+}
+function stopLive(){
+  clearTimeout(LIVE.timer);
+  if(LIVE.end){ try{ LIVE.end(); }catch(_){} }
+  if(LIVE.pc){ try{ LIVE.pc.close(); }catch(_){} }
+  LIVE.pc = null; LIVE.end = null; LIVE.session = null; LIVE.q = [];
+  $('camVideo').srcObject = null;
+}
+function closeLive(){ const back = LIVE.from; stopLive(); if(back === 'camSheet') openCams(); else closeSheets(); }
+$('camVideo').addEventListener('playing', () => liveSay(''));
+$('liveDone').addEventListener('click', closeLive);
+$('liveSound').addEventListener('click', () => { const v = $('camVideo'); v.muted = !v.muted; setText('liveSound', v.muted ? 'Sound on' : 'Sound off'); });
+$('camDone').addEventListener('click', closeSheets);
+{ const camPanel = $('camSheet').querySelector('.sheet'); dragToClose(camPanel, camPanel); }
+
+function paintCamRow(){
+  if(!haCan()) return;
+  const on = haIn();
+  setText('camText', on ? 'Signed in to Home Assistant. Your Ring cameras open from Home, the run screen and Paused, and the front door pops up when the doorbell rings.'
+    : 'Sign in to Home Assistant to see your Ring cameras here. Use a Home Assistant user made for the treadmill.');
+  setText('camSignBtn', on ? 'Sign out' : 'Sign in');
+}
+if(haCan()){
+  ['camBadge', 'camRunBtn', 'pCamBtn', 'camRow'].forEach(id => $(id).hidden = false);
+  ['camBadge', 'camRunBtn', 'pCamBtn'].forEach(id => $(id).addEventListener('click', openCams));
+  $('camSignBtn').addEventListener('click', () => {
+    if(haIn()){ NATIVE.haSignOut(); stopLive(); if(HA.ws) HA.ws.close(); HA.cams = []; paintCamRow(); return; }
+    store.set('deck.ha', $('haAddr').value.trim());
+    const b = haBase();
+    if(!b){ $('haAddr').focus(); toast('Put Home Assistant’s address in first, like 192.168.4.31:80.'); return; }
+    NATIVE.haSignIn(b);
+  });
+  setTimeout(haConnect, 2500);
+}
+
 /* Start on power-up: C1250 Deck as Android's Home app, so iFit's sign-in screen never shows. */
 function paintHomeRow(){
   if(!(NATIVE && NATIVE.isHome)) return;
@@ -3239,7 +3457,7 @@ function seg(boxId, options, value, onPick){
   });
 }
 function paintSettings(){
-  paintHomeRow(); paintMe();
+  paintHomeRow(); paintMe(); if(typeof paintCamRow === 'function') paintCamRow();
   setText('setHr', HR.state === 'connected' ? 'Connected to ' + (HR.name || 'your monitor') : HR.name ? HR.name + ' · not connected' : 'Not connected');
   setText('setHrBtn', HR.state === 'connected' ? 'Manage' : 'Connect');
   setText('setUp', UP.state === 'available' ? 'Version ' + UP.version + ' is ready · you’re on ' + UP.current : 'C1250 Deck ' + (UP.current || '1.4'));
@@ -3319,6 +3537,12 @@ function renderHrList(list){
 }
 window.__deckHr = msg => {
   if(msg.type === 'runSent'){ runSent(msg); return; }
+  if(msg.type === 'haAuth'){
+    paintSettings();
+    if(msg.ok){ toast('<b>Signed in to Home Assistant.</b> Cameras are ready.'); haConnect(); }
+    else if(msg.why) toast(esc(msg.why));
+    return;
+  }
   if(msg.type === 'home'){
     if(msg.kind === 'tv'){
       if(!msg.ok){ $('tvNote').hidden = false; $('tvNote').textContent = 'Couldn’t reach Home Assistant. ' + (msg.why || '') + ' Check the address in Settings.'; }
