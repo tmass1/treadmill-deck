@@ -316,6 +316,12 @@ public class MainActivity extends Activity {
         @JavascriptInterface public String haToken() { return a.ha.token(); }
         @JavascriptInterface public void haSignOut() { a.ha.signOut(); }
 
+        /** A quiet upload to the site's report box (no Diagnostics sheet), e.g. kind "camera" from a live view. */
+        @JavascriptInterface public void sendReport(String kind, String text) {
+            final String v = a.updater.versionName();
+            new Thread(() -> Reports.send(kind == null ? "report" : kind, v, text == null ? "" : text), "deck-report").start();
+        }
+
         @JavascriptInterface public String shareApps(boolean on) {
             if (!on) { Diagnostics.stopShare(); return ""; }
             return Diagnostics.startShare(a);

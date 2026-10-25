@@ -2260,7 +2260,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 
   <!-- A camera live, full screen: from the Cameras sheet, or by itself when the doorbell rings -->
   <div class="overlay live" id="camLive" hidden>
-    <video id="camVideo" autoplay playsinline muted></video>
+    <video id="camVideo" autoplay playsinline muted poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"></video>
     <div class="livebar">
       <div class="livename"><span class="eyebrow" id="liveEyebrow">Live</span><h2 id="liveName">Camera</h2></div>
       <button class="pill raised" id="liveSound" type="button">Sound on</button>
@@ -3453,10 +3453,36 @@ function openCams(){
 }
 
 /* Live: WebRTC through Home Assistant, as its own app does it. Muted until you ask for sound. */
-const LIVE = { pc:null, end:null, session:null, q:[], timer:0, from:'' };
+const LIVE = { pc:null, end:null, session:null, q:[], timer:0, from:'', log:[], t0:0, id:'', offer:'', answer:'', sent:false };
+const liveLog = m => { LIVE.log.push(((performance.now() - LIVE.t0)/1000).toFixed(1) + 's ' + m); };
+const sdpCodecs = (sdp, kind) => { const m = (sdp || '').split('m=' + kind)[1]; return m ? (m.split('\nm=')[0].match(/a=rtpmap:\d+ [^\r\n]+/g) || []).map(x => x.replace('a=rtpmap:', '')).join(', ') : 'none'; };
+// What happened, uploaded to the site's report box (kind "camera") when a live view plays or stalls.
+async function liveReport(why){
+  if(LIVE.sent || !(NATIVE && NATIVE.sendReport)) return;
+  LIVE.sent = true;
+  const v = $('camVideo'), pc = LIVE.pc, out = ['Live view: ' + why, 'Camera: ' + LIVE.id, 'Browser: ' + navigator.userAgent, ''];
+  out.push('Offer video codecs: ' + sdpCodecs(LIVE.offer, 'video'));
+  out.push('Answer video codecs: ' + sdpCodecs(LIVE.answer, 'video'));
+  out.push('Answer audio codecs: ' + sdpCodecs(LIVE.answer, 'audio'));
+  if(pc) out.push('ICE ' + pc.iceConnectionState + ' · connection ' + (pc.connectionState || '?') + ' · signaling ' + pc.signalingState);
+  out.push('Video: readyState ' + v.readyState + ', paused ' + v.paused + ', ' + v.videoWidth + 'x' + v.videoHeight + (v.error ? ', error ' + v.error.code : '') + ', tracks ' + (v.srcObject ? v.srcObject.getTracks().map(t => t.kind + ':' + t.readyState + (t.muted ? ' muted' : '')).join(' ') : 'none'));
+  try{
+    if(pc){
+      const st = await pc.getStats(), codecs = {};
+      st.forEach(r => { if(r.type === 'codec') codecs[r.id] = r.mimeType; });
+      st.forEach(r => {
+        if(r.type === 'inbound-rtp') out.push('inbound ' + (r.kind || r.mediaType) + ': bytes ' + r.bytesReceived + ', packets ' + r.packetsReceived + ', lost ' + r.packetsLost + ', frames decoded ' + (r.framesDecoded != null ? r.framesDecoded : '-') + ', codec ' + (codecs[r.codecId] || r.codecId || '-') + (r.decoderImplementation ? ', decoder ' + r.decoderImplementation : ''));
+        if(r.type === 'candidate-pair' && r.nominated) out.push('pair ' + r.state + ', sent ' + r.bytesSent + ', received ' + r.bytesReceived);
+      });
+    }
+  }catch(e){ out.push('stats: ' + e); }
+  out.push('', 'Log:'); out.push.apply(out, LIVE.log);
+  NATIVE.sendReport('camera', out.join('\n'));
+}
 function liveSay(text){ $('liveNote').hidden = !text; $('liveNote').textContent = text || ''; }
 async function openLive(id, ding){
   stopLive();
+  Object.assign(LIVE, { log:[], t0:performance.now(), id, offer:'', answer:'', sent:false });
   if(!HA.up){ if(ding) return; liveSay('Not connected to Home Assistant.'); }
   const cam = HA.cams.find(c => c.id === id) || { id, name:id.replace(/^camera\./, '').replace(/_live_view$/, '').replace(/_/g, ' ') };
   LIVE.from = $('camSheet').hidden ? '' : 'camSheet';
@@ -3472,22 +3498,31 @@ async function openLive(id, ding){
     if(cfg.dataChannel) pc.createDataChannel(cfg.dataChannel);
     pc.addTransceiver('audio', { direction:'recvonly' });
     pc.addTransceiver('video', { direction:'recvonly' });
-    pc.ontrack = e => { if(pc === LIVE.pc && e.streams[0]) v.srcObject = e.streams[0]; };
+    pc.ontrack = e => {
+      liveLog('track ' + e.track.kind);
+      if(pc !== LIVE.pc) return;
+      const ms = e.streams[0] || (v.srcObject instanceof MediaStream ? v.srcObject : new MediaStream());
+      if(!e.streams[0]) ms.addTrack(e.track);
+      if(v.srcObject !== ms) v.srcObject = ms;
+      const pr = v.play(); if(pr && pr.catch) pr.catch(err => liveLog('play() refused: ' + err.name));
+    };
+    pc.onconnectionstatechange = () => liveLog('connection ' + pc.connectionState);
     const send = c => haSend({ type:'camera/webrtc/candidate', entity_id:id, session_id:LIVE.session, candidate:c }).catch(() => {});
     pc.onicecandidate = e => { if(!e.candidate || pc !== LIVE.pc) return; const c = e.candidate.toJSON(); if(LIVE.session) send(c); else LIVE.q.push(c); };
-    pc.oniceconnectionstatechange = () => { if(pc === LIVE.pc && pc.iceConnectionState === 'failed') liveSay('The camera stopped sending. Close and try again.'); };
+    pc.oniceconnectionstatechange = () => { liveLog('ice ' + pc.iceConnectionState); if(pc === LIVE.pc && pc.iceConnectionState === 'failed'){ liveSay('The camera stopped sending. Close and try again.'); liveReport('ICE failed'); } };
     const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
+    LIVE.offer = offer.sdp; liveLog('offer sent');
     const end = await haSub({ type:'camera/webrtc/offer', entity_id:id, offer:offer.sdp }, ev => {
       if(pc !== LIVE.pc) return;
-      if(ev.type === 'session'){ LIVE.session = ev.session_id; LIVE.q.splice(0).forEach(send); }
-      else if(ev.type === 'answer') pc.setRemoteDescription({ type:'answer', sdp:ev.answer }).catch(() => liveSay('Live view didn’t start.'));
-      else if(ev.type === 'candidate' && ev.candidate) pc.addIceCandidate(ev.candidate).catch(() => {});
-      else if(ev.type === 'error') liveSay('Live view didn’t start: ' + (ev.message || ev.code || ''));
+      if(ev.type === 'session'){ liveLog('session'); LIVE.session = ev.session_id; LIVE.q.splice(0).forEach(send); }
+      else if(ev.type === 'answer'){ liveLog('answer'); LIVE.answer = ev.answer; pc.setRemoteDescription({ type:'answer', sdp:ev.answer }).catch(err => { liveLog('setRemoteDescription failed: ' + err); liveSay('Live view didn’t start.'); liveReport('answer refused'); }); }
+      else if(ev.type === 'candidate' && ev.candidate){ liveLog('remote candidate'); pc.addIceCandidate(ev.candidate).catch(err => liveLog('addIceCandidate failed: ' + err)); }
+      else if(ev.type === 'error'){ liveLog('error ' + (ev.code || '') + ' ' + (ev.message || '')); liveSay('Live view didn’t start: ' + (ev.message || ev.code || '')); liveReport('Home Assistant error'); }
     });
     if(pc !== LIVE.pc){ end(); return; }
     LIVE.end = end;
-    setTimeout(() => { if(pc === LIVE.pc && !v.videoWidth) liveSay('Still waiting for the camera…'); }, 15000);
-  }catch(e){ liveSay('Live view didn’t start. ' + ((e && e.message) || '')); }
+    setTimeout(() => { if(pc === LIVE.pc && !v.videoWidth){ liveSay('Still waiting for the camera…'); liveReport('no picture after 15 s'); } }, 15000);
+  }catch(e){ liveLog('threw ' + ((e && e.message) || e)); liveSay('Live view didn’t start. ' + ((e && e.message) || '')); liveReport('threw'); }
 }
 function stopLive(){
   clearTimeout(LIVE.timer);
@@ -3497,7 +3532,7 @@ function stopLive(){
   $('camVideo').srcObject = null;
 }
 function closeLive(){ const back = LIVE.from; stopLive(); if(back === 'camSheet') openCams(); else closeSheets(); }
-$('camVideo').addEventListener('playing', () => liveSay(''));
+$('camVideo').addEventListener('playing', () => { liveSay(''); liveLog('playing'); setTimeout(() => liveReport('playing'), 3000); });
 $('liveDone').addEventListener('click', closeLive);
 $('liveSound').addEventListener('click', () => { const v = $('camVideo'); v.muted = !v.muted; setText('liveSound', v.muted ? 'Sound on' : 'Sound off'); });
 $('camDone').addEventListener('click', closeSheets);
