@@ -1805,6 +1805,13 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .camtile .shot{position:relative;display:block;padding-top:56.25%;background:var(--muted)}
 .camtile .shot img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
 .camtile .name{display:block;padding:14px 18px;font-size:19px;font-weight:600}
+/* Choosing: every camera shows, the hidden ones dimmed with a mark; a tap flips one. */
+.camtile .mark{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:9999px;display:none;align-items:center;justify-content:center;background:var(--primary);color:var(--primary-foreground)}
+.camtile .mark .ico{width:22px;height:22px;stroke-width:3}
+.camgrid.choosing .camtile .mark{display:flex}
+.camgrid.choosing .camtile.off{opacity:.45}
+.camgrid.choosing .camtile.off .mark{background:var(--secondary);color:var(--muted-foreground)}
+.camgrid.choosing .camtile.off .mark .ico{visibility:hidden}
 .camnote{text-align:center;font-size:17px;color:var(--muted-foreground)}
 .overlay.live{padding:0;background:var(--background)}
 .overlay.live video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain}
@@ -2245,7 +2252,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
   <div class="overlay bottom" id="camSheet" hidden>
     <div class="panel sheet" role="dialog" aria-modal="true" aria-labelledby="camTitle" data-density="touch">
       <div class="grab" aria-hidden="true"></div>
-      <div class="sheethead"><h2 id="camTitle">Cameras</h2><button class="pill raised" id="camDone" type="button">Done</button></div>
+      <div class="sheethead"><h2 id="camTitle" style="flex:1">Cameras</h2><button class="pill ghost" id="camChoose" type="button">Choose</button><button class="pill raised" id="camDone" type="button">Done</button></div>
       <div class="camgrid" id="camGrid"></div>
       <p class="camnote" id="camNote" hidden></p>
     </div>
@@ -3398,25 +3405,44 @@ function onDing(ev){
 
 /* The sheet: a picture per camera, refreshed every 15 s while it's open (the picture links carry a token that
    Home Assistant rotates, so the list itself is read again every 3 minutes). Tap one for live. */
-let camTimer = 0, camListTimer = 0;
+let camTimer = 0, camListTimer = 0, camChoosing = false;
+// Which cameras the sheet shows: Choose → tap to hide or show (deck.camHidden, a list of entity ids).
+let camHidden = (() => { try{ return JSON.parse(store.get('deck.camHidden') || '[]'); }catch(_){ return []; } })();
+const camShown = () => camChoosing ? HA.cams : HA.cams.filter(c => camHidden.indexOf(c.id) < 0);
 function paintCams(fresh){
   const grid = $('camGrid'), note = $('camNote');
   if(!HA.up){ grid.innerHTML = ''; note.hidden = false; note.textContent = HA.tries > 1 ? 'Can’t reach Home Assistant. Check the address in Settings.' : 'Connecting to Home Assistant…'; return; }
   if(!HA.cams.length){ grid.innerHTML = ''; note.hidden = false; note.textContent = 'Home Assistant has no cameras to show.'; return; }
-  note.hidden = true;
-  if(fresh || grid.children.length !== HA.cams.length){
+  const list = camShown();
+  grid.classList.toggle('choosing', camChoosing);
+  setText('camChoose', camChoosing ? 'Done choosing' : 'Choose');
+  $('camDone').hidden = camChoosing;
+  note.hidden = !camChoosing && list.length > 0;
+  note.textContent = camChoosing ? 'Tap a camera to show or hide it here.' : 'Every camera is hidden. Tap Choose to bring some back.';
+  if(fresh || grid.children.length !== list.length || grid.__key !== list.map(c => c.id).join() + camChoosing){
+    grid.__key = list.map(c => c.id).join() + camChoosing;
     grid.innerHTML = '';
-    HA.cams.forEach(c => {
+    list.forEach(c => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'camtile';
-      b.innerHTML = '<span class="shot"><img alt=""></span><span class="name"></span>';
+      b.innerHTML = '<span class="shot"><img alt=""><span class="mark"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></span><span class="name"></span>';
       b.querySelector('.name').textContent = c.name;
-      b.addEventListener('click', () => openLive(c.id, false));
+      b.classList.toggle('off', camHidden.indexOf(c.id) >= 0);
+      b.addEventListener('click', () => {
+        if(!camChoosing) return openLive(c.id, false);
+        const i = camHidden.indexOf(c.id);
+        if(i >= 0) camHidden.splice(i, 1); else camHidden.push(c.id);
+        store.set('deck.camHidden', JSON.stringify(camHidden));
+        b.classList.toggle('off', i < 0);
+        b.setAttribute('aria-pressed', String(i >= 0));
+      });
+      if(camChoosing) b.setAttribute('aria-pressed', String(camHidden.indexOf(c.id) < 0));
       grid.appendChild(b);
     });
   }
-  HA.cams.forEach((c, i) => { const img = grid.children[i].querySelector('img'); if(c.pic) img.src = HA.base + c.pic + (c.pic.indexOf('?') < 0 ? '?' : '&') + '_=' + Date.now(); });
+  list.forEach((c, i) => { const el = grid.children[i]; const img = el && el.querySelector('img'); if(img && c.pic) img.src = HA.base + c.pic + (c.pic.indexOf('?') < 0 ? '?' : '&') + '_=' + Date.now(); });
 }
 function openCams(){
+  camChoosing = false;
   if(!haIn()){ paintSettings(); openSheet('settings'); toast('<b>Sign in to Home Assistant</b> to see your cameras: Settings → Cameras.'); return; }
   haConnect();
   openSheet('camSheet'); paintCams(true);
@@ -3475,6 +3501,7 @@ $('camVideo').addEventListener('playing', () => liveSay(''));
 $('liveDone').addEventListener('click', closeLive);
 $('liveSound').addEventListener('click', () => { const v = $('camVideo'); v.muted = !v.muted; setText('liveSound', v.muted ? 'Sound on' : 'Sound off'); });
 $('camDone').addEventListener('click', closeSheets);
+$('camChoose').addEventListener('click', () => { camChoosing = !camChoosing; paintCams(true); });
 { const camPanel = $('camSheet').querySelector('.sheet'); dragToClose(camPanel, camPanel); }
 
 function paintCamRow(){
