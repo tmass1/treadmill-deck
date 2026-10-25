@@ -50,7 +50,9 @@ final class HomeAuth {
 
     /** Home Assistant's login page, in a full-screen dialog. base is like http://192.168.4.31:80. */
     void signIn(String base) {
-        final String b = base.replaceAll("/+$", "");
+        // Drop a default port (http :80, https :443): WebView drops it from the URLs it reports, so the
+        // redirect would never match, and Home Assistant's own app signs in without one.
+        final String b = base.replaceAll("/+$", "").replaceFirst("^(http://[^/]+):80$", "$1").replaceFirst("^(https://[^/]+):443$", "$1");
         final String client = b + "/";
         final String back = b + "/?deck_auth=1";
         final String url = b + "/auth/authorize?response_type=code&state=deck"
@@ -76,10 +78,15 @@ final class HomeAuth {
             CookieManager.getInstance().setAcceptCookie(true);
             w.setWebViewClient(new WebViewClient() {
                 private boolean done = false;
+                // The way back is any address carrying deck_auth=1 (matched on the query, not the exact
+                // string: the WebView may rewrite the host or port it reports).
                 private boolean catchBack(String u) {
-                    if (done || u == null || !u.startsWith(back)) return false;
+                    if (done || u == null) return false;
+                    Uri p;
+                    try { p = Uri.parse(u); } catch (Exception e) { return false; }
+                    if (!p.isHierarchical() || !"1".equals(p.getQueryParameter("deck_auth"))) return false;
                     done = true;
-                    String code = Uri.parse(u).getQueryParameter("code");
+                    String code = p.getQueryParameter("code");
                     dialog.dismiss();
                     if (code == null || code.isEmpty()) { say(false, "Home Assistant didn't sign you in."); return true; }
                     new Thread(() -> exchange(b, client, code), "deck-ha-auth").start();
@@ -87,6 +94,7 @@ final class HomeAuth {
                 }
                 @Override public boolean shouldOverrideUrlLoading(WebView v, String u) { return catchBack(u); }
                 @Override public void onPageStarted(WebView v, String u, Bitmap f) { if (catchBack(u)) v.stopLoading(); }
+                @Override public void doUpdateVisitedHistory(WebView v, String u, boolean reload) { catchBack(u); }
                 @Override public void onReceivedError(WebView v, int code, String desc, String u) {
                     if (u != null && u.startsWith(b + "/auth")) { dialog.dismiss(); say(false, "Couldn't open Home Assistant's sign-in page: " + desc); }
                 }
