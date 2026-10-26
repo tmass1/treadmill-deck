@@ -27,6 +27,7 @@ public class UpdateReceiver extends BroadcastReceiver {
             Intent confirm = intent.getParcelableExtra(Intent.EXTRA_INTENT);
             if (confirm != null) {
                 confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                KeepFront.leaving("update confirm");
                 try { ctx.startActivity(confirm); } catch (Exception ignored) {}
             }
             if (u != null) u.needsConfirmation();

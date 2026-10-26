@@ -68,6 +68,8 @@ public class MainActivity extends Activity {
         hw.scheduleWithFixedDelay(this::poll, 500, 250, TimeUnit.MILLISECONDS);
         // Look for a new version every 6 hours; the console stays on for days at a time.
         hw.scheduleWithFixedDelay(() -> updater.check(false), 6, 6, TimeUnit.HOURS);
+        // Running, so it hears the screen wake and can take the console back from iFit (KeepFront).
+        KeepFront.start(this, "app start", 60);
     }
 
     @Override
@@ -95,11 +97,13 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        KeepFront.visible = true;
         if (hw != null) hw.execute(() -> belt.resume());
     }
 
     @Override
     protected void onStop() {
+        KeepFront.visible = false;
         // Off screen: pause a running belt and let go of the board, so iFit can have it if it's opened.
         if (hw != null) hw.execute(() -> belt.suspend());
         super.onStop();
@@ -294,6 +298,7 @@ public class MainActivity extends Activity {
 
         /** Open Android's Home app picker; falls back to the general Settings app. */
         @JavascriptInterface public void chooseHome() {
+            KeepFront.leaving("Settings");
             a.runOnUiThread(() -> {
                 try { a.startActivity(new android.content.Intent(android.provider.Settings.ACTION_HOME_SETTINGS)); return; } catch (Exception ignored) {}
                 try { a.startActivity(new android.content.Intent(android.provider.Settings.ACTION_SETTINGS)); } catch (Exception ignored) {}

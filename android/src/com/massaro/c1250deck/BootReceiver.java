@@ -21,7 +21,10 @@ public class BootReceiver extends BroadcastReceiver {
         String a = intent.getAction();
         if (!Intent.ACTION_BOOT_COMPLETED.equals(a) && !"android.intent.action.LOCKED_BOOT_COMPLETED".equals(a)) return;
         Intent launch = new Intent(ctx, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        try { ctx.startActivity(launch); } catch (Exception ignored) {}
+        KeepFront.note("boot: " + a);
+        try { ctx.startActivity(launch); } catch (Exception e) { KeepFront.note("boot launch refused: " + e.getMessage()); }
+        // Hold the screen for the first 4 minutes: iFit's app opens after the relaunches below (1.10.7).
+        KeepFront.start(ctx, "boot", 240);
         AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
         if (am == null) return;
         int[] delays = {20, 45};

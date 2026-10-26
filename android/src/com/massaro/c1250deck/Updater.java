@@ -104,6 +104,7 @@ public class Updater {
     }
 
     public void install() {
+        KeepFront.leaving("update");
         final JSONObject m = offer;
         if (m == null || busy) return;
         busy = true;

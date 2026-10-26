@@ -6,6 +6,7 @@
 -keep class com.massaro.c1250deck.MainActivity { *; }
 -keep class com.massaro.c1250deck.UpdateReceiver { *; }
 -keep class com.massaro.c1250deck.BootReceiver { *; }
+-keep class com.massaro.c1250deck.KeepFront { *; }
 
 # Methods the web page calls through window.DeckNative
 -keepclassmembers class * { @android.webkit.JavascriptInterface <methods>; }
