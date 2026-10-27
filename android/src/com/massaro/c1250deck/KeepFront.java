@@ -5,7 +5,10 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.app.AppOpsManager;
 import android.app.admin.DevicePolicyManager;
+import android.app.usage.UsageEvents;
+import android.app.usage.UsageStatsManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -45,6 +48,8 @@ public class KeepFront extends Service {
     private long until = 0;
     private boolean ticking = false, reported = false;
     private int relaunches = 0, windowTries = 0;
+    private long lastReport = 0, pauseUntil = 0;
+    private final java.util.ArrayDeque<Long> recent = new java.util.ArrayDeque<>();
     private BroadcastReceiver screen;
 
     /** Start or extend the window. why is a word for the log; seconds from now. */
@@ -62,6 +67,27 @@ public class KeepFront extends Service {
         if (LOG.length() > 12000) LOG.delete(0, 4000);
         LOG.append(new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date()))
            .append(" (+").append(SystemClock.elapsedRealtime() / 1000).append("s) ").append(s).append('\n');
+    }
+
+    /** Has Usage access been granted (Settings → Keep iFit away)? It's how we see which app is in front. */
+    static boolean usageAccess(Context c) {
+        try {
+            AppOpsManager ops = (AppOpsManager) c.getSystemService(Context.APP_OPS_SERVICE);
+            return ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, android.os.Process.myUid(), c.getPackageName()) == AppOpsManager.MODE_ALLOWED;
+        } catch (Exception e) { return false; }
+    }
+
+    /** The app most recently brought to the front (from usage events), or "" without usage access. */
+    static String front(Context c) {
+        try {
+            UsageStatsManager u = (UsageStatsManager) c.getSystemService(Context.USAGE_STATS_SERVICE);
+            long now = System.currentTimeMillis();
+            UsageEvents ev = u.queryEvents(now - 6 * 3600_000L, now);
+            UsageEvents.Event e = new UsageEvents.Event();
+            String last = "";
+            while (ev.hasNextEvent()) { ev.getNextEvent(e); if (e.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) last = e.getPackageName(); }
+            return last;
+        } catch (Exception e) { return ""; }
     }
 
     @Override public IBinder onBind(Intent i) { return null; }
@@ -84,7 +110,9 @@ public class KeepFront extends Service {
         registerReceiver(screen, f);
         // The startup report, once, three minutes into this boot.
         long sinceBoot = SystemClock.elapsedRealtime();
-        if (sinceBoot < 10 * 60_000L) h.postDelayed(this::report, Math.max(5_000L, 180_000L - sinceBoot));
+        if (sinceBoot < 10 * 60_000L) h.postDelayed(() -> report("Startup"), Math.max(5_000L, 180_000L - sinceBoot));
+        // With usage access: watch all the time, and send iFit back whenever it takes the screen.
+        h.postDelayed(this::watch, 2000);
     }
 
     @Override public int onStartCommand(Intent i, int flags, int id) {
@@ -113,7 +141,7 @@ public class KeepFront extends Service {
         if (!visible && now - leftAt > 10 * 60_000L) {
             // At most 20 tries a window (about a minute of trying): past that, whatever is in front
             // is probably there on purpose (privileged mode, Android settings), so leave it.
-            if (windowTries >= 20) { ticking = false; until = 0; note("gave up after 20 tries" + lockState()); return; }
+            if (windowTries >= 20) { ticking = false; until = 0; note("gave up after 20 tries" + lockState()); report("Gave up: something else stayed in front"); return; }
             windowTries++;
             relaunches++;
             note("not in front, relaunching" + lockState());
@@ -122,6 +150,24 @@ public class KeepFront extends Service {
             } catch (Exception e) { note("relaunch refused: " + e.getMessage()); }
         }
         h.postDelayed(this::tick, 3000);
+    }
+
+    /** Every 2 s: if iFit is in front (and we didn't leave on purpose), bring the console back. */
+    private void watch() {
+        h.postDelayed(this::watch, 2000);
+        long now = SystemClock.elapsedRealtime();
+        if (visible || now < pauseUntil || now - leftAt < 10 * 60_000L || !usageAccess(this)) return;
+        String fg = front(this);
+        if (!fg.startsWith("com.ifit.")) return;
+        while (!recent.isEmpty() && now - recent.peekFirst() > 60_000L) recent.pollFirst();
+        if (recent.size() >= 15) { pauseUntil = now + 60_000L; note(fg + " keeps coming back; resting a minute" + lockState()); report("iFit keeps coming back"); return; }
+        recent.addLast(now);
+        relaunches++;
+        note(fg + " in front, bringing the console back" + lockState());
+        if (recent.size() == 1) h.postDelayed(() -> report("iFit took the screen (" + fg + ")"), 8000);
+        try {
+            startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
+        } catch (Exception e) { note("relaunch refused: " + e.getMessage()); }
     }
 
     /** " · kiosk lock: locked" when a lock task is holding the screen. */
@@ -134,10 +180,13 @@ public class KeepFront extends Service {
         } catch (Exception e) { return ""; }
     }
 
-    private void report() {
-        if (reported) return;
-        reported = true;
-        StringBuilder r = new StringBuilder("Startup\n");
+    /** Upload what happened (kind "startup"): at most one every 10 minutes. */
+    private void report(String title) {
+        long now = SystemClock.elapsedRealtime();
+        if (lastReport != 0 && now - lastReport < 10 * 60_000L) return;
+        lastReport = now;
+        StringBuilder r = new StringBuilder(title + "\n");
+        r.append("Usage access: ").append(usageAccess(this) ? "on · in front now: " + front(this) : "off").append('\n');
         r.append("Up ").append(SystemClock.elapsedRealtime() / 1000).append(" s · console ").append(visible ? "in front" : "NOT in front")
          .append(" · relaunches ").append(relaunches).append(lockState()).append('\n');
         PackageManager pm = getPackageManager();

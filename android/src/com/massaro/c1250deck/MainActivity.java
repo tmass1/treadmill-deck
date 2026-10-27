@@ -321,6 +321,17 @@ public class MainActivity extends Activity {
         @JavascriptInterface public String haToken() { return a.ha.token(); }
         @JavascriptInterface public void haSignOut() { a.ha.signOut(); }
 
+        /** Keep iFit away: can we see which app is in front (Usage access)? */
+        @JavascriptInterface public boolean usageAccess() { return KeepFront.usageAccess(a); }
+        /** Open Android's Usage access list, where C1250 Deck is switched on. */
+        @JavascriptInterface public void openUsageAccess() {
+            KeepFront.leaving("Usage access settings");
+            a.runOnUiThread(() -> {
+                try { a.startActivity(new android.content.Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS)); return; } catch (Exception ignored) {}
+                try { a.startActivity(new android.content.Intent(android.provider.Settings.ACTION_SETTINGS)); } catch (Exception ignored) {}
+            });
+        }
+
         /** A quiet upload to the site's report box (no Diagnostics sheet), e.g. kind "camera" from a live view. */
         @JavascriptInterface public void sendReport(String kind, String text) {
             final String v = a.updater.versionName();

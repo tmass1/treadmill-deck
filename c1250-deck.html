@@ -2152,6 +2152,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
         <div class="srow" id="gymRow" hidden><div class="t"><b>Home Assistant</b><span>For Gym lights and the TV remote. Address and port, like 192.168.1.20:8123</span></div>
           <div class="btns" style="flex-wrap:nowrap;flex:none"><input class="cb-input" id="haAddr" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="192.168.1.20:8123" style="width:190px"><button class="pill raised" id="haTest" type="button">Try it</button></div></div>
         <div class="srow" id="camRow" hidden><div class="t"><b>Cameras</b><span id="camText">Sign in to Home Assistant to see your Ring cameras here.</span></div><button class="pill raised" id="camSignBtn" type="button">Sign in</button></div>
+        <div class="srow" id="awayRow" hidden><div class="t"><b>Keep iFit away</b><span id="awayText">Let C1250 Deck see which app is in front, so it can close iFit's screens when they pop up.</span></div><button class="pill raised" id="awayBtn" type="button">Allow</button></div>
         <div class="srow" id="homeRow" hidden><div class="t"><b>Start on power-up</b><span id="homeText">Make C1250 Deck the home screen so the treadmill opens here, not iFit.</span></div><button class="pill raised" id="homeBtn" type="button">Set up</button></div>
         <div class="srow"><div class="t"><b>Software</b><span id="setUp">C1250 Deck</span></div><button class="pill raised" id="setUpBtn" type="button">Check for updates</button></div>
         <div class="srow"><div class="t"><b>Appearance</b><span>Dark is easiest on the eyes mid-run.</span></div><div class="seg well" id="themeSeg" role="radiogroup" aria-label="Appearance"></div></div>
@@ -3569,7 +3570,7 @@ function paintHomeRow(){
 }
 if(NATIVE && NATIVE.chooseHome){
   $('homeBtn').addEventListener('click', () => NATIVE.chooseHome());
-  document.addEventListener('visibilitychange', () => { if(!document.hidden) paintHomeRow(); });
+  document.addEventListener('visibilitychange', () => { if(!document.hidden){ paintHomeRow(); paintAway(); } });
 }
 $('histBtn').addEventListener('click', openHistory);
 $('histDone').addEventListener('click', closeSheets);
@@ -3589,8 +3590,17 @@ function seg(boxId, options, value, onPick){
     box.appendChild(b);
   });
 }
+/* Keep iFit away (1.10.8): with Usage access, KeepFront sees iFit take the screen and sends it back. */
+function paintAway(){
+  if(!(NATIVE && NATIVE.usageAccess)) return;
+  const on = NATIVE.usageAccess();
+  $('awayRow').hidden = false;
+  setText('awayText', on ? 'On. When iFit pops up, C1250 Deck comes straight back.' : 'Let C1250 Deck see which app is in front, so it can close iFit\u2019s screens when they pop up. In the list that opens, tap C1250 Deck and turn it on.');
+  setText('awayBtn', on ? 'Change' : 'Allow');
+}
+if(NATIVE && NATIVE.openUsageAccess) $('awayBtn').addEventListener('click', () => NATIVE.openUsageAccess());
 function paintSettings(){
-  paintHomeRow(); paintMe(); if(typeof paintCamRow === 'function') paintCamRow();
+  paintHomeRow(); paintMe(); paintAway(); if(typeof paintCamRow === 'function') paintCamRow();
   setText('setHr', HR.state === 'connected' ? 'Connected to ' + (HR.name || 'your monitor') : HR.name ? HR.name + ' · not connected' : 'Not connected');
   setText('setHrBtn', HR.state === 'connected' ? 'Manage' : 'Connect');
   setText('setUp', UP.state === 'available' ? 'Version ' + UP.version + ' is ready · you’re on ' + UP.current : 'C1250 Deck ' + (UP.current || '1.4'));
