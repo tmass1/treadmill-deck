@@ -41,6 +41,19 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle saved) {
         super.onCreate(saved);
+        // A crash leaves its stack trace in crash.txt, sent to the site's report box (kind "crash") next start.
+        final Thread.UncaughtExceptionHandler prev = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            try {
+                java.io.StringWriter sw = new java.io.StringWriter();
+                e.printStackTrace(new java.io.PrintWriter(sw));
+                java.io.FileOutputStream f = openFileOutput("crash.txt", MODE_PRIVATE);
+                f.write(("Crash on thread " + t.getName() + "\n" + sw).getBytes("UTF-8"));
+                f.close();
+            } catch (Throwable ignored) {}
+            if (prev != null) prev.uncaughtException(t, e);
+        });
+        sendCrashReport();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         WebView.setWebContentsDebuggingEnabled(true);
 
@@ -56,6 +69,16 @@ public class MainActivity extends Activity {
         web.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView v, String url) {
                 if (!hrResumed) { hrResumed = true; hr.resume(); updater.startup(); }
+            }
+            // The page's renderer died (out of memory, or a crash in it): without this Android closes the
+            // whole app. Note it, and start the screen again; a run in progress is saved (deck.inflight).
+            @Override public boolean onRenderProcessGone(WebView v, android.webkit.RenderProcessGoneDetail d) {
+                final String why = "The screen's renderer went away (" + (d != null && d.didCrash() ? "crashed" : "killed for memory") + "); the app started it again.";
+                final String ver = updater.versionName();
+                new Thread(() -> Reports.send("crash", ver, why), "deck-crash").start();
+                KeepFront.note(why);
+                runOnUiThread(MainActivity.this::recreate);
+                return true;
             }
         });
         web.setBackgroundColor(0xFF08090A);
@@ -107,6 +130,23 @@ public class MainActivity extends Activity {
         // Off screen: pause a running belt and let go of the board, so iFit can have it if it's opened.
         if (hw != null) hw.execute(() -> belt.suspend());
         super.onStop();
+    }
+
+    /** Send the last crash's stack trace, if there is one, and forget it. */
+    private void sendCrashReport() {
+        java.io.File f = new java.io.File(getFilesDir(), "crash.txt");
+        if (!f.exists()) return;
+        try {
+            byte[] b = new byte[(int) Math.min(f.length(), 64000)];
+            java.io.FileInputStream in = new java.io.FileInputStream(f);
+            int n = in.read(b); in.close();
+            final String text = new String(b, 0, Math.max(0, n), "UTF-8");
+            f.delete();
+            String v = "?";
+            try { v = getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Exception ignored) {}
+            final String ver = v;
+            new Thread(() -> Reports.send("crash", ver, text), "deck-crash").start();
+        } catch (Exception ignored) {}
     }
 
     /** reportOut on its own thread (it uploads), for callers on the hardware thread. */

@@ -51,6 +51,7 @@ public class KeepFront extends Service {
     private long lastReport = 0, pauseUntil = 0;
     private final java.util.ArrayDeque<Long> recent = new java.util.ArrayDeque<>();
     private BroadcastReceiver screen;
+    private Notification notif;
 
     /** Start or extend the window. why is a word for the log; seconds from now. */
     static void start(Context c, String why, int seconds) {
@@ -100,7 +101,8 @@ public class KeepFront extends Service {
             nm.createNotificationChannel(new NotificationChannel(CH, "Console", NotificationManager.IMPORTANCE_MIN));
             b = new Notification.Builder(this, CH);
         } else b = new Notification.Builder(this);
-        startForeground(7, b.setSmallIcon(R.drawable.ic_launcher).setContentTitle("C1250 Deck").setContentText("Keeping the console in front").build());
+        notif = b.setSmallIcon(R.drawable.ic_launcher).setContentTitle("C1250 Deck").setContentText("Keeping the console in front").build();
+        startForeground(7, notif);
         screen = new BroadcastReceiver() {
             @Override public void onReceive(Context c, Intent i) { note("screen: " + i.getAction()); extend(120); }
         };
@@ -116,6 +118,9 @@ public class KeepFront extends Service {
     }
 
     @Override public int onStartCommand(Intent i, int flags, int id) {
+        // Every startForegroundService needs a startForeground, even when the service is already
+        // running; without it Android closes the whole app five seconds later.
+        if (notif != null) startForeground(7, notif);
         String why = i != null ? i.getStringExtra("why") : "restarted";
         int secs = i != null ? i.getIntExtra("secs", 120) : 120;
         note("window " + secs + "s (" + why + ")" + lockState());

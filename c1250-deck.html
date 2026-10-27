@@ -2929,6 +2929,7 @@ window.__deckNative = st => {
   if(st.cmdError) console.warn('treadmill command', st.cmdError);
 };
 function initNative(){
+  setTimeout(recoverInflight, 3000);   // a run the app went down in the middle of
   setTimeout(syncRuns, 8000);   // anything left from a run that finished offline
   S.driver = 'native'; resetSession();
   setConn('demo', 'Connecting to treadmill…');
@@ -2987,7 +2988,7 @@ const drv = () => S.driver === 'ftms' ? FTMS : S.driver === 'native' ? Native : 
 
 /* ---------- session ---------- */
 function resetSession(){
-  Object.assign(S, { state:'idle', board0:null, board1:null, distM:0, climbM:0, elapsed:0, kcal:0, progT:0, progDist:0, segIdx:-1, tKph:0, tInc:0, hr:null, hrSum:0, hrN:0, devDist:null, devElapsed:null, devKcal:null, devHr:null, resumeKph:0, trace:[], zoneT:[0,0,0,0,0], nextSample:0 });
+  Object.assign(S, { runId:0, state:'idle', board0:null, board1:null, distM:0, climbM:0, elapsed:0, kcal:0, progT:0, progDist:0, segIdx:-1, tKph:0, tInc:0, hr:null, hrSum:0, hrN:0, devDist:null, devElapsed:null, devKcal:null, devHr:null, resumeKph:0, trace:[], zoneT:[0,0,0,0,0], nextSample:0 });
   dropDoneChart();
   if(S.driver === 'demo'){ S.kph = 0; S.incline = 0; }
 }
@@ -3011,6 +3012,7 @@ $('countCancel').addEventListener('click', () => { clearInterval(begin.t); show(
 function start(){
   if(S.state === 'done') resetSession();
   const resuming = S.state === 'paused';
+  if(!S.runId) S.runId = Date.now();
   S.state = 'running'; drv().start();
   const p = PROGRAMS[S.prog];
   if(p.segs.length) S.segIdx = -1;                 // the loop re-applies the current segment
@@ -3061,16 +3063,21 @@ function bestsOf(h){
   return out;
 }
 /** Save the run that just finished; returns the bests it beat (only once there's an earlier one to beat). */
-function recordRun(sum){
-  if(sum.secs < 60) return [];
-  if(S.driver === 'demo' && !/[?&]record\b/.test(location.search)) return [];
-  const h = loadHist(), before = bestsOf(h);
+/** The run so far as History keeps it (also what's saved while running, in case the app goes down). */
+function runRecord(sum){
   const hrs = S.trace.map(t => t.hr).filter(Boolean);
-  const run = { id:Date.now(), at:Date.now(), prog:S.prog, name:PROGRAMS[S.prog].segs.length ? PROGRAMS[S.prog].name : quickName(),
+  return { id:S.runId || Date.now(), at:Date.now(), prog:S.prog, name:PROGRAMS[S.prog].segs.length ? PROGRAMS[S.prog].name : quickName(),
     secs:Math.round(sum.secs), miles:Math.round(sum.miles*1000)/1000, pace:Math.round(sum.pace), climbFt:Math.round(S.climbM*3.28084),
     hr:sum.hr || 0, peakHr:hrs.length ? Math.max(...hrs) : 0, kcal:Math.round(S.devKcal ?? S.kcal), est:S.devKcal == null,
     zoneT:S.zoneT.map(Math.round), trace:S.trace.slice(), weightLb:Math.round(ME.lb || 176), distCal:ME.distCal,
     board:S.board0 && S.board1 ? { distRaw:S.board1.d - S.board0.d, timeRaw:S.board1.t - S.board0.t } : null };
+}
+function recordRun(sum){
+  store.set('deck.inflight', '');
+  if(sum.secs < 60) return [];
+  if(S.driver === 'demo' && !/[?&]record\b/.test(location.search)) return [];
+  const h = loadHist().filter(r => String(r.id) !== String(S.runId)), before = bestsOf(h);
+  const run = runRecord(sum);
   const beat = BESTS.filter(b => { const v = b.val(run), old = before[b.key]; return v != null && old && v > old.v; }).map(b => b.label.toLowerCase());
   h.unshift(run);
   h.length = Math.min(h.length, HIST_MAX);
@@ -4190,6 +4197,26 @@ async function runTour(){
   }
 }
 
+/* A workout in progress is saved every 15 s (deck.inflight), so if the app goes down mid-run the next start
+   puts it in History (and sends it on to Apple Fitness) instead of losing it. */
+setInterval(() => {
+  if((S.state === 'running' || S.state === 'paused') && S.driver !== 'demo'){
+    const sum = summary();
+    if(sum.secs >= 60) try{ store.set('deck.inflight', JSON.stringify(runRecord(sum))); }catch(_){}
+  }
+}, 15000);
+function recoverInflight(){
+  let run = null;
+  try{ run = JSON.parse(store.get('deck.inflight') || 'null'); }catch(_){}
+  store.set('deck.inflight', '');
+  if(!run || !run.secs || run.secs < 60) return;
+  const h = loadHist();
+  if(h.some(r => String(r.id) === String(run.id))) return;
+  run.interrupted = true;
+  h.unshift(run); h.sort((a, b) => b.at - a.at);
+  saveHist(h); syncRuns(); paintHome();
+  toast('<b>Saved your last workout.</b> The app closed mid-run, so it\u2019s in History as of ' + fmtTime(run.secs) + ', ' + run.miles.toFixed(2) + ' mi.');
+}
 paintHr(); paintHome(); setConn('demo', 'Demo · simulated');
 // Flex gap (Chrome 84+): measure it once, and fall back to margins on the console's older WebView.
 (function(){
