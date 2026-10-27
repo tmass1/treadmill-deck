@@ -1815,6 +1815,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .camnote{text-align:center;font-size:17px;color:var(--muted-foreground)}
 .overlay.live{padding:0;background:var(--background)}
 .overlay.live video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain}
+.overlay.live .livestill{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain}
 .livebar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;padding:20px 24px;background:linear-gradient(var(--scrim),transparent)}
 .livename{flex:1;display:flex;flex-direction:column}
 .livename h2{margin:2px 0 0;font-size:26px;font-weight:600}
@@ -2262,6 +2263,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
   <!-- A camera live, full screen: from the Cameras sheet, or by itself when the doorbell rings -->
   <div class="overlay live" id="camLive" hidden>
     <video id="camVideo" autoplay playsinline muted poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"></video>
+    <img class="livestill" id="camStill" alt="" hidden>
     <div class="livebar">
       <div class="livename"><span class="eyebrow" id="liveEyebrow">Live</span><h2 id="liveName">Camera</h2></div>
       <button class="pill raised" id="liveSound" type="button">Sound on</button>
@@ -3454,7 +3456,7 @@ function openCams(){
 }
 
 /* Live: WebRTC through Home Assistant, as its own app does it. Muted until you ask for sound. */
-const LIVE = { pc:null, end:null, session:null, q:[], timer:0, from:'', log:[], t0:0, id:'', offer:'', answer:'', sent:false };
+const LIVE = { pc:null, end:null, session:null, q:[], timer:0, from:'', log:[], t0:0, id:'', offer:'', answer:'', sent:false, still:0, tries:0, check:0 };
 const liveLog = m => { LIVE.log.push(((performance.now() - LIVE.t0)/1000).toFixed(1) + 's ' + m); };
 const sdpCodecs = (sdp, kind) => { const m = (sdp || '').split('m=' + kind)[1]; return m ? (m.split('\nm=')[0].match(/a=rtpmap:\d+ [^\r\n]+/g) || []).map(x => x.replace('a=rtpmap:', '')).join(', ') : 'none'; };
 // What happened, uploaded to the site's report box (kind "camera") when a live view plays or stalls.
@@ -3481,12 +3483,13 @@ async function liveReport(why){
   NATIVE.sendReport('camera', out.join('\n'));
 }
 function liveSay(text){ $('liveNote').hidden = !text; $('liveNote').textContent = text || ''; }
-async function openLive(id, ding){
+function openLiveAgain(id, ding){ const t = LIVE.tries; openLive(id, ding, true); LIVE.tries = t; }
+async function openLive(id, ding, again){
   stopLive();
-  Object.assign(LIVE, { log:[], t0:performance.now(), id, offer:'', answer:'', sent:false });
+  Object.assign(LIVE, { log:again ? LIVE.log : [], t0:again ? LIVE.t0 : performance.now(), id, offer:'', answer:'', sent:false, tries:again ? LIVE.tries : 0 });
   if(!HA.up){ if(ding) return; liveSay('Not connected to Home Assistant.'); }
   const cam = HA.cams.find(c => c.id === id) || { id, name:id.replace(/^camera\./, '').replace(/_live_view$/, '').replace(/_/g, ' ') };
-  LIVE.from = $('camSheet').hidden ? '' : 'camSheet';
+  if(!again) LIVE.from = $('camSheet').hidden ? '' : 'camSheet';
   setText('liveName', cam.name); setText('liveEyebrow', ding ? 'Someone’s at the door' : 'Live');
   const v = $('camVideo'); v.muted = true; setText('liveSound', 'Sound on');
   liveSay('Starting live view…');
@@ -3511,7 +3514,14 @@ async function openLive(id, ding){
     const send = c => haSend({ type:'camera/webrtc/candidate', entity_id:id, session_id:LIVE.session, candidate:c }).catch(() => {});
     pc.onicecandidate = e => { if(!e.candidate || pc !== LIVE.pc) return; const c = e.candidate.toJSON(); if(LIVE.session) send(c); else LIVE.q.push(c); };
     pc.oniceconnectionstatechange = () => { liveLog('ice ' + pc.iceConnectionState); if(pc === LIVE.pc && pc.iceConnectionState === 'failed'){ liveSay('The camera stopped sending. Close and try again.'); liveReport('ICE failed'); } };
-    const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
+    const offer = await pc.createOffer();
+    if(!/H264\//.test(sdpCodecs(offer.sdp, 'video')) && LIVE.tries < 3){
+      // The WebView sometimes leaves H.264 out of its first offer after waking, and Ring sends only H.264.
+      LIVE.tries++; liveLog('no H.264 in the offer, trying again'); pc.close(); LIVE.pc = null;
+      setTimeout(() => { if(!$('camLive').hidden) openLiveAgain(id, ding); }, 600);
+      return;
+    }
+    await pc.setLocalDescription(offer);
     LIVE.offer = offer.sdp; liveLog('offer sent');
     const end = await haSub({ type:'camera/webrtc/offer', entity_id:id, offer:offer.sdp }, ev => {
       if(pc !== LIVE.pc) return;
@@ -3522,11 +3532,41 @@ async function openLive(id, ding){
     });
     if(pc !== LIVE.pc){ end(); return; }
     LIVE.end = end;
-    setTimeout(() => { if(pc === LIVE.pc && !v.videoWidth){ liveSay('Still waiting for the camera…'); liveReport('no picture after 15 s'); } }, 15000);
+    // Video arriving but never decoding means a picture bigger than this console's 1080p video chip
+    // (the doorbell's 1536 × 1536): fall back to its still picture, refreshed every 2 seconds.
+    LIVE.check = setTimeout(async () => {
+      if(pc !== LIVE.pc || v.videoWidth) return;
+      let bytes = 0, frames = 0;
+      try{ (await pc.getStats()).forEach(r => { if(r.type === 'inbound-rtp' && (r.kind || r.mediaType) === 'video'){ bytes = r.bytesReceived || 0; frames = r.framesDecoded || 0; } }); }catch(_){}
+      if(pc !== LIVE.pc || v.videoWidth) return;
+      if(bytes > 50000 && !frames){ liveLog('video arriving but not decoding: pictures instead'); await liveReport('too big to decode: pictures instead'); startStills(id); }
+    }, 7000);
+    setTimeout(() => { if(pc === LIVE.pc && !v.videoWidth && !LIVE.still){ liveSay('Still waiting for the camera…'); liveReport('no picture after 15 s'); } }, 15000);
   }catch(e){ liveLog('threw ' + ((e && e.message) || e)); liveSay('Live view didn’t start. ' + ((e && e.message) || '')); liveReport('threw'); }
 }
+/* The still picture, every 2 s, for a camera whose live video this console can't decode. */
+function startStills(id){
+  if(LIVE.pc){ try{ LIVE.pc.close(); }catch(_){} } LIVE.pc = null;
+  if(LIVE.end){ try{ LIVE.end(); }catch(_){} } LIVE.end = null;
+  const img = $('camStill'), v = $('camVideo');
+  v.srcObject = null; v.hidden = true; img.hidden = false; $('liveSound').hidden = true;
+  setText('liveEyebrow', $('liveEyebrow').textContent === 'Live' ? 'Pictures · live video is too big for this screen' : $('liveEyebrow').textContent);
+  const load = () => {
+    const cam = HA.cams.find(c => c.id === id);
+    if(!cam || !cam.pic){ liveSay('No picture from this camera.'); return; }
+    const next = new Image();
+    next.onload = () => { img.src = next.src; liveSay(''); };
+    next.src = HA.base + cam.pic + (cam.pic.indexOf('?') < 0 ? '?' : '&') + '_=' + Date.now();
+  };
+  // The picture links carry a token Home Assistant rotates every few minutes: read them again every 3.
+  let n = 0;
+  liveSay('Loading the picture…'); load();
+  clearInterval(LIVE.still); LIVE.still = setInterval(() => { if(++n % 90 === 0 && HA.up) haSend({ type:'get_states' }).then(haTakeCams).catch(() => {}); load(); }, 2000);
+}
 function stopLive(){
-  clearTimeout(LIVE.timer);
+  clearTimeout(LIVE.timer); clearTimeout(LIVE.check);
+  clearInterval(LIVE.still); LIVE.still = 0;
+  $('camStill').hidden = true; $('camStill').removeAttribute('src'); $('camVideo').hidden = false; $('liveSound').hidden = false;
   if(LIVE.end){ try{ LIVE.end(); }catch(_){} }
   if(LIVE.pc){ try{ LIVE.pc.close(); }catch(_){} }
   LIVE.pc = null; LIVE.end = null; LIVE.session = null; LIVE.q = [];
