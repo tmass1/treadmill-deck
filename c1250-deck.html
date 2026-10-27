@@ -3429,7 +3429,8 @@ function paintCams(fresh){
   $('camDone').hidden = camChoosing;
   note.hidden = !camChoosing && list.length > 0;
   note.textContent = camChoosing ? 'Tap a camera to show or hide it here.' : 'Every camera is hidden. Tap Choose to bring some back.';
-  if(fresh || grid.children.length !== list.length || grid.__key !== list.map(c => c.id).join() + camChoosing){
+  // Rebuild the tiles only when the cameras (or Choose) change: a rebuild throws away pictures still loading.
+  if(grid.children.length !== list.length || grid.__key !== list.map(c => c.id).join() + camChoosing){
     grid.__key = list.map(c => c.id).join() + camChoosing;
     grid.innerHTML = '';
     list.forEach(c => {
@@ -3465,7 +3466,13 @@ function loadShot(img, c){
   if(!c.pic || img.__loading) return;
   img.__loading = true;
   const t0 = performance.now(), next = new Image();
-  next.onload = () => { img.__loading = false; img.src = next.src; if(camShotLog && !(c.name in camShotLog)) camShotLog[c.name] = 'ok in ' + ((performance.now() - t0)/1000).toFixed(1) + ' s'; };
+  next.onload = () => {
+    img.__loading = false;
+    // Put the loaded picture itself in the tile (no second fetch: Home Assistant doesn't let it be cached).
+    next.alt = '';
+    if(img.parentNode) img.parentNode.replaceChild(next, img);
+    if(camShotLog && !(c.name in camShotLog)) camShotLog[c.name] = 'ok in ' + ((performance.now() - t0)/1000).toFixed(1) + ' s, ' + next.naturalWidth + 'x' + next.naturalHeight;
+  };
   next.onerror = () => { img.__loading = false; if(camShotLog && !(c.name in camShotLog)) camShotLog[c.name] = 'refused after ' + ((performance.now() - t0)/1000).toFixed(1) + ' s'; refreshCams(); };
   next.src = shotUrl(c);
 }
@@ -3477,7 +3484,10 @@ function openCams(){
   // Once a session: which previews loaded, for the site's report box.
   if(!camShotLog && NATIVE && NATIVE.sendReport){
     camShotLog = {};
-    setTimeout(() => NATIVE.sendReport('camera', 'Previews after 20 s\n' + HA.cams.map(c => c.name + ': ' + (camShotLog[c.name] || 'still loading')).join('\n') + '\nConnected: ' + HA.up), 20000);
+    setTimeout(() => {
+      const shown = [...$('camGrid').querySelectorAll('.camtile')].map(t => { const i = t.querySelector('img'), r = i ? i.getBoundingClientRect() : null; return (t.querySelector('.name') || {}).textContent + ': ' + (i ? (i.naturalWidth ? 'picture ' + i.naturalWidth + 'x' + i.naturalHeight : 'no picture') + ' drawn ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' ' + getComputedStyle(i).display : 'no img'); });
+      NATIVE.sendReport('camera', 'Previews after 20 s\n' + HA.cams.map(c => c.name + ': ' + (camShotLog[c.name] || 'still loading')).join('\n') + '\nConnected: ' + HA.up + '\n\nOn screen:\n' + shown.join('\n'));
+    }, 20000);
   }
   clearInterval(camTimer); clearInterval(camListTimer);
   camTimer = setInterval(() => { if($('camSheet').hidden){ clearInterval(camTimer); clearInterval(camListTimer); return; } paintCams(false); }, 15000);
