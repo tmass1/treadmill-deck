@@ -1638,14 +1638,44 @@ img{display:block;max-width:100%;height:auto}
 .raised:hover{background:var(--lit-raised-hover)}
 .ico{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
 
-/* top bar */
-.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 0}
-.brand{display:flex;align-items:center;gap:12px;font-weight:600;font-size:17px;text-decoration:none}
-.mark{width:36px;height:36px;border-radius:var(--radius-md);background:var(--cta-fill);box-shadow:var(--shadow-cta);display:grid;place-items:center;color:var(--cta-foreground)}
+/* top bar: a full-width row at the top of the page; once you scroll it gathers into a floating pane of
+   glass that stays, marks the section you're reading, and brings the demo button along. */
+.top{position:sticky;top:0;z-index:50;padding:0 16px;pointer-events:none}
+.bar{pointer-events:auto;position:relative;display:flex;align-items:center;gap:12px;width:min(1120px,100%);height:76px;margin:0 auto;padding:0;border-radius:var(--radius-full);
+  transition:background .3s ease,width .36s cubic-bezier(.3,.7,.2,1),height .36s cubic-bezier(.3,.7,.2,1),margin .36s cubic-bezier(.3,.7,.2,1),padding .36s cubic-bezier(.3,.7,.2,1)}
+.bar>.cb-glass{position:absolute;inset:0;border-radius:inherit;opacity:0;transition:opacity .3s ease;pointer-events:none}
+.stuck .bar{width:min(880px,100%);height:60px;margin-top:12px;padding:0 8px 0 12px;background:color-mix(in srgb,var(--background) 55%,transparent)}
+.stuck .bar>.cb-glass{opacity:1}
+.bar>:not(.cb-glass){position:relative}
+.brand{display:flex;align-items:center;gap:12px;font-weight:600;font-size:17px;letter-spacing:-.01em;text-decoration:none;border-radius:var(--radius-md);margin-right:auto;white-space:nowrap}
+.mark{width:36px;height:36px;border-radius:var(--radius-md);background:var(--cta-fill);box-shadow:var(--shadow-cta);display:grid;place-items:center;color:var(--cta-foreground);flex:none;transition:transform .36s cubic-bezier(.3,.7,.2,1)}
+.stuck .mark{transform:scale(.9)}
 .mark .ico{width:20px;height:20px;stroke-width:2.25}
-.top nav{display:flex;gap:4px}
-.top nav a{padding:8px 14px;border-radius:var(--radius-full);text-decoration:none;color:var(--muted-foreground);font-weight:500;font-size:15px}
-.top nav a:hover{color:var(--foreground);background:var(--secondary)}
+.links{position:relative;display:flex;align-items:center;gap:2px}
+.links a{position:relative;z-index:1;display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:var(--radius-full);text-decoration:none;color:var(--muted-foreground);font-weight:500;font-size:15px;transition:color .16s ease}
+.links a:hover,.links a[aria-current]{color:var(--foreground)}
+.links a .ico{width:18px;height:18px}
+/* the section you're reading: one pill behind its link, sliding to the next */
+.spot{position:absolute;z-index:0;top:0;left:0;height:40px;width:0;border-radius:var(--radius-full);background:var(--glass-control);box-shadow:var(--shadow-pane-raised);opacity:0;
+  transition:transform .32s cubic-bezier(.3,.7,.2,1),width .32s cubic-bezier(.3,.7,.2,1),opacity .2s ease}
+.links a:hover~.spot{opacity:1}
+.spot.on{opacity:1}
+.sep{width:1px;height:24px;background:var(--border);margin:0 6px}
+.navcta{height:40px;padding:0 18px;font-size:15px;gap:8px;max-width:0;padding-left:0;padding-right:0;margin-left:0;opacity:0;overflow:hidden;
+  transition:max-width .36s cubic-bezier(.3,.7,.2,1),padding .36s cubic-bezier(.3,.7,.2,1),margin .36s cubic-bezier(.3,.7,.2,1),opacity .24s ease}
+.navcta .ico{width:16px;height:16px}
+.stuck .navcta{max-width:180px;padding:0 18px;margin-left:6px;opacity:1}
+.menu{display:none;width:44px;height:44px;border:0;border-radius:var(--radius-full);background:transparent;color:var(--foreground);place-items:center;cursor:pointer}
+.menu .ico{width:22px;height:22px}
+.bar a:focus-visible,.menu:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.drawer{pointer-events:auto;position:absolute;left:16px;right:16px;top:calc(100% + 8px);padding:8px;border-radius:var(--radius-lg);display:grid;gap:2px;
+  opacity:0;transform:translateY(-6px) scale(.98);transform-origin:top right;visibility:hidden;transition:opacity .18s ease,transform .18s ease,visibility 0s .18s}
+.open .drawer{opacity:1;transform:none;visibility:visible;transition:opacity .18s ease,transform .18s ease}
+.drawer{isolation:isolate}
+.drawer::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;background:color-mix(in srgb,var(--background) 55%,transparent)}
+.drawer a{display:flex;align-items:center;gap:12px;height:52px;padding:0 16px;border-radius:var(--radius-md);text-decoration:none;font-weight:500;font-size:17px}
+.drawer a:hover{background:var(--glass-control)}
+.drawer .ico{width:20px;height:20px;color:var(--info)}
 
 /* hero */
 .hero{padding:28px 0 40px;text-align:center}
@@ -1656,7 +1686,7 @@ img{display:block;max-width:100%;height:auto}
 .actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:26px}
 
 /* the console, framed like the treadmill's screen */
-.device{margin:36px auto 0;width:min(1040px,100%);padding:clamp(8px,1.4vw,16px);border-radius:calc(var(--radius-xl) + 10px);background:var(--card);box-shadow:var(--shadow-lit),0 0 0 1px var(--border),0 40px 120px -20px #000c}
+.device{--paint-drop:#000c;margin:36px auto 0;width:min(1040px,100%);padding:clamp(8px,1.4vw,16px);border-radius:calc(var(--radius-xl) + 10px);background:var(--card);box-shadow:var(--shadow-lit),0 0 0 1px var(--border),0 40px 120px -20px var(--paint-drop)}
 /* The live console, in demo mode, playing its tour: a 1280 × 800 page scaled to the frame. The still
    underneath shows until it has loaded, and instead of it for anyone who'd rather not have motion. */
 .screen{position:relative;border-radius:var(--radius-xl);overflow:hidden;aspect-ratio:16/10;background:var(--background)}
@@ -1668,18 +1698,57 @@ img{display:block;max-width:100%;height:auto}
 .caption a::after{content:" →"}
 
 /* sections */
-section{padding:96px 0 0}
+section{padding:96px 0 0;scroll-margin-top:72px}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 .head{max-width:62ch;margin-bottom:36px}
 .head h2{margin:10px 0 0;font-size:clamp(30px,4vw,44px);line-height:1.1;font-weight:400;letter-spacing:-.02em}
 .head p{margin:14px 0 0;font-size:18px;color:var(--muted-foreground)}
 
 /* features */
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:16px}
-.card{background:color-mix(in srgb,var(--card) 72%,transparent);box-shadow:var(--shadow-lit, var(--shadow-card));border-radius:var(--radius-lg);padding:24px}
-.card,.step,.closing{-webkit-backdrop-filter:blur(24px) saturate(140%);backdrop-filter:blur(24px) saturate(140%)}
-.card .ico{width:28px;height:28px;color:var(--glow, var(--info))}
-.card h3{margin:16px 0 6px;font-size:19px;font-weight:600}
+/* A bento of panes: the two that have something to show (the motor, the gym) run two columns wide with
+   a small picture of it. A light follows the pointer across each pane and catches its edge. */
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.card{--mx:50%;--my:0%;--paint-mask:#000;position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;padding:28px;border-radius:var(--radius-lg);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--card) 82%,transparent),color-mix(in srgb,var(--card) 62%,transparent));box-shadow:var(--shadow-lit, var(--shadow-card))}
+.card,.node,.closing{-webkit-backdrop-filter:blur(24px) saturate(140%);backdrop-filter:blur(24px) saturate(140%)}
+.card::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity .3s ease;
+  background:radial-gradient(420px circle at var(--mx) var(--my),color-mix(in srgb,var(--info) 12%,transparent),transparent 45%)}
+.card::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;opacity:0;transition:opacity .3s ease;
+  background:radial-gradient(280px circle at var(--mx) var(--my),color-mix(in srgb,var(--info) 70%,transparent),transparent 60%);
+  -webkit-mask:linear-gradient(var(--paint-mask) 0 0) content-box,linear-gradient(var(--paint-mask) 0 0);-webkit-mask-composite:xor;mask:linear-gradient(var(--paint-mask) 0 0) content-box exclude,linear-gradient(var(--paint-mask) 0 0)}
+.card:hover::before,.card:hover::after{opacity:1}
+.card.wide{grid-column:span 2;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:center}
+.tile{width:48px;height:48px;border-radius:var(--radius-md);display:grid;place-items:center;background:var(--pane-raised);box-shadow:var(--shadow-pane-raised);color:var(--info)}
+.tile .ico{width:24px;height:24px;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--info) 55%,transparent))}
+.card h3{margin:20px 0 8px;font-size:20px;font-weight:600;letter-spacing:-.01em}
 .card p{margin:0;color:var(--muted-foreground);font-size:16px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:20px}
+.tags span{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:var(--radius-full);background:var(--pane-well);box-shadow:var(--shadow-pane-well);font-family:var(--font-mono);font-size:12px;color:var(--muted-foreground)}
+/* the pictures inside the wide panes */
+.pic{border-radius:var(--radius-md);background:var(--pane-well);box-shadow:var(--shadow-pane-well);padding:20px}
+.readouts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ro{padding:14px 16px;border-radius:var(--radius-md);background:var(--pane-raised);box-shadow:var(--shadow-pane-raised)}
+.ro small{display:block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground)}
+.ro b{display:block;margin-top:2px;font-size:40px;line-height:1.1;font-weight:300;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.ro b i{font-style:normal;font-size:15px;font-weight:500;letter-spacing:0;color:var(--muted-foreground);margin-left:4px}
+.link-live{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:14px;color:var(--muted-foreground)}
+.link-live b{color:var(--foreground);font-weight:600}
+.beat{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 0 0 color-mix(in srgb,var(--success) 60%,transparent);animation:beat 1s ease-out infinite}
+@keyframes beat{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--success) 60%,transparent)}100%{box-shadow:0 0 0 8px transparent}}
+.zones{display:flex;gap:4px;height:10px;margin-top:auto}
+.card p.lead{padding-bottom:20px}
+.zones+.tags{margin-top:0;padding-top:16px}
+.zones span{border-radius:var(--radius-full)}
+.ctl{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ctl div{display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:var(--radius-md);background:var(--pane-raised);box-shadow:var(--shadow-pane-raised);font-size:14px;font-weight:600}
+.ctl div small{display:block;font-weight:500;color:var(--muted-foreground);margin-top:2px}
+.ctl .ico{width:22px;height:22px;color:var(--muted-foreground)}
+.ctl .lit{background:color-mix(in srgb,var(--lamp) 14%,var(--pane-raised))}
+.ctl .lit .ico{color:var(--lamp);filter:drop-shadow(0 0 8px color-mix(in srgb,var(--lamp) 60%,transparent))}
+.ctl .cam{position:relative}
+.ctl .cam .ico{color:var(--info)}
+.ctl .cam::after{content:"";position:absolute;top:14px;right:14px;width:8px;height:8px;border-radius:50%;background:var(--destructive)}
 
 /* screens */
 .screens{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:24px}
@@ -1689,12 +1758,42 @@ section{padding:96px 0 0}
 .shot figcaption b{color:var(--foreground);font-weight:600}
 
 /* how it works */
-.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:16px;counter-reset:step}
-.step{counter-increment:step;padding:24px;border-radius:var(--radius-lg);background:color-mix(in srgb,var(--secondary) 70%,transparent)}
-.step::before{content:counter(step);display:grid;place-items:center;width:32px;height:32px;border-radius:var(--radius-full);background:var(--background);font-weight:600;font-size:15px;font-variant-numeric:tabular-nums}
-.step h3{margin:16px 0 6px;font-size:18px;font-weight:600}
-.step p{margin:0;color:var(--muted-foreground);font-size:16px}
-code{font-family:var(--font-mono);font-size:.9em;padding:2px 6px;border-radius:var(--radius-sm);background:var(--background)}
+/* A diagram of the parts: the motor board, the app and the site in a row, joined by what passes between
+   them (dots travel the wires), with Home Assistant and the iPhone hanging off the two they talk to, and
+   the safety note under the motor board. */
+.flow{display:grid;grid-template-columns:minmax(0,1fr) 88px minmax(0,1fr) 88px minmax(0,1fr);grid-template-rows:auto 64px auto;
+  grid-template-areas:"board l1 app l2 site" "safe . v1 . v2" "safe . ha . fit"}
+.node{position:relative;padding:24px;border-radius:var(--radius-lg);background:linear-gradient(180deg,color-mix(in srgb,var(--card) 84%,transparent),color-mix(in srgb,var(--card) 64%,transparent));box-shadow:var(--shadow-lit, var(--shadow-card))}
+.node.main{display:flex;flex-direction:column}
+.node.main::before{content:attr(data-n);position:absolute;top:24px;right:24px;font-family:var(--font-mono);font-size:13px;color:var(--muted-foreground)}
+.node .kicker{display:block;margin-top:18px;font-family:var(--font-mono);font-size:12px;color:var(--info)}
+.node h3{margin:4px 0 8px;font-size:20px;font-weight:600;letter-spacing:-.01em}
+.node p{margin:0;color:var(--muted-foreground);font-size:15px}
+.spec{list-style:none;margin:18px 0 0;padding:14px 0 0;border-top:1px solid var(--border);display:grid;gap:8px;font-size:14px;margin-top:auto}
+.node p+.spec{margin-top:18px}
+.spec li{display:flex;justify-content:space-between;gap:12px;color:var(--muted-foreground)}
+.spec li b{font-family:var(--font-mono);font-weight:500;font-size:13px;color:var(--foreground);text-align:right}
+.node.side{display:flex;gap:16px;align-items:flex-start;padding:20px}
+.node.side .tile{flex:none}
+.node.side h3{margin:0 0 4px;font-size:17px}
+.node.side .kicker{margin:0 0 2px}
+.node.safe{grid-area:safe;align-self:end;display:flex;gap:16px;align-items:flex-start;padding:20px;background:color-mix(in srgb,var(--card) 40%,transparent);box-shadow:inset 0 0 0 1px var(--border)}
+.node.safe .tile{flex:none;color:var(--success)}
+.node.safe .tile .ico{filter:none}
+.node.safe h3{margin:0 0 4px;font-size:17px}
+/* wires */
+.wire{position:relative;display:grid;place-items:center}
+.wire::before{content:"";position:absolute;left:-2px;right:-2px;top:50%;height:2px;margin-top:-1px;border-radius:2px;background:linear-gradient(90deg,color-mix(in srgb,var(--info) 30%,var(--border)),color-mix(in srgb,var(--info) 70%,var(--border)),color-mix(in srgb,var(--info) 30%,var(--border)))}
+.wire.v::before{left:50%;right:auto;top:-2px;bottom:-2px;width:2px;height:auto;margin:0 0 0 -1px;background:linear-gradient(180deg,color-mix(in srgb,var(--info) 30%,var(--border)),color-mix(in srgb,var(--info) 70%,var(--border)),color-mix(in srgb,var(--info) 30%,var(--border)))}
+.wire i{position:absolute;top:50%;left:0;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:var(--info);box-shadow:var(--shadow-glow);animation:along 2.4s linear infinite}
+.wire i.back{animation-name:back;animation-delay:-1.2s;background:var(--success);box-shadow:0 0 12px color-mix(in srgb,var(--success) 60%,transparent)}
+.wire.v i{left:50%;top:0;animation-name:down}
+@keyframes along{0%{left:0;opacity:0}12%,88%{opacity:1}100%{left:100%;opacity:0}}
+@keyframes back{0%{left:100%;opacity:0}12%,88%{opacity:1}100%{left:0;opacity:0}}
+@keyframes down{0%{top:0;opacity:0}15%,85%{opacity:1}100%{top:100%;opacity:0}}
+.wire span{position:relative;z-index:1;padding:4px 10px;border-radius:var(--radius-full);background:var(--secondary);box-shadow:var(--shadow-pane-raised);font-family:var(--font-mono);font-size:11px;line-height:1.3;color:var(--muted-foreground);text-align:center;white-space:nowrap}
+.wire:not(.v) span{transform:translateY(-30px)}
+code{font-family:var(--font-mono);font-size:.9em;padding:2px 6px;border-radius:var(--radius-sm);background:var(--pane-well)}
 
 /* closing */
 .closing{margin-top:96px;padding:56px 32px;border-radius:var(--radius-xl);background:color-mix(in srgb,var(--card) 72%,transparent);box-shadow:var(--shadow-lit, var(--shadow-card));text-align:center}
@@ -1703,27 +1802,66 @@ code{font-family:var(--font-mono);font-size:.9em;padding:2px 6px;border-radius:v
 footer{padding:48px 0 56px;color:var(--muted-foreground);font-size:14px;display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
 footer a{color:var(--foreground)}
 
+@media (max-width:980px){
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .card.wide{grid-template-columns:1fr;gap:24px}
+  /* the diagram stands up: one column, wires running down */
+  .flow{grid-template-columns:minmax(0,1fr);grid-template-rows:none;grid-template-areas:"board" "l1" "app" "l2" "site" "v2" "fit" "gap" "ha" "safe";max-width:560px}
+  .flow .wire{height:72px}
+  .flow .wire::before{left:50%;right:auto;top:-2px;bottom:-2px;width:2px;height:auto;margin:0 0 0 -1px;background:linear-gradient(180deg,color-mix(in srgb,var(--info) 30%,var(--border)),color-mix(in srgb,var(--info) 70%,var(--border)),color-mix(in srgb,var(--info) 30%,var(--border)))}
+  .flow .wire i{left:50%;top:0;animation-name:down}
+  .flow .wire i.back{animation-name:up}
+  .flow .v1{display:none}
+  .flow .wire span{transform:none}
+  .flow::after{content:"";grid-area:gap;height:16px}
+  .node.safe{align-self:auto;margin-top:12px}
+}
+@keyframes up{0%{top:100%;opacity:0}15%,85%{opacity:1}100%{top:0;opacity:0}}
+@media (max-width:760px){
+  .links,.sep{display:none}
+  .menu{display:grid}
+  .stuck .bar{padding:0 4px 0 10px}
+}
 @media (max-width:640px){
-  .top nav a:not(.gh){display:none}
-  .hero{padding-top:20px}
+  .grid{grid-template-columns:1fr}
+  .card.wide{grid-column:auto}
+  .card{padding:24px}
+  .ctl{grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .ctl div{padding:12px}
+  .hero{padding-top:12px}
   .pill{height:48px;padding:0 20px;font-size:16px}
+  .stuck .navcta{max-width:120px;padding:0 14px}
+  .navcta .ico{display:none}
   section{padding-top:72px}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important}.scene::before{animation:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}.scene::before,.wire i,.beat{animation:none}.wire i{display:none}}
 </style>
 </head>
 <body data-finish="lit">
 <div class="scene" aria-hidden="true"></div>
-<div class="wrap">
-  <header class="top">
+<header class="top" id="top">
+  <div class="bar">
+    <span class="cb-glass" aria-hidden="true"></span>
     <a class="brand" href="/"><span class="mark"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 17h4l3-10"/><path d="M4 17h5"/><path d="M7 13l2 4"/><circle cx="16" cy="5" r="1.5"/></svg></span>C1250 Deck</a>
-    <nav aria-label="Page">
+    <nav class="links" aria-label="Page">
       <a href="#features">Features</a>
       <a href="#screens">Screens</a>
       <a href="#how">How it works</a>
-      <a class="gh" href="https://github.com/tmass1/treadmill-deck">GitHub</a>
+      <span class="spot" aria-hidden="true"></span>
     </nav>
-  </header>
+    <span class="sep" aria-hidden="true"></span>
+    <nav class="links" aria-label="Elsewhere"><a href="https://github.com/tmass1/treadmill-deck"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg>GitHub</a></nav>
+    <a class="pill cta navcta" href="/console/" tabindex="-1"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16l13-8z"/></svg>Try the demo</a>
+    <button class="menu" type="button" aria-expanded="false" aria-controls="drawer" aria-label="Menu"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+  <nav class="drawer cb-glass" id="drawer" aria-label="Page">
+    <a href="#features"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>Features</a>
+    <a href="#screens"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8"/></svg>Screens</a>
+    <a href="#how"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></svg>How it works</a>
+    <a href="https://github.com/tmass1/treadmill-deck"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg>GitHub</a>
+  </nav>
+</header>
+<div class="wrap">
 
   <main>
     <div class="hero">
@@ -1743,12 +1881,16 @@ footer a{color:var(--foreground)}
     <section id="features" aria-labelledby="featuresTitle">
       <div class="head"><span class="eyebrow">Features</span><h2 id="featuresTitle">Everything a run needs, and nothing it doesn't.</h2><p>Made to be read from a stride away and tapped mid-run: big numbers, big buttons, one thing at a time.</p></div>
       <div class="grid">
-        <div class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg><h3>Drives the motor</h3><p>Speed, incline, start, pause and stop, straight to the treadmill's motor board. The console's own keys, STOP and safety key keep working and always win.</p></div>
-        <div class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2h4"/><path d="M12 14l3-3"/><circle cx="12" cy="14" r="8"/></svg><h3>Workouts</h3><p>Quick starts at a walk, jog, run or a 10% incline, and programs: intervals, a hill climb, a steady tempo. A 3-2-1 countdown, then the belt follows the plan.</p></div>
-        <div class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><h3>Heart rate and zones</h3><p>Any Bluetooth heart-rate strap, or an Apple Watch through a broadcast app. Your zone lights the screen; the summary shows time in each.</p></div>
-        <div class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg><h3>History and bests</h3><p>Every run kept: this week's runs, miles and time, your streak, and personal bests for distance, time, pace and climb.</p></div>
-        <div class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg><h3>Apple Fitness</h3><p>Runs land in Apple Fitness through an iPhone Shortcut, with the treadmill's own time, distance and calories, and count toward your rings.</p></div>
-        <div class="card"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><h3>Your gym, from the belt</h3><p>With Home Assistant: a gym lights button and a TV remote, with Netflix, Prime Video and Spotify a tap away. Optional, and local to your network.</p></div>
+        <div class="card wide"><div><div class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></div><h3>Drives the motor</h3><p>Speed, incline, start, pause and stop, straight to the treadmill's motor board. The console's own speed and incline keys still work, and STOP and the safety key always win.</p><div class="tags"><span>USB · FitPro</span><span>4× a second</span></div></div>
+          <div class="pic" aria-hidden="true"><div class="readouts"><div class="ro"><small>Incline</small><b>1.0<i>%</i></b></div><div class="ro"><small>Speed</small><b>7.0<i>mph</i></b></div></div><div class="link-live"><span class="beat"></span><b>Motor link</b> belt running</div></div></div>
+        <div class="card"><div class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2h4"/><path d="M12 14l3-3"/><circle cx="12" cy="14" r="8"/></svg></div><h3>Workouts</h3><p>Quick starts at a walk, jog, run or a 10% incline, and programs: intervals you can adjust, a hill climb, a steady tempo. A 3-2-1 countdown, then the belt follows the plan.</p><div class="tags"><span>Quick starts</span><span>Intervals</span></div></div>
+        <div class="card"><div class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></div><h3>Heart rate and zones</h3><p class="lead">Any Bluetooth strap, or an Apple Watch through a broadcast app. Your zone lights the screen; the summary shows time in each.</p>
+          <div class="zones" aria-hidden="true"><span style="flex:1;background:var(--zone-1)"></span><span style="flex:2.5;background:var(--zone-2)"></span><span style="flex:4;background:var(--zone-3)"></span><span style="flex:2;background:var(--zone-4)"></span><span style="flex:.6;background:var(--zone-5)"></span></div><div class="tags"><span>Bluetooth</span><span>5 zones</span></div></div>
+        <div class="card"><div class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg></div><h3>History and bests</h3><p>Every run kept: this week's runs, miles and time, your streak, and personal bests for distance, time, pace and climb.</p><div class="tags"><span>Streak</span><span>Bests</span></div></div>
+        <div class="card"><div class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></div><h3>Apple Fitness</h3><p>Runs land in Apple Fitness through an iPhone Shortcut, with the treadmill's own time, distance and calories, and count toward your rings.</p><div class="tags"><span>iPhone Shortcut</span></div></div>
+        <div class="card wide"><div><div class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><h3>Your gym, from the belt</h3><p>With Home Assistant: the gym lights, a remote for the TV, and your Ring cameras. When the doorbell rings, the door opens on the screen mid-run. Optional, and it stays on your network.</p><div class="tags"><span>Home Assistant</span><span>Local only</span></div></div>
+          <div class="pic" aria-hidden="true"><div class="ctl"><div class="lit"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><span>Lights<small>On</small></span></div><div><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="15" x="2" y="7" rx="2"/><path d="m17 2-5 5-5-5"/></svg><span>Gym TV<small>Remote</small></span></div><div class="cam"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg><span>Front door<small>Live</small></span></div></div></div></div>
+        <div class="card"><div class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg></div><h3>Starts with the treadmill</h3><p>Opens when the treadmill turns on, keeps iFit's app off the screen, and updates itself over Wi-Fi, never mid-run.</p><div class="tags"><span>Updates over Wi-Fi</span></div></div>
       </div>
     </section>
 
@@ -1765,10 +1907,17 @@ footer a{color:var(--foreground)}
 
     <section id="how" aria-labelledby="howTitle">
       <div class="head"><span class="eyebrow">How it works</span><h2 id="howTitle">An app on the treadmill, talking to the motor.</h2><p>The console is an Android tablet. C1250 Deck runs on it in place of iFit's app, and talks to the motor board the way iFit does.</p></div>
-      <div class="steps">
-        <div class="step"><h3>The motor board</h3><p>The treadmill's motor board is a USB device that speaks ICON's FitPro protocol. C1250 Deck speaks it too, four times a second: speed, incline and the workout mode out, the belt's state back.</p></div>
-        <div class="step"><h3>The app</h3><p>An Android app with a full-screen web interface built on the <a href="https://github.com/tmass1/cabin">Cabin</a> design system. It starts when the treadmill turns on and updates itself over Wi-Fi.</p></div>
-        <div class="step"><h3>The site</h3><p>A Cloudflare Worker carries the update channel, a box for Diagnostics reports, and each finished run for Apple Fitness, behind a private key. <code>/console</code> runs the interface in demo mode.</p></div>
+      <div class="flow">
+        <div class="node main" data-n="01" style="grid-area:board"><div class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg></div><span class="kicker">USB · ICON 213c:0002</span><h3>The motor board</h3><p>The board under the deck runs the belt and the incline. It's a USB device that speaks ICON's FitPro protocol, and C1250 Deck speaks it the way iFit does.</p><ul class="spec"><li>Out<b>speed, incline, mode</b></li><li>Back<b>belt state, Start key</b></li><li>Every<b>250 ms</b></li></ul></div>
+        <div class="wire" style="grid-area:l1"><i></i><i class="back"></i><span>USB<br>4× a second</span></div>
+        <div class="node main" data-n="02" style="grid-area:app"><div class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M18 12h.01"/></svg></div><span class="kicker">Android 9 · the console's tablet</span><h3>The app</h3><p>Runs in place of iFit's app: a full-screen interface built on the <a href="https://github.com/tmass1/cabin">Cabin</a> design system, sized to read from a stride away, with a small native side for USB and updates.</p><ul class="spec"><li>Starts<b>with the treadmill</b></li><li>Heart rate<b>Bluetooth</b></li><li>Account<b>none</b></li></ul></div>
+        <div class="wire" style="grid-area:l2"><i></i><i class="back"></i><span>Wi-Fi<br>HTTPS</span></div>
+        <div class="node main" data-n="03" style="grid-area:site"><div class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg></div><span class="kicker">Cloudflare Worker</span><h3>The site</h3><p>Carries the update channel, Diagnostics reports and each finished run, behind a private key. <code>/console</code> runs the interface in demo mode.</p><ul class="spec"><li>Updates<b>signed APKs</b></li><li>Runs<b>kept for Fitness</b></li><li>Demo<b>/console</b></li></ul></div>
+        <div class="wire v v1" style="grid-area:v1"><i></i><span>local</span></div>
+        <div class="wire v" style="grid-area:v2"><i></i><span>Shortcut</span></div>
+        <div class="node side" style="grid-area:ha"><div class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><div><span class="kicker">Optional · your network</span><h3>Home Assistant</h3><p>Gym lights, the TV and Ring cameras. Nothing leaves the house.</p></div></div>
+        <div class="node side" style="grid-area:fit"><div class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg></div><div><span class="kicker">iPhone</span><h3>Apple Fitness</h3><p>A Shortcut picks up each finished run and logs it as an indoor run.</p></div></div>
+        <div class="node safe"><div class="tile"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></div><div><h3>Safety stays in hardware</h3><p>The console's STOP key and safety key stop the belt on their own. Nothing in the app can override them.</p></div></div>
       </div>
     </section>
 
@@ -1785,6 +1934,58 @@ footer a{color:var(--foreground)}
   </footer>
 </div>
 <script>
+// The top bar: gathers into a floating pane once the page scrolls, marks the section in view, and opens
+// a menu on narrow screens.
+(function(){
+  var top = document.getElementById('top'), cta = top.querySelector('.navcta'), menu = top.querySelector('.menu');
+  var page = top.querySelector('.links'), spot = page.querySelector('.spot'), links = [].slice.call(page.querySelectorAll('a'));
+  var stuck = false;
+  function onScroll(){
+    var s = scrollY > 24;
+    if(s === stuck) return;
+    stuck = s; top.classList.toggle('stuck', s); cta.tabIndex = s ? 0 : -1;
+    setTimeout(place, 380);
+  }
+  function place(a){
+    a = a || page.querySelector('a[aria-current]');
+    if(!a){ spot.classList.remove('on'); return; }
+    spot.style.width = a.offsetWidth + 'px';
+    spot.style.transform = 'translateX(' + a.offsetLeft + 'px)';
+    spot.classList.add('on');
+  }
+  // Hovering a link previews the pill there; leaving puts it back on the section in view.
+  links.forEach(function(a){ a.addEventListener('mouseenter', function(){ place(a); }); });
+  page.addEventListener('mouseleave', function(){ place(); });
+  var current = null;
+  function spy(){
+    var y = innerHeight * .35, now = null;
+    links.forEach(function(a){
+      var sec = document.querySelector(a.getAttribute('href'));
+      if(sec && sec.getBoundingClientRect().top <= y && sec.getBoundingClientRect().bottom > y) now = a;
+    });
+    if(now === current) return;
+    current = now;
+    links.forEach(function(a){ if(a === now) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current'); });
+    place();
+  }
+  addEventListener('scroll', function(){ onScroll(); spy(); }, {passive: true});
+  addEventListener('resize', function(){ place(); });
+  onScroll(); spy();
+  // The menu (narrow screens)
+  function setOpen(o){ top.classList.toggle('open', o); menu.setAttribute('aria-expanded', o); }
+  menu.addEventListener('click', function(){ setOpen(!top.classList.contains('open')); });
+  top.querySelectorAll('.drawer a').forEach(function(a){ a.addEventListener('click', function(){ setOpen(false); }); });
+  document.addEventListener('click', function(e){ if(!top.contains(e.target)) setOpen(false); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') setOpen(false); });
+})();
+// A light follows the pointer across the feature panes.
+document.querySelectorAll('.card').forEach(function(c){
+  c.addEventListener('pointermove', function(e){
+    var r = c.getBoundingClientRect();
+    c.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    c.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  });
+});
 // The hero plays the console's tour (/console/?demo=tour), unless motion is turned down.
 (function(){
   var box = document.getElementById('screen');
