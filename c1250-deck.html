@@ -3449,13 +3449,36 @@ function paintCams(fresh){
       grid.appendChild(b);
     });
   }
-  list.forEach((c, i) => { const el = grid.children[i]; const img = el && el.querySelector('img'); if(img && c.pic) img.src = HA.base + c.pic + (c.pic.indexOf('?') < 0 ? '?' : '&') + '_=' + Date.now(); });
+  list.forEach((c, i) => { const el = grid.children[i]; const img = el && el.querySelector('img'); if(img) loadShot(img, c); });
+}
+/* The picture links carry a token Home Assistant rotates every few minutes, so they're read again when the
+   sheet opens and whenever one is refused. Each picture loads off to the side and is swapped in when it
+   has arrived, so a slow camera isn't cut off by the next refresh. */
+let camRefreshing = null, camShotLog = null;
+function refreshCams(){
+  if(!HA.up) return Promise.resolve();
+  if(!camRefreshing) camRefreshing = haSend({ type:'get_states' }).then(haTakeCams).catch(() => {}).then(() => { camRefreshing = null; });
+  return camRefreshing;
+}
+const shotUrl = c => HA.base + c.pic + (c.pic.indexOf('?') < 0 ? '?' : '&') + '_=' + Date.now();
+function loadShot(img, c){
+  if(!c.pic || img.__loading) return;
+  img.__loading = true;
+  const t0 = performance.now(), next = new Image();
+  next.onload = () => { img.__loading = false; img.src = next.src; if(camShotLog && !(c.name in camShotLog)) camShotLog[c.name] = 'ok in ' + ((performance.now() - t0)/1000).toFixed(1) + ' s'; };
+  next.onerror = () => { img.__loading = false; if(camShotLog && !(c.name in camShotLog)) camShotLog[c.name] = 'refused after ' + ((performance.now() - t0)/1000).toFixed(1) + ' s'; refreshCams(); };
+  next.src = shotUrl(c);
 }
 function openCams(){
   camChoosing = false;
   if(!haIn()){ paintSettings(); openSheet('settings'); toast('<b>Sign in to Home Assistant</b> to see your cameras: Settings → Cameras.'); return; }
   haConnect();
-  openSheet('camSheet'); paintCams(true);
+  openSheet('camSheet'); paintCams(true); refreshCams();
+  // Once a session: which previews loaded, for the site's report box.
+  if(!camShotLog && NATIVE && NATIVE.sendReport){
+    camShotLog = {};
+    setTimeout(() => NATIVE.sendReport('camera', 'Previews after 20 s\n' + HA.cams.map(c => c.name + ': ' + (camShotLog[c.name] || 'still loading')).join('\n') + '\nConnected: ' + HA.up), 20000);
+  }
   clearInterval(camTimer); clearInterval(camListTimer);
   camTimer = setInterval(() => { if($('camSheet').hidden){ clearInterval(camTimer); clearInterval(camListTimer); return; } paintCams(false); }, 15000);
   camListTimer = setInterval(() => { if(HA.up) haSend({ type:'get_states' }).then(haTakeCams).catch(() => {}); }, 180000);
@@ -3561,14 +3584,17 @@ function startStills(id){
   const load = () => {
     const cam = HA.cams.find(c => c.id === id);
     if(!cam || !cam.pic){ liveSay('No picture from this camera.'); return; }
+    if(load.busy) return;
+    load.busy = true;
     const next = new Image();
-    next.onload = () => { img.src = next.src; liveSay(''); };
-    next.src = HA.base + cam.pic + (cam.pic.indexOf('?') < 0 ? '?' : '&') + '_=' + Date.now();
+    next.onload = () => { load.busy = false; img.src = next.src; liveSay(''); };
+    next.onerror = () => { load.busy = false; refreshCams(); };
+    next.src = shotUrl(cam);
   };
   // The picture links carry a token Home Assistant rotates every few minutes: read them again every 3.
   let n = 0;
-  liveSay('Loading the picture…'); load();
-  clearInterval(LIVE.still); LIVE.still = setInterval(() => { if(++n % 90 === 0 && HA.up) haSend({ type:'get_states' }).then(haTakeCams).catch(() => {}); load(); }, 2000);
+  liveSay('Loading the picture…'); refreshCams().then(load);
+  clearInterval(LIVE.still); LIVE.still = setInterval(() => { if(++n % 90 === 0) refreshCams(); load(); }, 2000);
 }
 function stopLive(){
   clearTimeout(LIVE.timer); clearTimeout(LIVE.check);
