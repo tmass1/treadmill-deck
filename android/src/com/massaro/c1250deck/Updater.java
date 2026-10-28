@@ -47,6 +47,8 @@ public class Updater {
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private JSONObject offer;
     private volatile boolean busy;
+    private volatile long busySince;
+    private volatile Intent confirm;   // Android's own "Update" prompt, while it's waiting for a tap
 
     public Updater(Activity a, Sink s) {
         act = a;
@@ -79,8 +81,24 @@ public class Updater {
         check(false);
     }
 
+    /**
+     * An install is under way. Android 9 always asks for a tap on its own Update prompt, and if that
+     * prompt is dismissed or covered without Android reporting back, the install never finishes and
+     * nothing says so. Since the app now stays alive in the background (KeepFront), that would last
+     * until the treadmill restarts: "Checking for updates…" with no answer (28 Oct 2026). So an
+     * install older than two minutes counts as abandoned, and a check or Install starts over.
+     */
+    private boolean stillBusy() {
+        if (busy && System.currentTimeMillis() - busySince > 120_000) { busy = false; confirm = null; }
+        return busy;
+    }
+
     public void check(boolean manual) {
-        if (busy) return;
+        if (stillBusy()) {
+            // Answer anyway, so the screen never waits on a check that won't run.
+            send(confirm != null ? "confirm" : "downloading", "", -1);
+            return;
+        }
         io.execute(() -> {
             try {
                 if (manual) send("checking", "", -1);
@@ -106,8 +124,15 @@ public class Updater {
     public void install() {
         KeepFront.leaving("update");
         final JSONObject m = offer;
-        if (m == null || busy) return;
+        if (stillBusy()) {
+            // Waiting on Android's prompt: show it again rather than doing nothing.
+            Intent c = confirm;
+            if (c != null) { try { act.startActivity(c); } catch (Exception ignored) {} send("confirm", "", -1); }
+            return;
+        }
+        if (m == null) { check(true); return; }
         busy = true;
+        busySince = System.currentTimeMillis();
         io.execute(() -> {
             File apk = new File(act.getCacheDir(), "update.apk");
             try {
@@ -154,18 +179,23 @@ public class Updater {
     /** Called by UpdateReceiver when Android reports a failure (success restarts the app instead). */
     void installFailed(String msg) {
         busy = false;
+        confirm = null;
         send("error", msg, -1);
     }
 
-    void needsConfirmation() { send("confirm", "", -1); }
+    void needsConfirmation(Intent prompt) {
+        confirm = prompt;
+        busySince = System.currentTimeMillis();   // the two minutes start again from the prompt
+        send("confirm", "", -1);
+    }
 
     // ---------- network ----------
 
     private static byte[] get(String url) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
         c.setRequestProperty("X-Deck-Key", Secrets.DECK_KEY);   // the update channel is private (worker/index.js)
-        c.setConnectTimeout(8000);
-        c.setReadTimeout(8000);
+        c.setConnectTimeout(10000);
+        c.setReadTimeout(15000);
         c.setUseCaches(false);
         try {
             if (c.getResponseCode() != 200) throw new Exception("HTTP " + c.getResponseCode());

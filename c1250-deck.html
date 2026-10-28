@@ -3861,9 +3861,9 @@ function paintUpdate(){
   setText('upNotes', UP.notes);
   $('upBar').hidden = UP.state !== 'downloading';
   $('upBar').firstElementChild.style.width = UP.progress + '%';
-  $('upInstall').hidden = !(UP.state === 'available' || (UP.state === 'error' && UP.version));
+  $('upInstall').hidden = !(UP.state === 'available' || UP.state === 'confirm' || (UP.state === 'error' && UP.version));
   $('upInstall').disabled = busy;
-  setText('upInstall', UP.state === 'error' ? 'Try again' : 'Install update');
+  setText('upInstall', UP.state === 'error' ? 'Try again' : UP.state === 'confirm' ? 'Show the prompt again' : 'Install update');
   $('upCheck').hidden = UP.state === 'downloading' || UP.state === 'installing' || UP.state === 'confirm';
   if(!$('settings').hidden) paintSettings();
 }
@@ -3874,14 +3874,21 @@ function onUpdate(msg){
   if(msg.progress !== undefined) UP.progress = msg.progress;
   paintUpdate();
 }
-function openUpdate(check){ paintUpdate(); openSheet('upSheet'); if(check){ UP.state = 'checking'; paintUpdate(); NATIVE.updateCheck(); } }
+// A check the app never answers (it shouldn't happen, but it did: 28 Oct) says so after 30 s instead of waiting forever.
+let upWait = 0;
+function runCheck(){
+  UP.state = 'checking'; paintUpdate(); NATIVE.updateCheck();
+  clearTimeout(upWait);
+  upWait = setTimeout(() => { if(UP.state === 'checking') onUpdate({ state:'error', message:'No answer from the update check. Try again, or turn the treadmill off and on.' }); }, 30000);
+}
+function openUpdate(check){ paintUpdate(); openSheet('upSheet'); if(check) runCheck(); }
 if(NATIVE && NATIVE.updateCheck){
   UP.current = NATIVE.appVersion ? NATIVE.appVersion() : '';
   $('upBadge').addEventListener('click', () => openUpdate(false));
   $('setUpBtn').addEventListener('click', () => openUpdate(UP.state !== 'available'));
   $('upDone').addEventListener('click', closeSheets);
-  $('upCheck').addEventListener('click', () => { UP.state = 'checking'; paintUpdate(); NATIVE.updateCheck(); });
-  $('upInstall').addEventListener('click', () => { if(beltBusy()) return; UP.state = 'downloading'; UP.progress = 0; paintUpdate(); NATIVE.updateInstall(); });
+  $('upCheck').addEventListener('click', runCheck);
+  $('upInstall').addEventListener('click', () => { if(beltBusy()) return; if(UP.state !== 'confirm'){ UP.state = 'downloading'; UP.progress = 0; } paintUpdate(); NATIVE.updateInstall(); });
   setInterval(() => { if(!$('upSheet').hidden) paintUpdate(); }, 1000);
 }
 

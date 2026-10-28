@@ -30,7 +30,7 @@ public class UpdateReceiver extends BroadcastReceiver {
                 KeepFront.leaving("update confirm");
                 try { ctx.startActivity(confirm); } catch (Exception ignored) {}
             }
-            if (u != null) u.needsConfirmation();
+            if (u != null) u.needsConfirmation(confirm);
         } else if (status != PackageInstaller.STATUS_SUCCESS) {
             String msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
             String text = status == PackageInstaller.STATUS_FAILURE_ABORTED
