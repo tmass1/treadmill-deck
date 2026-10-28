@@ -1834,11 +1834,25 @@ footer a{color:var(--foreground)}
   .navcta .ico{display:none}
   section{padding-top:72px}
 }
+
+/* Parallax (/?parallax, an iteration to compare): the photo sits far back and moves slowly, a band of
+   mist nearer in moves faster, the hero's words drift up and fade while the console tilts up to face
+   you, and the panes below travel at slightly different rates per column. All of it is `translate`
+   (separate from transform), so hover and the photo's own drift still apply. */
+.px .scene::before{bottom:-45vh;translate:0 var(--far,0px)}
+.px .mist{position:absolute;left:-5%;right:-5%;top:35vh;height:110vh;background:url(/console/bg/mist-woods-blur.webp) center/cover no-repeat;opacity:.28;mix-blend-mode:screen;
+  -webkit-mask:linear-gradient(180deg,transparent,var(--paint-mask-on) 30%,var(--paint-mask-on) 70%,transparent);mask:linear-gradient(180deg,transparent,var(--paint-mask-on) 30%,var(--paint-mask-on) 70%,transparent);translate:0 var(--near,0px);pointer-events:none}
+.scene{--paint-mask-on:#000}
+.mist{display:none}
+.px .mist{display:block}
+.px [data-px]{will-change:translate}
+.px .device{transform-origin:50% 0;will-change:transform}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}.scene::before,.wire i,.beat{animation:none}.wire i{display:none}}
 </style>
+<script>if(/[?&]parallax\b/.test(location.search)&&!matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("px")</script>
 </head>
 <body data-finish="lit">
-<div class="scene" aria-hidden="true"></div>
+<div class="scene" aria-hidden="true"><div class="mist"></div></div>
 <header class="top" id="top">
   <div class="bar">
     <span class="cb-glass" aria-hidden="true"></span>
@@ -1986,6 +2000,62 @@ document.querySelectorAll('.card').forEach(function(c){
     c.style.setProperty('--my', (e.clientY - r.top) + 'px');
   });
 });
+// Parallax, when /?parallax turned it on (see the CSS).
+(function(){
+  var root = document.documentElement;
+  if(!root.classList.contains('px')) return;
+  var scene = document.querySelector('.scene'), device = document.querySelector('.device');
+  var heroBits = [].slice.call(document.querySelectorAll('.hero > .eyebrow, .hero > h1, .hero > p:not(.caption), .hero > .actions'));
+  heroBits.forEach(function(el, i){ el.dataset.px = ''; el.dataset.lag = [.5,.42,.34,.26][i]; });
+  // Panes: by column in the feature bento and the screens grid; section heads lag a little.
+  var items = [];
+  function add(el, k){ el.dataset.px = ''; items.push({el: el, k: k, top: 0, h: 0}); }
+  document.querySelectorAll('.head').forEach(function(el){ add(el, -.08); });
+  function columns(sel, ks){
+    var els = [].slice.call(document.querySelectorAll(sel));
+    els.forEach(function(el){ add(el, 0); el._cols = ks; });
+  }
+  columns('#features .card', [0, 0, .12]);  // the wide panes span columns 1 and 2, so those two move together
+  columns('.screens .shot', [0, .08, .16]);
+  add(document.querySelector('.flow'), .04);
+  add(document.querySelector('.closing'), .1);
+  function measure(){
+    var wide = innerWidth > 980;
+    items.forEach(function(it){
+      it.el.style.translate = '';
+      var r = it.el.getBoundingClientRect();
+      it.top = r.top + scrollY; it.h = r.height;
+      if(it.el._cols){
+        // which column: by its left edge against its grid's
+        var g = it.el.parentElement.getBoundingClientRect(), col = Math.round((r.left - g.left) / (g.width / 3));
+        it.k = wide ? it.el._cols[Math.max(0, Math.min(2, col))] : 0;
+      }
+    });
+    frame();
+  }
+  var ticking = false;
+  function frame(){
+    ticking = false;
+    var y = scrollY, vh = innerHeight, mid = y + vh / 2;
+    scene.style.setProperty('--far', (-y * .06).toFixed(1) + 'px');
+    scene.style.setProperty('--near', (-y * .22).toFixed(1) + 'px');
+    // Hero: words lag and fade over the first screen; the console starts tipped back and rises to face you.
+    var t = Math.min(1, y / (vh * .4));
+    heroBits.forEach(function(el){ el.style.translate = '0 ' + (y * el.dataset.lag).toFixed(1) + 'px'; el.style.opacity = Math.max(0, 1 - t * 1.2).toFixed(3); });
+    var d = Math.min(1, y / (vh * .45));
+    device.style.transform = 'perspective(1600px) rotateX(' + (16 * (1 - d)).toFixed(2) + 'deg) scale(' + (.92 + .08 * d).toFixed(4) + ')';
+    items.forEach(function(it){
+      if(!it.k) { it.el.style.translate = ''; return; }
+      var off = (it.top + it.h / 2 - mid) * it.k;
+      off = Math.max(-90, Math.min(90, off));
+      it.el.style.translate = '0 ' + off.toFixed(1) + 'px';
+    });
+  }
+  addEventListener('scroll', function(){ if(!ticking){ ticking = true; requestAnimationFrame(frame); } }, {passive: true});
+  addEventListener('resize', measure);
+  addEventListener('load', measure);
+  measure();
+})();
 // The hero plays the console's tour (/console/?demo=tour), unless motion is turned down.
 (function(){
   var box = document.getElementById('screen');
