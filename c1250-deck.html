@@ -1800,9 +1800,10 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .tvnote{text-align:center}
 /* Cameras: three across, each picture 16:9 (padding, not aspect-ratio: Chrome 80). */
 .camgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-gap:16px}
-.camtile{display:flex;flex-direction:column;padding:0;border:0;text-align:left;border-radius:20px;overflow:hidden;background:var(--secondary);color:var(--foreground);box-shadow:var(--shadow-raised, none);transition:transform .1s ease}
+.camtile{display:flex;flex-direction:column;width:100%;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:0;border:0;text-align:left;border-radius:20px;overflow:hidden;background:var(--secondary);color:var(--foreground);box-shadow:var(--shadow-raised, none);transition:transform .1s ease}
 .camtile:active{transform:scale(.98)}
-.camtile .shot{position:relative;display:block;padding-top:56.25%;background:var(--muted)}
+.camtile:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.camtile .shot{position:relative;display:block;width:100%;padding-top:56.25%;background:var(--muted)}
 .camtile .shot img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
 .camtile .name{display:block;padding:14px 18px;font-size:19px;font-weight:600}
 /* Choosing: every camera shows, the hidden ones dimmed with a mark; a tap flips one. */
@@ -3434,7 +3435,11 @@ function paintCams(fresh){
     grid.__key = list.map(c => c.id).join() + camChoosing;
     grid.innerHTML = '';
     list.forEach(c => {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'camtile';
+      // A div acting as a button, not a <button>: the console's WebView (Chrome 83) lays out a button's
+      // inside shrunk to its content, and a picture box holds nothing in flow, so every preview was drawn
+      // 0 px wide (the camera report, 28 Oct 2026). Pictures loaded all along.
+      const b = document.createElement('div'); b.className = 'camtile'; b.setAttribute('role', 'button'); b.tabIndex = 0;
+      b.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); b.click(); } });
       b.innerHTML = '<span class="shot"><img alt=""><span class="mark"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></span><span class="name"></span>';
       b.querySelector('.name').textContent = c.name;
       b.classList.toggle('off', camHidden.indexOf(c.id) >= 0);
@@ -3471,7 +3476,7 @@ function loadShot(img, c){
     // Put the loaded picture itself in the tile (no second fetch: Home Assistant doesn't let it be cached).
     next.alt = '';
     if(img.parentNode) img.parentNode.replaceChild(next, img);
-    if(camShotLog && !(c.name in camShotLog)) camShotLog[c.name] = 'ok in ' + ((performance.now() - t0)/1000).toFixed(1) + ' s, ' + next.naturalWidth + 'x' + next.naturalHeight;
+    if(camShotLog && (!(c.name in camShotLog) || /^refused/.test(camShotLog[c.name]))) camShotLog[c.name] = (camShotLog[c.name] ? 'refused, then ok' : 'ok') + ' in ' + ((performance.now() - t0)/1000).toFixed(1) + ' s, ' + next.naturalWidth + 'x' + next.naturalHeight;
   };
   next.onerror = () => { img.__loading = false; if(camShotLog && !(c.name in camShotLog)) camShotLog[c.name] = 'refused after ' + ((performance.now() - t0)/1000).toFixed(1) + ' s'; refreshCams(); };
   next.src = shotUrl(c);
