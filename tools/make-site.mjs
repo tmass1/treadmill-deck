@@ -12,6 +12,7 @@ const m = src.match(/<div class="app"[\s>]/);
 if (!m) throw new Error('make-site: no <div class="app"> container in c1250-deck.html');
 const head = '<!doctype html><html lang="en"><head><meta charset="utf-8">'
   + '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
+  + '<link rel="icon" href="/favicon.svg" type="image/svg+xml"><title>C1250 Deck · demo</title>'
   + '<style>:root{color-scheme:light}body{margin:0;font:14px system-ui}[hidden]{display:none!important}img{max-width:100%}</style>';
 mkdirSync(join(out, 'bg'), { recursive: true });
 writeFileSync(join(out, 'index.html'), head + src.slice(0, m.index) + '</head><body>' + src.slice(m.index) + '</body></html>');
