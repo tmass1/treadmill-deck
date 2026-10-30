@@ -1716,6 +1716,27 @@ img{display:block;max-width:100%;height:auto}
 .screen img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .screen iframe{position:absolute;left:0;top:0;width:1280px;height:800px;border:0;transform-origin:0 0;transform:scale(var(--s,.8));pointer-events:none;opacity:0;transition:opacity .6s ease}
 .screen iframe.on{opacity:1}
+/* The demo, right here: the tour hands over to the real console in the same frame. */
+.take{position:absolute;inset:0;z-index:2;display:grid;place-items:center;border:0;padding:0;background:transparent;cursor:pointer;font:inherit;color:inherit;border-radius:inherit}
+.take span{display:inline-flex;align-items:center;gap:10px;height:52px;padding:0 22px 0 12px;border-radius:var(--radius-full);font-size:17px;font-weight:600;opacity:0;transform:translateY(6px) scale(.98);transition:opacity .2s ease,transform .2s ease}
+.take span .go{margin-left:0}
+.take:hover span,.take:focus-visible span{opacity:1;transform:none}
+.take::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,transparent 40%,color-mix(in srgb,var(--background) 55%,transparent));opacity:0;transition:opacity .2s ease}
+.take:hover::before,.take:focus-visible::before{opacity:1}
+.take:focus-visible{outline:none;box-shadow:inset var(--focus-ring)}
+.screen.live .take{display:none}
+.screen.live iframe{pointer-events:auto}
+.device{transition:box-shadow .4s ease}
+.device.live{box-shadow:var(--shadow-lit),0 0 0 1px color-mix(in srgb,var(--info) 55%,transparent),0 0 80px -10px color-mix(in srgb,var(--info) 40%,transparent),0 40px 120px -20px var(--paint-drop)}
+.livebar{display:none;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 16px;margin-top:14px;font-size:14px;color:var(--muted-foreground)}
+.livebar .dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 10px color-mix(in srgb,var(--success) 70%,transparent);margin-right:-8px}
+.livebar b{color:var(--foreground);font-weight:600}
+.livebar button,.livebar a{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:0;border-radius:var(--radius-full);background:var(--lit-raised);box-shadow:var(--shadow-raised),inset 0 0 0 1px var(--border);color:var(--foreground);font:inherit;font-weight:600;text-decoration:none;cursor:pointer}
+.livebar button:focus-visible,.livebar a:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.livebar .ico{width:16px;height:16px}
+.hero.live .caption{display:none}
+.hero.live .livebar{display:flex}
+@media (max-width:760px){.take{display:none}}
 .caption{margin-top:14px;text-align:center;font-size:14px;color:var(--muted-foreground)}
 .caption a{color:var(--foreground);font-weight:600;text-decoration:none;white-space:nowrap}
 .caption a::after{content:" →"}
@@ -1888,7 +1909,7 @@ footer a{color:var(--foreground)}
     </nav>
     <span class="sep" aria-hidden="true"></span>
     <nav class="links" aria-label="Elsewhere"><a href="https://github.com/tmass1/treadmill-deck"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg>GitHub</a></nav>
-    <a class="pill cta navcta" href="/console/" tabindex="-1"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16l13-8z"/></svg>Try the demo</a>
+    <a class="pill cta navcta" href="/console/" tabindex="-1" data-live><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16l13-8z"/></svg>Try the demo</a>
     <button class="menu" type="button" aria-expanded="false" aria-controls="drawer" aria-label="Menu"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
   <nav class="drawer cb-glass" id="drawer" aria-label="Page">
@@ -1901,18 +1922,22 @@ footer a{color:var(--foreground)}
 <div class="wrap">
 
   <main>
-    <div class="hero">
+    <div class="hero" id="hero">
       <span class="eyebrow">For the NordicTrack Commercial 1250</span>
       <h1>Your treadmill,<br><b>without the subscription.</b></h1>
       <p>C1250 Deck replaces iFit on the treadmill's own screen. It drives the motor directly: speed, incline, start and stop, with workouts, heart-rate zones and your history. No account, nothing to renew.</p>
       <div class="actions">
-        <a class="pill cta" href="/console/"><span class="go"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16l13-8z"/></svg></span>Try it in your browser</a>
+        <a class="pill cta" href="/console/" data-live><span class="go"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16l13-8z"/></svg></span>Try it in your browser</a>
         <a class="pill raised" href="https://github.com/tmass1/treadmill-deck"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg>Source on GitHub</a>
       </div>
-      <div class="device"><div class="screen" id="screen">
+      <div class="device" id="device"><div class="screen" id="screen">
+        <button class="take" type="button" data-live aria-label="Try the demo here"><span class="cta"><span class="go"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16l13-8z"/></svg></span>Try it here</span></button>
         <img src="/img/home.webp" alt="C1250 Deck's Home screen: a quick start card set to Incline 3.8, a workout card for Intervals, and buttons for gym lights, the gym TV and heart rate, over a misty road photo." width="1280" height="800">
       </div></div>
-      <p class="caption">The real interface, playing on its own: Home, an incline walk, the summary, then Intervals. <a href="/console/">Try it yourself</a></p>
+      <p class="caption">The real interface, playing on its own: Home, an incline walk, the summary, then Intervals. <a href="/console/" data-live>Try it yourself</a></p>
+      <div class="livebar" role="status"><span class="dot" aria-hidden="true"></span><span><b>You're driving the demo.</b> Tap anything; no real treadmill moves.</span>
+        <button type="button" id="backTour"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Back to the tour</button>
+        <a href="/console/" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>Full screen</a></div>
     </div>
 
     <section id="features" aria-labelledby="featuresTitle">
@@ -1961,7 +1986,7 @@ footer a{color:var(--foreground)}
     <div class="closing">
       <h2>Built for one treadmill. Shared for the rest.</h2>
       <p>C1250 Deck is a personal project for a NordicTrack Commercial 1250. The code is on GitHub: how it reaches the motor, how it's built, and how to put it on a treadmill.</p>
-      <div class="actions"><a class="pill cta" href="https://github.com/tmass1/treadmill-deck">See the code</a><a class="pill raised" href="/console/">Try the demo</a></div>
+      <div class="actions"><a class="pill cta" href="https://github.com/tmass1/treadmill-deck">See the code</a><a class="pill raised" href="/console/" data-live>Try the demo</a></div>
     </div>
   </main>
 
@@ -2066,7 +2091,8 @@ document.querySelectorAll('.card').forEach(function(c){
     var t = Math.min(1, y / (vh * .4));
     heroBits.forEach(function(el){ el.style.translate = '0 ' + (y * el.dataset.lag).toFixed(1) + 'px'; el.style.opacity = Math.max(0, 1 - t * 1.2).toFixed(3); });
     var d = Math.min(1, y / (vh * .45));
-    device.style.transform = 'perspective(1600px) rotateX(' + (16 * (1 - d)).toFixed(2) + 'deg) scale(' + (.92 + .08 * d).toFixed(4) + ')';
+    if(window.__deckLive){ device.style.transform = ''; }
+    else device.style.transform = 'perspective(1600px) rotateX(' + (16 * (1 - d)).toFixed(2) + 'deg) scale(' + (.92 + .08 * d).toFixed(4) + ')';
     items.forEach(function(it){
       if(!it.k) { it.el.style.translate = ''; return; }
       var off = (it.top + it.h / 2 - mid) * it.k;
@@ -2079,17 +2105,41 @@ document.querySelectorAll('.card').forEach(function(c){
   addEventListener('load', measure);
   measure();
 })();
-// The hero plays the console's tour (/console/?demo=tour), unless motion is turned down.
+// The hero plays the console's tour (/console/?demo=tour), unless motion is turned down. Any "Try it"
+// swaps the tour for the real demo in the same frame; a phone, where the frame is too small to use,
+// opens the demo full screen as before.
 (function(){
-  var box = document.getElementById('screen');
-  if(!box || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var f = document.createElement('iframe');
-  f.src = '/console/?demo=tour&photo=fog-road'; f.title = 'C1250 Deck, playing a demo';
-  f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
-  var fit = function(){ f.style.setProperty('--s', box.clientWidth/1280); };
-  fit(); addEventListener('resize', fit);
-  f.addEventListener('load', function(){ setTimeout(function(){ f.classList.add('on'); }, 400); });
-  box.appendChild(f);
+  var box = document.getElementById('screen'), device = document.getElementById('device'), hero = document.getElementById('hero');
+  if(!box) return;
+  var still = matchMedia('(prefers-reduced-motion: reduce)').matches, f = null;
+  var fit = function(){ if(f) f.style.setProperty('--s', box.clientWidth/1280); };
+  addEventListener('resize', fit);
+  function frame(src, live){
+    if(f) f.remove();
+    f = document.createElement('iframe');
+    f.src = src;
+    f.title = live ? 'C1250 Deck demo' : 'C1250 Deck, playing a demo';
+    if(!live){ f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1; }
+    fit();
+    f.addEventListener('load', function(){ setTimeout(function(){ f.classList.add('on'); if(live) try { f.focus(); } catch(e){} }, live ? 150 : 400); });
+    box.appendChild(f);
+  }
+  function setLive(on){
+    window.__deckLive = on;
+    box.classList.toggle('live', on); device.classList.toggle('live', on); hero.classList.toggle('live', on);
+    frame(on ? '/console/' : '/console/?demo=tour&photo=fog-road', on);
+    if(on) device.scrollIntoView({behavior: still ? 'auto' : 'smooth', block: 'center'});
+    dispatchEvent(new Event('scroll'));
+  }
+  if(!still) frame('/console/?demo=tour&photo=fog-road', false);
+  document.querySelectorAll('[data-live]').forEach(function(a){
+    a.addEventListener('click', function(e){
+      if(innerWidth <= 760) return;           // phones: the link opens the demo full screen
+      e.preventDefault();
+      if(!window.__deckLive) setLive(true); else device.scrollIntoView({behavior: still ? 'auto' : 'smooth', block: 'center'});
+    });
+  });
+  document.getElementById('backTour').addEventListener('click', function(){ setLive(false); if(still && f){ f.remove(); f = null; } });
 })();
 </script>
 </body>
