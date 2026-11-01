@@ -1875,6 +1875,13 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 /* ---------- overlays: countdown, paused, done, sheets ---------- */
 /* `hidden` must win over the overlays' display:flex (and every other display set here), or every sheet shows at once. */
 [hidden]{display:none !important}
+/* Sleep: a dim with a word first, then black (and the app turns the backlight off). Above everything, so
+   the tap that wakes it never lands on a control. */
+.sleep{--paint-night:#000;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.sleep::before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;background:var(--paint-night);opacity:.62;transition:opacity 1.2s ease}
+.sleep.dark::before{opacity:1}
+.sleep .note{position:relative;display:flex;align-items:center;height:64px;padding:0 28px;border-radius:9999px;background:var(--secondary);color:var(--foreground);font-size:22px;font-weight:600;box-shadow:var(--shadow-raised, none);transition:opacity .4s ease}
+.sleep.dark .note{opacity:0}
 /* The console's WebView (Chrome 80) has no flex gap; the page adds no-flexgap to <html> when it's missing. */
 .no-flexgap .pill > .ico,.no-flexgap .badge > .ico,.no-flexgap .badge > .dot{margin-right:10px}
 .no-flexgap .runctl .pill > .ico{margin-right:12px}
@@ -2144,6 +2151,9 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 
   <div class="panel toast" id="toast" role="status" hidden><p id="toastText"></p><button class="pill raised" id="toastClose" type="button">Dismiss</button></div>
 
+  <!-- Sleep -->
+  <div class="sleep" id="sleep" hidden><span class="note">Going to sleep. Tap to stay awake.</span></div>
+
   <!-- Settings -->
   <div class="overlay" id="settings" hidden>
     <div class="panel dialog wide" role="dialog" aria-modal="true" aria-labelledby="setTitle" data-density="touch">
@@ -2156,6 +2166,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
         <div class="srow" id="camRow" hidden><div class="t"><b>Cameras</b><span id="camText">Sign in to Home Assistant to see your Ring cameras here.</span></div><button class="pill raised" id="camSignBtn" type="button">Sign in</button></div>
         <div class="srow" id="awayRow" hidden><div class="t"><b>Keep iFit away</b><span id="awayText">Let C1250 Deck see which app is in front, so it can close iFit's screens when they pop up.</span></div><button class="pill raised" id="awayBtn" type="button">Allow</button></div>
         <div class="srow" id="homeRow" hidden><div class="t"><b>Start on power-up</b><span id="homeText">Make C1250 Deck the home screen so the treadmill opens here, not iFit.</span></div><button class="pill raised" id="homeBtn" type="button">Set up</button></div>
+        <div class="srow" id="sleepRow" hidden><div class="t"><b>Sleep</b><span id="sleepText">The screen goes dark when the belt's stopped and nobody's touched it for a while. Tap to wake.</span></div><div class="seg well" id="sleepSeg" role="radiogroup" aria-label="Sleep after"></div></div>
         <div class="srow"><div class="t"><b>Software</b><span id="setUp">C1250 Deck</span></div><button class="pill raised" id="setUpBtn" type="button">Check for updates</button></div>
         <div class="srow"><div class="t"><b>Appearance</b><span>Dark is easiest on the eyes mid-run.</span></div><div class="seg well" id="themeSeg" role="radiogroup" aria-label="Appearance"></div></div>
         <div class="srow"><div class="t"><b>Background</b><span>Photos from Unsplash by Brendan Church, Walter Coppola, Wes Hicks and Annie Spratt.</span></div><div class="seg well" id="bgSeg" role="radiogroup" aria-label="Background"></div></div>
@@ -2915,6 +2926,7 @@ window.__deckNative = st => {
   }
   // The console's own Start key: the board asks (REQUIRE_START_REQUESTED) and the page answers.
   if(st.startRequested){
+    if(typeof wakeScreen === 'function') wakeScreen();
     if(S.state === 'paused') start();
     else if((S.state === 'idle' || S.state === 'done') && $('countdown').hidden) begin('free');
   }
@@ -3411,6 +3423,7 @@ function onDing(ev){
   const t = ev && ev.variables && ev.variables.trigger; if(!t) return;
   const from = t.from_state, to = t.to_state;
   if(!from || !to || from.state === to.state || /unavailable|unknown/.test(from.state) || to.state === 'unavailable') return;
+  if(typeof wakeScreen === 'function') wakeScreen();   // the doorbell wakes a sleeping console
   openLive(t.entity_id.replace(/^event\./, 'camera.').replace(/_ding$/, '_live_view'), true);
 }
 
@@ -3895,6 +3908,39 @@ if(NATIVE && NATIVE.updateCheck){
   $('upCheck').addEventListener('click', runCheck);
   $('upInstall').addEventListener('click', () => { if(beltBusy()) return; if(UP.state !== 'confirm'){ UP.state = 'downloading'; UP.progress = 0; } paintUpdate(); NATIVE.updateInstall(); });
   setInterval(() => { if(!$('upSheet').hidden) paintUpdate(); }, 1000);
+}
+
+/* ---------- Sleep (1.10.18): the console goes dark when nobody's using it ---------- */
+// The app keeps the display powered (FLAG_KEEP_SCREEN_ON: Android's own screen-off might not wake on
+// a tap on this console), so sleep is this: after deck.sleepMin minutes with the belt stopped and no
+// touch, 30 s of dim with a word, then black, and the app turns the backlight off (NATIVE.setSleep).
+// A tap, the console's Start key, the doorbell or the app coming back to the screen wakes it.
+const SLEEP = { min:(() => { const v = parseInt(store.get('deck.sleepMin'), 10); return isNaN(v) ? 10 : v; })(), last:Date.now(), stage:0 };
+const sleepOk = () => S.state !== 'running' && $('countdown').hidden && $('camLive').hidden
+  && UP.state !== 'downloading' && UP.state !== 'installing' && UP.state !== 'confirm';
+function sleepStage(n){
+  if(SLEEP.stage === n) return;
+  SLEEP.stage = n;
+  $('sleep').hidden = n === 0;
+  $('sleep').classList.toggle('dark', n === 2);
+  if(NATIVE && NATIVE.setSleep) NATIVE.setSleep(n === 2);
+}
+function wakeScreen(){ SLEEP.last = Date.now(); sleepStage(0); }
+window.__deckWake = wakeScreen;
+$('sleep').addEventListener('click', wakeScreen);
+// Any touch or key keeps it awake (while it's awake; asleep, the overlay takes the tap).
+['pointerdown', 'touchstart', 'keydown'].forEach(t => addEventListener(t, () => { if(!SLEEP.stage) SLEEP.last = Date.now(); }, true));
+if(NATIVE && NATIVE.setSleep){
+  setInterval(() => {
+    if(!SLEEP.min || !sleepOk()){ SLEEP.last = Date.now(); if(SLEEP.stage) sleepStage(0); return; }
+    const idle = Date.now() - SLEEP.last, at = SLEEP.min*60000;
+    if(idle >= at) sleepStage(2); else if(idle >= at - 30000) sleepStage(1);
+  }, 1000);
+  $('sleepRow').hidden = false;
+  const sleepWords = m => m ? `The screen goes dark after ${m} minutes with the belt stopped and nobody touching it. Tap to wake.` : 'The screen stays on.';
+  setText('sleepText', sleepWords(SLEEP.min));
+  seg('sleepSeg', [{ value:0, label:'Never' }, { value:5, label:'5 min' }, { value:10, label:'10 min' }, { value:20, label:'20 min' }, { value:30, label:'30 min' }], SLEEP.min,
+    v => { SLEEP.min = v; store.set('deck.sleepMin', String(v)); setText('sleepText', sleepWords(v)); SLEEP.last = Date.now(); });
 }
 
 /* ---------- Home ---------- */

@@ -54,6 +54,8 @@ public class MainActivity extends Activity {
             if (prev != null) prev.uncaughtException(t, e);
         });
         sendCrashReport();
+        // The display stays powered (Android's own screen-off might not wake on a tap on this console);
+        // sleep is the page's black screen plus the backlight turned off (setBacklightOff).
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         WebView.setWebContentsDebuggingEnabled(true);
 
@@ -121,6 +123,9 @@ public class MainActivity extends Activity {
     protected void onStart() {
         super.onStart();
         KeepFront.visible = true;
+        // Coming back to the screen always wakes it.
+        setBacklightOff(false);
+        if (web != null) web.evaluateJavascript("window.__deckWake && window.__deckWake()", null);
         if (hw != null) hw.execute(() -> belt.resume());
     }
 
@@ -255,6 +260,15 @@ public class MainActivity extends Activity {
      * Exposed to the page as window.DeckNative. A static class with an explicit constructor:
      * the dexer in build-tools 34 chokes on the implicit outer-instance parameter of inner classes.
      */
+    /** Sleep: the backlight off (the page is already black), or back to the system's brightness. */
+    void setBacklightOff(boolean off) {
+        runOnUiThread(() -> {
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.screenBrightness = off ? WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_OFF : WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE;
+            getWindow().setAttributes(lp);
+        });
+    }
+
     static final class Bridge {
         private final MainActivity a;
         private final GlassOS g;
@@ -360,6 +374,7 @@ public class MainActivity extends Activity {
         /** A current access token for Home Assistant's websocket, or "" (may take a moment: it refreshes when due). */
         @JavascriptInterface public String haToken() { return a.ha.token(); }
         @JavascriptInterface public void haSignOut() { a.ha.signOut(); }
+        @JavascriptInterface public void setSleep(boolean on) { a.setBacklightOff(on); }
 
         /** Keep iFit away: can we see which app is in front (Usage access)? */
         @JavascriptInterface public boolean usageAccess() { return KeepFront.usageAccess(a); }
