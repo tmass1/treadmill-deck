@@ -12,7 +12,7 @@ Started 22 Oct 2026, after 1.8.5. Each release goes out over the air (Settings �
 
 ## 2. Smarter workouts
 - [ ] **Heart-rate mode**: pick a zone; speed (or incline) adjusts to hold you in it. Needs the Polar H10.
-- [ ] **Goals**: run to a distance or a time (5K, 30 min) with progress on screen and an automatic cool-down.
+- [x] **Goals** (1.11.0): a quick start runs to a time or a distance (Home → Goal), with what's left under the time and miles, then eases to a walk at 0% for a cool-down (3 minutes by default) and ends. Keep going skips the cool-down.
 - [ ] **Workout builder**: make workouts on the Mac or phone (intervals, hills, pace targets); they appear on the treadmill.
 - [x] **Calories from your weight** (1.9.2): Settings → You sets your weight; calories are active calories (what Apple Fitness counts), from speed, incline and weight.
 - [x] **Distance calibration** (1.9.2): a ±% setting in You, from a tape-on-the-belt check. Each run also keeps the motor board's own distance and time counters, to calibrate against.

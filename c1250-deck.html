@@ -1768,6 +1768,15 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .headline{display:flex;align-items:flex-start;justify-content:center;gap:clamp(32px,6vw,72px);margin-top:clamp(12px,3vh,24px)}
 .headline .hl{display:flex;flex-direction:column;align-items:center;gap:8px}
 .headline .hl + .hl{padding-left:clamp(32px,6vw,72px);border-left:1px solid var(--border)}
+.goalline{display:flex;align-items:center;gap:16px;width:min(520px,100%);margin-top:14px}
+.goalline .bar{flex:1}
+.goalline span{font-size:17px;color:var(--muted-foreground);white-space:nowrap}
+.goalline span b{color:var(--foreground);font-weight:600}
+.cool .row .pill{height:52px;padding:0 22px;font-size:17px}
+.go .goalbtn{margin-left:auto;height:52px;padding:0 20px;font-size:17px}
+.go .goalbtn .ico{width:20px;height:20px}
+.goalsheet .seg{margin:8px 0 4px}
+.goalnote{margin:14px 0 0;font-size:16px;color:var(--muted-foreground)}
 .rep{width:min(520px,100%);padding:18px 22px;display:flex;flex-direction:column;gap:10px}
 .rep .row{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
 .rep .now{font-size:24px;font-weight:600}
@@ -1891,6 +1900,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .no-flexgap .runctl > * + *{margin-left:16px}
 .no-flexgap .sheethead > * + *{margin-left:16px}
 .no-flexgap .profile > i + i{margin-left:4px}
+.no-flexgap .goalline > * + *{margin-left:16px}
 /* Cabin's scrim assumes a backdrop blur, which the console can't afford; two layers of it (64% dark, 42% light) do the blur's job of pushing the screen back. */
 .overlay{position:absolute;top:0;right:0;bottom:0;left:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(var(--scrim),var(--scrim)),var(--scrim)}
 .dialog{width:min(520px,100%);padding:32px;display:flex;flex-direction:column;gap:22px;max-height:100%;overflow:auto}
@@ -2018,6 +2028,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
             <button class="startdisc cta" id="qsStart" type="button" aria-label="Start quick run"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
           </div>
           <div><b>Start</b><span id="qsSub">3, 2, 1, then 3.0 mph</span></div>
+          <button class="pill raised goalbtn" id="qsGoal" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></svg><span id="qsGoalText">Goal</span></button>
         </div>
       </div>
 
@@ -2062,6 +2073,12 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
         <div class="headline" id="headline">
           <div class="hl"><span class="elapsed tnum" id="elapsedBig">0:00</span><span class="eyebrow">Time</span></div>
           <div class="hl"><span class="elapsed tnum" id="distBig">0.00</span><span class="eyebrow">Miles</span></div>
+        </div>
+        <div class="goalline" id="goalLine" hidden><div class="bar well"><i class="fill" id="goalBar"></i></div><span class="tnum" id="goalText"></span></div>
+        <div class="panel rep cool" id="coolCard" hidden>
+          <div class="row"><span class="now" id="coolNow">Goal reached</span><span class="left tnum" id="coolLeft">3:00</span></div>
+          <div class="bar well"><i class="fill" id="coolBar"></i></div>
+          <div class="row"><span class="next" id="coolNext">Cooling down at a walk, incline 0%</span><button class="pill raised" id="keepGoing" type="button">Keep going</button></div>
         </div>
         <div class="panel rep" id="repCard" hidden>
           <div class="row"><span class="now" id="repNow">Rep 1 of 6</span><span class="left tnum" id="repLeft">1:00</span></div>
@@ -2259,6 +2276,17 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
       <div class="sheethead"><h2 id="ivTitle" style="flex:none">Intervals</h2><p class="ivsum tnum" id="ivSum"></p><button class="pill ghost" id="ivReset" type="button">Reset</button><button class="pill raised" id="ivDone" type="button">Done</button></div>
       <div class="ivgrid" id="ivGrid"></div>
       <div class="profile" id="ivProfile" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <!-- Goal for a quick start: a time or a distance, then a cool-down -->
+  <div class="overlay bottom" id="goalSheet" hidden>
+    <div class="panel sheet goalsheet" role="dialog" aria-modal="true" aria-labelledby="goalTitle" data-density="touch">
+      <div class="grab" aria-hidden="true"></div>
+      <div class="sheethead"><h2 id="goalTitle" style="flex:none">Goal</h2><p class="ivsum tnum" id="goalSum"></p><button class="pill raised" id="goalDone" type="button">Done</button></div>
+      <div class="seg well" id="goalSeg" role="radiogroup" aria-label="Goal"></div>
+      <div class="ivgrid" id="goalGrid"></div>
+      <p class="goalnote" id="goalNote"></p>
     </div>
   </div>
 
@@ -3001,7 +3029,7 @@ const drv = () => S.driver === 'ftms' ? FTMS : S.driver === 'native' ? Native : 
 
 /* ---------- session ---------- */
 function resetSession(){
-  Object.assign(S, { runId:0, state:'idle', board0:null, board1:null, distM:0, climbM:0, elapsed:0, kcal:0, progT:0, progDist:0, segIdx:-1, tKph:0, tInc:0, hr:null, hrSum:0, hrN:0, devDist:null, devElapsed:null, devKcal:null, devHr:null, resumeKph:0, trace:[], zoneT:[0,0,0,0,0], nextSample:0 });
+  Object.assign(S, { runId:0, state:'idle', board0:null, board1:null, distM:0, climbM:0, elapsed:0, kcal:0, progT:0, progDist:0, segIdx:-1, tKph:0, tInc:0, hr:null, hrSum:0, hrN:0, devDist:null, devElapsed:null, devKcal:null, devHr:null, resumeKph:0, trace:[], zoneT:[0,0,0,0,0], nextSample:0, goal:null, goalHit:false, cool:null });
   dropDoneChart();
   if(S.driver === 'demo'){ S.kph = 0; S.incline = 0; }
 }
@@ -3011,6 +3039,8 @@ function begin(prog){
   // From Home: 3, 2, 1, then the belt starts.
   resetSession(); S.prog = prog;
   const p = PROGRAMS[prog];
+  // A quick start carries the goal set on Home (programs end on their own).
+  if(!p.segs.length && GOAL.kind !== 'none') S.goal = { kind:GOAL.kind, value:GOAL.kind === 'time' ? GOAL.min*60 : GOAL.mi, cool:GOAL.cool };
   const first = p.segs.length ? p.segs[0].mph : quickMph();
   const firstInc = p.segs.length ? 0 : (quick().inc || 0);
   setText('countLine', 'Then ' + first.toFixed(1) + ' mph' + (firstInc ? ' at ' + firstInc + '%' : ''));
@@ -3046,7 +3076,8 @@ function finish(stopped){
   const lastT = S.trace.length ? S.trace[S.trace.length - 1].t : -1;
   if(S.elapsed - lastT >= 2) sample(currentHr());
   const bests = recordRun(sum);
-  setText('dEyebrow', bests.length ? 'New best · ' + bests.join(', ') : stopped ? 'Workout ended' : 'Workout complete');
+  const goalWord = S.goalHit ? 'Goal reached · ' + goalLabel(S.goal) : '';
+  setText('dEyebrow', bests.length ? (goalWord ? goalWord + ' · ' : '') + 'New best · ' + bests.join(', ') : goalWord || (stopped ? 'Workout ended' : 'Workout complete'));
   setText('dTitle', PROGRAMS[S.prog].segs.length ? PROGRAMS[S.prog].name : quickName());
   setText('dElapsed', fmtTime(sum.secs));
   setText('dDist', sum.miles.toFixed(2));
@@ -3083,7 +3114,8 @@ function runRecord(sum){
     secs:Math.round(sum.secs), miles:Math.round(sum.miles*1000)/1000, pace:Math.round(sum.pace), climbFt:Math.round(S.climbM*3.28084),
     hr:sum.hr || 0, peakHr:hrs.length ? Math.max(...hrs) : 0, kcal:Math.round(S.devKcal ?? S.kcal), est:S.devKcal == null,
     zoneT:S.zoneT.map(Math.round), trace:S.trace.slice(), weightLb:Math.round(ME.lb || 176), distCal:ME.distCal,
-    board:S.board0 && S.board1 ? { distRaw:S.board1.d - S.board0.d, timeRaw:S.board1.t - S.board0.t } : null };
+    board:S.board0 && S.board1 ? { distRaw:S.board1.d - S.board0.d, timeRaw:S.board1.t - S.board0.t } : null,
+    goal:S.goal ? { kind:S.goal.kind, value:S.goal.value, reached:S.goalHit } : null };
 }
 function recordRun(sum){
   store.set('deck.inflight', '');
@@ -3229,7 +3261,7 @@ function toast(html, withHelp, stay){
 $('toastClose').addEventListener('click', () => $('toast').hidden = true);
 
 /* ---------- sheets ---------- */
-const SHEETS = ['settings', 'upSheet', 'hrSheet', 'help', 'diagSheet', 'tvSheet', 'histSheet', 'meSheet', 'camSheet', 'camLive', 'ivSheet'];
+const SHEETS = ['settings', 'upSheet', 'hrSheet', 'help', 'diagSheet', 'tvSheet', 'histSheet', 'meSheet', 'camSheet', 'camLive', 'ivSheet', 'goalSheet'];
 function openSheet(id){ SHEETS.forEach(s => show(s, s === id)); const b = $(id).querySelector('button'); if(b) b.focus({ preventScroll:true }); }
 function closeSheets(){ SHEETS.forEach(s => show(s, false)); unscroll(); }
 // The page never scrolls, but Android's keyboard (and focusing a field) can push the whole screen up inside
@@ -4036,6 +4068,66 @@ function setIv(k, v){
     holdRepeat('ivu_' + r.k, () => setIv(r.k, IV[r.k] + r.step));
   });
 })();
+
+/* ---------- Goals (1.11.0): a quick start runs to a time or a distance, then cools down ----------
+   deck.goal: { kind:'none'|'time'|'dist', min, mi, cool }. The goal rides on the run (S.goal) from begin();
+   reaching it eases the belt to a walk (3.0 mph at most) at 0% for the cool-down, then the run finishes.
+   Keep going drops the cool-down and carries on as a free run. */
+const GOAL = Object.assign({ kind:'none', min:30, mi:3, cool:3 }, (() => { try{ return JSON.parse(store.get('deck.goal') || '{}') || {}; }catch(_){ return {}; } })());
+const COOL_MPH = 3.0;
+const miStr = v => String(Math.round(v*100)/100);   // 0.25 mi steps: two places, trailing zeros dropped
+const goalLabel = g => !g ? '' : g.kind === 'time' ? Math.round(g.value/60) + ' min' : miStr(g.value) + ' mi';
+function goalLeft(){ const sum = summary(); return S.goal.kind === 'time' ? S.goal.value - sum.secs : S.goal.value - sum.miles; }
+function reachGoal(){
+  S.goalHit = true;
+  if(!S.goal.cool){ finish(false); return; }
+  S.cool = { until:S.elapsed + S.goal.cool*60, len:S.goal.cool*60, kph:S.tKph, inc:S.tInc };
+  drv().setSpeed(Math.min(S.tKph || S.kph, COOL_MPH*MPH)); drv().setIncline(0);
+  setText('coolNext', 'Cooling down at ' + (Math.min((S.tKph || S.kph)/MPH, COOL_MPH)).toFixed(1) + ' mph, incline 0%');
+}
+$('keepGoing').addEventListener('click', () => {
+  if(!S.cool) return;
+  const c = S.cool; S.cool = null;
+  if(S.state === 'running'){ drv().setSpeed(c.kph); drv().setIncline(c.inc); }
+});
+const GOAL_ROWS = {
+  time:{ k:'min', label:'Run for', note:'Minutes', step:5, min:5, max:180, fmt:v => v + ' min' },
+  dist:{ k:'mi', label:'Run to', note:'Miles', step:0.25, min:0.5, max:26.25, fmt:v => miStr(v) + ' mi' },
+  cool:{ k:'cool', label:'Cool down', note:'Minutes at a walk, after the goal', step:1, min:0, max:10, fmt:v => v ? v + ' min' : 'Off' },
+};
+function saveGoal(){ store.set('deck.goal', JSON.stringify(GOAL)); paintGoal(); paintHome(); }
+function paintGoal(){
+  const g = GOAL.kind === 'time' ? { kind:'time', value:GOAL.min*60 } : { kind:'dist', value:GOAL.mi };
+  setText('qsGoalText', GOAL.kind === 'none' ? 'Goal' : goalLabel(g));
+  $('qsGoal').setAttribute('aria-label', GOAL.kind === 'none' ? 'Set a goal' : 'Goal: ' + goalLabel(g));
+  setText('goalSum', GOAL.kind === 'none' ? 'Run as long as you like.' : goalLabel(g) + (GOAL.cool ? ', then ' + GOAL.cool + ' min cool-down' : ', no cool-down'));
+  const cells = $('goalGrid').children;
+  for(const c of cells){ const k = c.dataset.k; c.hidden = GOAL.kind === 'none' || (k === 'min' && GOAL.kind !== 'time') || (k === 'mi' && GOAL.kind !== 'dist'); }
+  setText('goal_min', GOAL_ROWS.time.fmt(GOAL.min)); setText('goal_mi', GOAL_ROWS.dist.fmt(GOAL.mi)); setText('goal_cool', GOAL_ROWS.cool.fmt(GOAL.cool));
+  setText('goalNote', GOAL.kind === 'none' ? 'Pick a time or a distance for quick starts. The run shows what’s left, and ends on its own.'
+    : GOAL.cool ? 'When you reach it the belt eases to a walk and the incline comes down. Keep going on the run screen skips the cool-down.'
+    : 'When you reach it the run ends and the belt stops.');
+}
+(function(){
+  const grid = $('goalGrid');
+  const minus = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>', plus = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>';
+  [GOAL_ROWS.time, GOAL_ROWS.dist, GOAL_ROWS.cool].forEach(r => {
+    const c = document.createElement('div'); c.className = 'ivcell'; c.dataset.k = r.k;
+    c.innerHTML = '<div class="t"><b></b><span></span></div><div class="stepper"><button class="round raised" type="button" id="gd_' + r.k + '">' + minus + '</button><b class="tnum" id="goal_' + r.k + '"></b><button class="round raised" type="button" id="gu_' + r.k + '">' + plus + '</button></div>';
+    c.querySelector('.t b').textContent = r.label; c.querySelector('.t span').textContent = r.note;
+    c.querySelector('#gd_' + r.k).setAttribute('aria-label', 'Less: ' + r.label.toLowerCase());
+    c.querySelector('#gu_' + r.k).setAttribute('aria-label', 'More: ' + r.label.toLowerCase());
+    grid.appendChild(c);
+    const set = v => { GOAL[r.k] = Math.round(clamp(v, r.min, r.max)/r.step)*r.step; if(r.step < 1) GOAL[r.k] = Math.round(GOAL[r.k]*100)/100; saveGoal(); };
+    holdRepeat('gd_' + r.k, () => set(GOAL[r.k] - r.step));
+    holdRepeat('gu_' + r.k, () => set(GOAL[r.k] + r.step));
+  });
+  seg('goalSeg', [{ value:'none', label:'None' }, { value:'time', label:'Time' }, { value:'dist', label:'Distance' }], GOAL.kind, v => { GOAL.kind = v; saveGoal(); });
+  $('qsGoal').addEventListener('click', () => { paintGoal(); openSheet('goalSheet'); });
+  $('goalDone').addEventListener('click', closeSheets);
+  { const gp = $('goalSheet').querySelector('.sheet'); dragToClose(gp, gp); }
+  paintGoal();
+})();
 $('wAdjust').addEventListener('click', () => { paintIv(); openSheet('ivSheet'); });
 $('ivDone').addEventListener('click', closeSheets);
 { const ivPanel = $('ivSheet').querySelector('.sheet'); dragToClose(ivPanel, ivPanel); }
@@ -4109,7 +4201,8 @@ function tick(now){
       const at = segAt(p, S.progT);
       if(!at) finish(false);
       else if(at.i !== S.segIdx){ S.segIdx = at.i; drv().setSpeed(at.seg.mph*MPH); drv().setIncline(at.seg.inc); }
-    }
+    } else if(S.goal && !S.goalHit && goalLeft() <= 0) reachGoal();
+    else if(S.cool && S.elapsed >= S.cool.until){ S.cool = null; finish(false); }
   }
   render();
   requestAnimationFrame(tick);
@@ -4157,7 +4250,18 @@ function render(){
     $('repBar').style.width = (100*(1 - at.left/at.seg.d)).toFixed(1) + '%';
     setText('m4Label', 'Elapsed'); setText('m4', fmtTime(sum.secs));
   } else {
-    show('headline', true); show('repCard', false);
+    show('headline', !S.cool); show('repCard', false);
+    show('coolCard', !!S.cool); show('goalLine', !!S.goal && !S.goalHit);
+    if(S.cool){
+      const left = Math.max(0, S.cool.until - S.elapsed);
+      setText('coolNow', 'Goal reached · ' + goalLabel(S.goal));
+      setText('coolLeft', fmtTime(left));
+      $('coolBar').style.width = (100*(1 - left/S.cool.len)).toFixed(1) + '%';
+    } else if(S.goal && !S.goalHit){
+      const left = Math.max(0, goalLeft()), done = 1 - left/S.goal.value;
+      $('goalBar').style.width = (100*clamp(done, 0, 1)).toFixed(1) + '%';
+      setHTML('goalText', '<b>' + (S.goal.kind === 'time' ? fmtTime(left) : left.toFixed(2) + ' mi') + '</b> to go');
+    }
     setText('elapsedBig', fmtTime(sum.secs)); setText('distBig', sum.miles.toFixed(2));
     setText('m4Label', S.devKcal != null ? 'Calories' : 'Calories (est.)'); setText('m4', String(Math.round(S.devKcal ?? S.kcal)));
   }
