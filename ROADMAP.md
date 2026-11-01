@@ -16,7 +16,7 @@ Started 22 Oct 2026, after 1.8.5. Each release goes out over the air (Settings �
 - [ ] **Workout builder**: make workouts on the Mac or phone (intervals, hills, pace targets); they appear on the treadmill.
 - [x] **Calories from your weight** (1.9.2): Settings → You sets your weight; calories are active calories (what Apple Fitness counts), from speed, incline and weight.
 - [x] **Distance calibration** (1.9.2): a ±% setting in You, from a tape-on-the-belt check. Each run also keeps the motor board's own distance and time counters, to calibrate against.
-- [ ] **Check the board's distance**: after a run or two, compare the board's counters (in `/runs`) with the app's distance; if they're the belt's measured distance, use them.
+- [x] **Check the board's distance** (checked 1 Nov 2026, six runs): the board's time counter matches the app's to the second, but its distance counter reads 0 on every run, so it can't be used. Distance stays the app's own, with the calibration in You.
 
 ## 3. Bigger
 - [ ] **Bluetooth treadmill (FTMS)**: the console shows up to Zwift, Peloton and other apps (on the gym Apple TV) as a smart treadmill: they read speed and set incline.
@@ -24,6 +24,9 @@ Started 22 Oct 2026, after 1.8.5. Each release goes out over the air (Settings �
 - [ ] **Race your past self**: a ghost runner on the lap track from your best at the same workout.
 
 ## 4. Small things
+- [x] **Ring cameras** (1.10.0–1.10.17): pictures and live view through Home Assistant, choose which show, and the doorbell opens on the screen mid-run.
+- [x] **Sleep** (1.10.18): dark after 10 minutes (Settings → Sleep) with the belt stopped; a tap wakes it.
+- [x] **Keep iFit away** (1.10.7–1.10.8) and **crash recovery** (1.10.10): the console stays in front, and a run survives a crash.
 - [ ] **Belt care**: the board's total belt distance, with a reminder when the belt needs lubricating.
 - [ ] **Music**: what's playing on the gym Sonos, with play/pause and skip.
 - [ ] **Coaching cues**: spoken "one minute left", "next: recover", halfway.
