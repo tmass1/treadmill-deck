@@ -16,7 +16,7 @@ import android.view.WindowManager;
 import org.json.JSONObject;
 
 /**
- * Turning the screen fully off when the page sleeps (1.10.19).
+ * Turning the screen fully off when the page sleeps (1.11.1).
  *
  * The page's sleep is a black screen, and the window's backlight override only goes down to the
  * panel's minimum on this console: it still glows (2 Nov 2026). Only Android switching the display

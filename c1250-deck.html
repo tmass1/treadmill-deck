@@ -3980,7 +3980,7 @@ if(NATIVE && NATIVE.setSleep){
     v => { SLEEP.min = v; store.set('deck.sleepMin', String(v)); setText('sleepText', sleepWords(v)); SLEEP.last = Date.now(); });
 }
 
-/* Screen off (1.10.19): sleep's black still glows, so with Try it shown to wake, sleep lets Android switch the
+/* Screen off (1.11.1): sleep's black still glows, so with Try it shown to wake, sleep lets Android switch the
    screen off (ScreenSleep.java): a tap, or the console's Start key, wakes it. */
 function scrStatus(){ try{ return JSON.parse(NATIVE.screenStatus()); }catch(_){ return {}; } }
 function paintScreen(){
