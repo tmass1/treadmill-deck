@@ -2168,6 +2168,9 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 
   <div class="panel toast" id="toast" role="status" hidden><p id="toastText"></p><button class="pill raised" id="toastClose" type="button">Dismiss</button></div>
 
+  <!-- Screen off: Try it -->
+  <div class="sleep" id="scrTest" hidden><span class="note" id="scrTestNote">The screen switches off in about 10 seconds. Then tap it, or press Start on the console, to wake it.</span></div>
+
   <!-- Sleep -->
   <div class="sleep" id="sleep" hidden><span class="note">Going to sleep. Tap to stay awake.</span></div>
 
@@ -2183,7 +2186,8 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
         <div class="srow" id="camRow" hidden><div class="t"><b>Cameras</b><span id="camText">Sign in to Home Assistant to see your Ring cameras here.</span></div><button class="pill raised" id="camSignBtn" type="button">Sign in</button></div>
         <div class="srow" id="awayRow" hidden><div class="t"><b>Keep iFit away</b><span id="awayText">Let C1250 Deck see which app is in front, so it can close iFit's screens when they pop up.</span></div><button class="pill raised" id="awayBtn" type="button">Allow</button></div>
         <div class="srow" id="homeRow" hidden><div class="t"><b>Start on power-up</b><span id="homeText">Make C1250 Deck the home screen so the treadmill opens here, not iFit.</span></div><button class="pill raised" id="homeBtn" type="button">Set up</button></div>
-        <div class="srow" id="sleepRow" hidden><div class="t"><b>Sleep</b><span id="sleepText">The screen goes dark when the belt's stopped and nobody's touched it for a while. Tap to wake.</span></div><div class="seg well" id="sleepSeg" role="radiogroup" aria-label="Sleep after"></div></div>
+        <div class="srow" id="sleepRow" hidden><div class="t"><b>Sleep</b><span id="sleepText">The screen goes dark when the belt's stopped and nobody's touched it for a while. Tap to wake.</span></div><div class="seg well" id="sleepSeg" role="radiogroup" aria-label="Sleep after, in minutes"></div></div>
+        <div class="srow" id="scrRow" hidden><div class="t"><b>Screen off</b><span id="scrText"></span></div><div class="btns"><button class="pill raised" id="scrAllow" type="button" hidden>Allow</button><button class="pill raised" id="scrTry" type="button">Try it</button><button class="pill ghost" id="scrStop" type="button" hidden>Turn off</button></div></div>
         <div class="srow"><div class="t"><b>Software</b><span id="setUp">C1250 Deck</span></div><button class="pill raised" id="setUpBtn" type="button">Check for updates</button></div>
         <div class="srow"><div class="t"><b>Appearance</b><span>Dark is easiest on the eyes mid-run.</span></div><div class="seg well" id="themeSeg" role="radiogroup" aria-label="Appearance"></div></div>
         <div class="srow"><div class="t"><b>Background</b><span>Photos from Unsplash by Brendan Church, Walter Coppola, Wes Hicks and Annie Spratt.</span></div><div class="seg well" id="bgSeg" role="radiogroup" aria-label="Background"></div></div>
@@ -3836,6 +3840,7 @@ window.__deckHr = msg => {
     return;
   }
   if(msg.type === 'update') return onUpdate(msg);
+  if(msg.type === 'screenTest') return onScreenTest(msg);
   if(msg.type === 'bpm') return onBpm(msg.bpm, msg.name);
   if(msg.type === 'devices') return renderHrList(msg.list || []);
   if(msg.type === 'status'){ HR.state = msg.state; HR.message = msg.message || ''; HR.needsLocation = !!msg.needsLocation; if(msg.name) HR.name = msg.name; paintHr(); }
@@ -3971,8 +3976,42 @@ if(NATIVE && NATIVE.setSleep){
   $('sleepRow').hidden = false;
   const sleepWords = m => m ? `The screen goes dark after ${m} minutes with the belt stopped and nobody touching it. Tap to wake.` : 'The screen stays on.';
   setText('sleepText', sleepWords(SLEEP.min));
-  seg('sleepSeg', [{ value:0, label:'Never' }, { value:5, label:'5 min' }, { value:10, label:'10 min' }, { value:20, label:'20 min' }, { value:30, label:'30 min' }], SLEEP.min,
+  seg('sleepSeg', [{ value:0, label:'Never' }, { value:5, label:'5' }, { value:10, label:'10' }, { value:20, label:'20' }, { value:30, label:'30' }], SLEEP.min,
     v => { SLEEP.min = v; store.set('deck.sleepMin', String(v)); setText('sleepText', sleepWords(v)); SLEEP.last = Date.now(); });
+}
+
+/* Screen off (1.10.19): sleep's black still glows, so with Try it shown to wake, sleep lets Android switch the
+   screen off (ScreenSleep.java): a tap, or the console's Start key, wakes it. */
+function scrStatus(){ try{ return JSON.parse(NATIVE.screenStatus()); }catch(_){ return {}; } }
+function paintScreen(){
+  if(!(NATIVE && NATIVE.screenStatus)) return;
+  const st = scrStatus(), needs = !st.canWrite && (st.timeoutMs < 0 || st.timeoutMs > 60000);
+  $('scrRow').hidden = false;
+  setText('scrText', st.enabled
+      ? 'On: the screen switches off when it sleeps. ' + (st.result === 'start' ? 'Press Start on the console to wake it.' : 'A tap wakes it.')
+    : st.result === 'timer' ? 'This console didn’t wake from a full screen-off, so sleep keeps it on, black.'
+    : 'Sleep’s black still glows a little. Try switching the screen fully off; you’ll tap it, or press Start on the console, to wake it.' + (needs ? ' It needs one permission first.' : ''));
+  $('scrAllow').hidden = !needs;
+  $('scrTry').hidden = needs;   // permission first, then the test
+  $('scrStop').hidden = !st.enabled;
+}
+function onScreenTest(msg){
+  $('scrTest').hidden = true;
+  const r = msg.result;
+  toast(r === 'tap' ? '<b>A tap woke it.</b> From now on the screen switches fully off when it sleeps.'
+    : r === 'start' ? '<b>The Start key woke it.</b> A tap didn’t. From now on the screen switches off when it sleeps; press Start on the console to wake it.'
+    : r === 'timer' ? '<b>Nothing woke it,</b> so the app turned it back on. Sleep keeps the screen on, black.'
+    : r === 'stayedOn' ? '<b>The screen didn’t switch off.</b> Tap Allow so the app can shorten Android’s screen timeout while it sleeps, then Try it again.'
+    : '<b>One permission first.</b> Tap Allow, switch on “Modify system settings” for C1250 Deck, come back, then Try it.');
+  paintScreen();
+}
+if(NATIVE && NATIVE.screenStatus){
+  $('scrTry').addEventListener('click', () => { $('scrTest').hidden = false; NATIVE.screenTest(); });
+  $('scrAllow').addEventListener('click', () => NATIVE.openWriteSettings());
+  $('scrStop').addEventListener('click', () => { NATIVE.screenOffEnabled(false); paintScreen(); });
+  paintScreen();
+  const prevWake = window.__deckWake;
+  window.__deckWake = () => { if(prevWake) prevWake(); paintScreen(); };   // back from Android's settings
 }
 
 /* ---------- Home ---------- */

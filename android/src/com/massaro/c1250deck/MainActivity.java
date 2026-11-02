@@ -37,6 +37,7 @@ public class MainActivity extends Activity {
     private Updater updater;
     private HomeAuth ha;
     private boolean hrResumed = false;
+    ScreenSleep sleeper;
 
     @Override
     protected void onCreate(Bundle saved) {
@@ -68,6 +69,7 @@ public class MainActivity extends Activity {
         hr = new HeartRate(this, this::pushHr);
         updater = new Updater(this, this::pushHr);
         ha = new HomeAuth(this, this::pushHr);
+        sleeper = new ScreenSleep(this, this::pushHr);
         web.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView v, String url) {
                 if (!hrResumed) { hrResumed = true; hr.resume(); updater.startup(); }
@@ -133,7 +135,8 @@ public class MainActivity extends Activity {
     protected void onStop() {
         KeepFront.visible = false;
         // Off screen: pause a running belt and let go of the board, so iFit can have it if it's opened.
-        if (hw != null) hw.execute(() -> belt.suspend());
+        // Not when it's our own sleep switching the screen off: then the board's Start key is how it wakes.
+        if (hw != null && !(sleeper != null && (sleeper.sleeping || sleeper.testing))) hw.execute(() -> belt.suspend());
         super.onStop();
     }
 
@@ -208,6 +211,7 @@ public class MainActivity extends Activity {
         if (belt.suspended) return;
         if (usb()) {
             JSONObject st = belt.tick();
+            if (st != null && st.optBoolean("startRequested") && sleeper != null) sleeper.startKey();
             if (st != null) push(st);
             else if (belt.problem != null) push(error("board", belt.problem));
             return;
@@ -374,7 +378,11 @@ public class MainActivity extends Activity {
         /** A current access token for Home Assistant's websocket, or "" (may take a moment: it refreshes when due). */
         @JavascriptInterface public String haToken() { return a.ha.token(); }
         @JavascriptInterface public void haSignOut() { a.ha.signOut(); }
-        @JavascriptInterface public void setSleep(boolean on) { a.setBacklightOff(on); }
+        @JavascriptInterface public void setSleep(boolean on) { a.sleeper.sleep(on); }
+        @JavascriptInterface public String screenStatus() { return a.sleeper.status(); }
+        @JavascriptInterface public void screenOffEnabled(boolean on) { a.sleeper.setEnabled(on); }
+        @JavascriptInterface public void screenTest() { a.sleeper.test(); }
+        @JavascriptInterface public void openWriteSettings() { a.sleeper.openPermission(); }
 
         /** Keep iFit away: can we see which app is in front (Usage access)? */
         @JavascriptInterface public boolean usageAccess() { return KeepFront.usageAccess(a); }
