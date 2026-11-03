@@ -20,7 +20,9 @@ KS="${DECK_KEYSTORE:-$PRIV/keystore/c1250deck.jks}"
 KS_PASS="${KS_PASS:-c1250deck}"
 LIBS="$APP/lib/okhttp-3.14.9.jar:$APP/lib/okio-1.17.6.jar"
 
-rm -rf "$B" && mkdir -p "$B/gen" "$B/obj" "$B/dex" "$B/pkg"
+# Empty the build folder instead of replacing it: a Dropbox ignore mark lives on the folder itself.
+mkdir -p "$B" && find "$B" -mindepth 1 -delete
+mkdir -p "$B/gen" "$B/obj" "$B/dex" "$B/pkg"
 rm -f "$APP/c1250-deck.apk"
 mkdir -p "$APP/assets/www"
 
