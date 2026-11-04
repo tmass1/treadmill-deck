@@ -2192,7 +2192,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
         <div class="srow"><div class="t"><b>Appearance</b><span>Dark is easiest on the eyes mid-run.</span></div><div class="seg well" id="themeSeg" role="radiogroup" aria-label="Appearance"></div></div>
         <div class="srow"><div class="t"><b>Background</b><span>Photos from Unsplash by Brendan Church, Walter Coppola, Wes Hicks and Annie Spratt.</span></div><div class="seg well" id="bgSeg" role="radiogroup" aria-label="Background"></div></div>
         <div class="srow"><div class="t"><b>Finish</b><span>Lit adds light and depth. Flat is plainer.</span></div><div class="seg well" id="finishSeg" role="radiogroup" aria-label="Finish"></div></div>
-        <div class="srow"><div class="t"><b>Treadmill</b><span id="connText">Demo · simulated</span></div><div class="btns"><button class="pill raised" id="connectBtn" type="button">Connect</button><button class="pill raised" id="diagBtn" type="button" hidden>Diagnostics</button><button class="pill ghost" id="helpBtn" type="button">Help</button></div></div>
+        <div class="srow"><div class="t"><b>Treadmill</b><span id="connText">Demo · simulated</span><span id="connCheck" hidden></span></div><div class="btns"><button class="pill raised" id="connectBtn" type="button">Connect</button><button class="pill raised" id="diagBtn" type="button" hidden>Diagnostics</button><button class="pill ghost" id="helpBtn" type="button">Help</button></div></div>
       </div>
       <div class="actions one"><button class="pill lg raised" id="setDone" type="button">Done</button></div>
     </div>
@@ -2317,6 +2317,20 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
   </div>
 
   <!-- Diagnostics (console only) -->
+  <!-- Before the belt moves (canMove). Plain text, not a Notice: Cabin's uses color-mix, past this WebView. -->
+  <div class="overlay" id="safetySheet" hidden>
+    <div class="panel dialog" role="dialog" aria-modal="true" aria-labelledby="safetyTitle" data-density="touch">
+      <h2 id="safetyTitle">Before the belt moves</h2>
+      <p id="safetyUntested" hidden><b>Not tested on this treadmill yet.</b> <span id="safetyUntestedText"></span></p>
+      <ol>
+        <li><b>Clip the safety key to your clothes, every time.</b> The console’s STOP key and the safety key stop the belt on their own, and nothing in this app can override them.</li>
+        <li><b>Stand on the side rails when you start,</b> and keep children and pets away from the belt.</li>
+        <li><b>This is a personal project, used at your own risk.</b> It isn’t made by or connected with NordicTrack, iFit or ICON, and it comes with no warranty. Replacing iFit may affect yours.</li>
+      </ol>
+      <div class="btns"><button class="pill cta" id="safetyOk" type="button">I understand</button><button class="pill ghost" id="safetyLater" type="button">Not now</button></div>
+    </div>
+  </div>
+
   <div class="overlay" id="diagSheet" hidden>
     <div class="panel dialog wide" role="dialog" aria-modal="true" aria-labelledby="diagTitle" data-density="touch">
       <h2 id="diagTitle">Diagnostics</h2>
@@ -2814,7 +2828,8 @@ window.Cabin = Object.assign(window.Cabin || {}, { chart: __cabinChart.chart });
 <script>
 (function(){
 const MPH = 1.609344;
-const SPEED_MIN = 0.5, SPEED_MAX = 12, INC_MIN = -3, INC_MAX = 12;
+/* The treadmill's own limits in mph and %, once its motor board has said (takeBoard). These stand in the demo. */
+let SPEED_MIN = 0.5, SPEED_MAX = 12, INC_MIN = -3, INC_MAX = 12;
 const LAP_M = 400;
 const $ = id => document.getElementById(id);
 const clamp = (v,a,b) => Math.min(b, Math.max(a, v));
@@ -2895,7 +2910,7 @@ const S = {
   trace:[], zoneT:[0,0,0,0,0], nextSample:0,      // the run over time, for Done: a sample every 5 s, and seconds in each zone
 };
 const quick = () => QUICK.find(q => q.id === S.quick) || QUICK[0];
-const quickMph = () => quick().mph;
+const quickMph = () => clamp(quick().mph, SPEED_MIN, SPEED_MAX);
 const quickName = () => quick().name || PROGRAMS.free.name;   // 'Just run' unless the quick start has a name
 
 /* ---------- demo driver ---------- */
@@ -2926,25 +2941,71 @@ function parseTreadmill(dv){
 /* ---------- on-console driver (Android app bridge to the treadmill's motor service) ---------- */
 const NATIVE = window.DeckNative || null;
 const Native = {
-  setSpeed(k){ S.tKph = k; S.nativeCmdAt = performance.now(); NATIVE.setSpeedKph(k); },
-  setIncline(i){ S.tInc = i; S.nativeCmdAt = performance.now(); NATIVE.setIncline(i); },
+  setSpeed(k){ k = clamp(k, SPEED_MIN*MPH, SPEED_MAX*MPH); S.tKph = k; S.nativeCmdAt = performance.now(); NATIVE.setSpeedKph(k); },
+  setIncline(i){ i = clamp(i, INC_MIN, INC_MAX); S.tInc = i; S.nativeCmdAt = performance.now(); NATIVE.setIncline(i); },
   start(){ S.nativeStartAt = performance.now(); NATIVE.start(); }, pause(){ NATIVE.pause(); }, stop(){ NATIVE.stop(); },
 };
-let nativeErr = '', lastConsole = '';
+let nativeErr = '', nativeWhy = '', lastConsole = '';
+const noMotor = () => nativeErr === 'certs'
+  ? '<b>C1250 Deck can’t find this treadmill’s motor.</b> This treadmill may not be supported yet.<br><small>' + esc(nativeWhy) + '</small>'
+  : nativeErr === 'unsupported'
+  ? '<b>C1250 Deck can’t drive this treadmill.</b> ' + esc(nativeWhy)
+  : nativeErr === 'board'
+  ? '<b>Can’t reach the motor.</b> ' + esc(nativeWhy) + ' Retrying…'
+  : '<b>Can’t reach the treadmill’s motor service.</b> Retrying… If this keeps up, restart the treadmill.';
+/* What the board says about itself (Belt.java): its limits, and whether this model has been tested. */
+const BOARD = { compat:'', model:0, seen:'' };
+const pct = v => numStr(v).replace('-', '−');
+const limitsText = () => SPEED_MIN.toFixed(1) + '–' + SPEED_MAX.toFixed(1) + ' mph, ' + pct(INC_MIN) + ' to ' + pct(INC_MAX) + '%';
+function takeBoard(st){
+  const seen = [st.minKph, st.maxKph, st.minIncline, st.maxIncline, st.compat, st.model].join();
+  if(seen === BOARD.seen) return;
+  BOARD.seen = seen; BOARD.compat = st.compat || 'untested'; BOARD.model = st.model || 0;
+  if(st.minKph > 0 && st.maxKph > st.minKph){ SPEED_MIN = Math.round(st.minKph/MPH*10)/10; SPEED_MAX = Math.round(st.maxKph/MPH*10)/10; }
+  if(st.maxIncline > st.minIncline){ INC_MIN = st.minIncline; INC_MAX = st.maxIncline; }
+  // The Intervals sheet offers only what this treadmill can do.
+  IV_ROWS.forEach(r => {
+    if(r.k === 'runMph' || r.k === 'recMph'){ r.min = SPEED_MIN; r.max = SPEED_MAX; }
+    if(r.k === 'inc'){ r.min = Math.max(0, INC_MIN); r.max = INC_MAX; }
+    IV[r.k] = clamp(IV[r.k], r.min, r.max);
+  });
+  Object.assign(PROGRAMS.intervals, buildIntervals(IV));
+  paintIv(); paintHome();
+  setText('connCheck', (BOARD.compat === 'tested' ? 'Tested on this model.' : 'Not tested on this model yet.') + (st.maxKph ? ' ' + limitsText() + '.' : ''));
+  $('connCheck').hidden = false;
+}
+/* Before the belt moves: the motor has to be there, with the safety key in, and this person has read the
+   safety points (and on a model that hasn't been tested, been told so). Agreeing doesn't start the belt: they tap Start again. */
+const SAFETY_V = '1';
+const needsAgreement = () => store.get('deck.safety') !== SAFETY_V || (BOARD.compat === 'untested' && store.get('deck.untested') !== String(BOARD.model));
+function openSafety(){
+  const untested = BOARD.compat === 'untested';
+  $('safetyUntested').hidden = !untested;
+  if(untested) setText('safetyUntestedText', (BOARD.model ? 'Model ' + BOARD.model + ' says it runs ' + limitsText() + ', but C1250' : 'C1250') + ' Deck has only been run on a NordicTrack Commercial 1250. Try Settings → Treadmill → Diagnostics → Belt test first.');
+  openSheet('safetySheet');
+}
+function canMove(){
+  if(!NATIVE) return true;
+  if(connState !== 'live'){
+    toast(nativeErr ? noMotor() : lastConsole === 'SAFETY_KEY' ? '<b>Safety key is out.</b> Clip it back on to start the belt.' : 'Still connecting to the motor. Try again in a moment.');
+    return false;
+  }
+  if(needsAgreement()){ openSafety(); return false; }
+  return true;
+}
 window.__deckNative = st => {
   if(!st.ok){
+    lastConsole = '';   // so the status comes back when the board does, even in the same state
     if(st.error !== nativeErr){
-      nativeErr = st.error;
-      setConn('lost', st.error === 'certs' ? 'Setup incomplete' : st.error === 'board' ? 'Motor not connected' : 'Motor service offline');
-      toast(st.error === 'certs'
-        ? '<b>The treadmill’s certificates aren’t on this console yet.</b> Take a photo of this message.<br><small>' + esc(st.message || '') + '</small>'
-        : st.error === 'board'
-        ? '<b>Can’t reach the motor.</b> ' + esc(st.message || '') + ' Retrying…'
-        : '<b>Can’t reach the treadmill’s motor service.</b> Retrying… If this keeps up, restart the treadmill.', false, st.error !== 'service');
+      nativeErr = st.error; nativeWhy = st.message || '';
+      $('connCheck').hidden = true; BOARD.seen = '';
+      setConn('lost', st.error === 'certs' ? 'Motor not found' : st.error === 'board' ? 'Motor not connected' : st.error === 'unsupported' ? 'Not supported' : 'Motor service offline');
+      toast(noMotor(), false, st.error !== 'service');
     }
     return;
   }
   if(nativeErr){ nativeErr = ''; $('toast').hidden = true; }
+  takeBoard(st);
   S.kph = st.kph; S.incline = st.incline;
   // The USB driver (1.8+) leaves distance, time and calories to the page; GlassOS sent its own.
   if(st.distKm != null) S.devDist = st.distKm*1000;
@@ -3042,13 +3103,14 @@ function resetSession(){
 let wake = null;
 async function holdScreen(on){ try{ if(on && navigator.wakeLock && !wake){ wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => wake = null); } if(!on && wake){ await wake.release(); wake = null; } }catch(_){} }
 function begin(prog){
+  if(!canMove()) return;
   // From Home: 3, 2, 1, then the belt starts.
   resetSession(); S.prog = prog;
   const p = PROGRAMS[prog];
   // A quick start carries the goal set on Home (programs end on their own).
   if(!p.segs.length && GOAL.kind !== 'none') S.goal = { kind:GOAL.kind, value:GOAL.kind === 'time' ? GOAL.min*60 : GOAL.mi, cool:GOAL.cool };
-  const first = p.segs.length ? p.segs[0].mph : quickMph();
-  const firstInc = p.segs.length ? 0 : (quick().inc || 0);
+  const first = p.segs.length ? clamp(p.segs[0].mph, SPEED_MIN, SPEED_MAX) : quickMph();
+  const firstInc = p.segs.length ? 0 : clamp(quick().inc || 0, INC_MIN, INC_MAX);
   setText('countLine', 'Then ' + first.toFixed(1) + ' mph' + (firstInc ? ' at ' + firstInc + '%' : ''));
   let n = 3; setText('countNum', '3'); show('countdown', true);
   clearInterval(begin.t);
@@ -3059,13 +3121,14 @@ function begin(prog){
 }
 $('countCancel').addEventListener('click', () => { clearInterval(begin.t); show('countdown', false); });
 function start(){
-  if(S.state === 'done') resetSession();
   const resuming = S.state === 'paused';
+  if(!resuming && !canMove()) return;   // the motor could have gone during the countdown
+  if(S.state === 'done') resetSession();
   if(!S.runId) S.runId = Date.now();
   S.state = 'running'; drv().start();
   const p = PROGRAMS[S.prog];
   if(p.segs.length) S.segIdx = -1;                 // the loop re-applies the current segment
-  else drv().setSpeed((resuming && S.resumeKph > SPEED_MIN*MPH ? S.resumeKph : (S.tKph >= SPEED_MIN*MPH ? S.tKph : quickMph()*MPH)));
+  else drv().setSpeed((resuming && S.resumeKph > 0 ? S.resumeKph : (S.tKph > 0 ? S.tKph : quickMph()*MPH)));
   if(!p.segs.length) drv().setIncline(resuming ? (S.tInc || 0) : (quick().inc || 0));
   holdScreen(true);
 }
@@ -3267,7 +3330,7 @@ function toast(html, withHelp, stay){
 $('toastClose').addEventListener('click', () => $('toast').hidden = true);
 
 /* ---------- sheets ---------- */
-const SHEETS = ['settings', 'upSheet', 'hrSheet', 'help', 'diagSheet', 'tvSheet', 'histSheet', 'meSheet', 'camSheet', 'camLive', 'ivSheet', 'goalSheet'];
+const SHEETS = ['settings', 'upSheet', 'hrSheet', 'help', 'diagSheet', 'tvSheet', 'histSheet', 'meSheet', 'camSheet', 'camLive', 'ivSheet', 'goalSheet', 'safetySheet'];
 function openSheet(id){ SHEETS.forEach(s => show(s, s === id)); const b = $(id).querySelector('button'); if(b) b.focus({ preventScroll:true }); }
 function closeSheets(){ SHEETS.forEach(s => show(s, false)); unscroll(); }
 // The page never scrolls, but Android's keyboard (and focusing a field) can push the whole screen up inside
@@ -3304,6 +3367,12 @@ if(NATIVE && NATIVE.runDiagnostics){
     setText('diagShareBtn', 'Stop sharing');
   });
   $('diagDone').addEventListener('click', () => { stopShare(); closeSheets(); });
+  $('safetyOk').addEventListener('click', () => {
+    store.set('deck.safety', SAFETY_V);
+    if(BOARD.compat === 'untested') store.set('deck.untested', String(BOARD.model));
+    closeSheets();
+  });
+  $('safetyLater').addEventListener('click', closeSheets);
   /* The site key: the app ships without one, so only the site's owner has this to type in. It turns on backups and reports. */
   if(NATIVE.setSyncKey){
     $('syncRow').hidden = false;
@@ -3329,10 +3398,11 @@ if(NATIVE && NATIVE.runDiagnostics){
     let armed = 0;
     $('diagBelt').hidden = false;
     $('diagBelt').addEventListener('click', () => {
+      if(!canMove()) return;
       diagWant = 'belt'; $('diagSent').hidden = true;
       if(Date.now() - armed > 10000){
         armed = Date.now();
-        $('diagText').textContent = 'The belt will move at its slowest speed (1 mph) for 10 seconds, then stop.\n\nStand on the side rails, not the belt, with the safety key clipped on. The console’s STOP key or the safety key ends it at any time.\n\nTap Start the belt to go.';
+        $('diagText').textContent = 'The belt will move at its slowest speed (' + SPEED_MIN.toFixed(1) + ' mph) for 10 seconds, then stop.\n\nStand on the side rails, not the belt, with the safety key clipped on. The console’s STOP key or the safety key ends it at any time.\n\nTap Start the belt to go.';
         setText('diagBelt', 'Start the belt');
         return;
       }

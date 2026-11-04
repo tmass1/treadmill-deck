@@ -30,6 +30,9 @@ import java.util.TreeMap;
  * Speed and incline are only sent while the belt is running; a value set before that waits.
  * The console's STOP key and the safety key act on the board directly and always win: the next
  * read shows the board's new mode and the page follows it.
+ *
+ * Other treadmills may work. One that answers as a treadmill, has the fields this needs and reports
+ * its limits is "untested": the page says so and asks first. Anything else is refused.
  */
 final class Belt {
     // GlassOS's workout-state numbers, which the page already understands.
@@ -37,9 +40,14 @@ final class Belt {
 
     private static final String[] IFIT = {"com.ifit.arda", "com.ifit.standalone"};
 
+    // The models this has been run on. The limits are what those boards report, in case one doesn't.
+    private static final int[] TESTED = {14124};   // NordicTrack Commercial 1250
+    private static final double TESTED_MIN_KPH = 1.6, TESTED_MAX_KPH = 19.3, TESTED_MIN_GRADE = -3, TESTED_MAX_GRADE = 12;
+
     private final Context ctx;
     private FitPro fp;
     boolean suspended;
+    boolean unsupported;   // this board can't be driven, and trying again won't change that
     private long nextTry;
     String problem;
     private String startupLog = "";
@@ -47,7 +55,7 @@ final class Belt {
     // What the board said last.
     int mode = -1;
     double setKph, kph, setGrade, grade;
-    double minKph = 1.6, maxKph = 19.3, minGrade = -3, maxGrade = 12;
+    double minKph = TESTED_MIN_KPH, maxKph = TESTED_MAX_KPH, minGrade = TESTED_MIN_GRADE, maxGrade = TESTED_MAX_GRADE;
     private boolean startRequested;
     // ACTUAL_KPH and ACTUAL_GRADE read 0 on Tommy's board (1.8.0, 22 Oct): until one ever reads non-zero,
     // the set values stand in for them, or the page's distance never moves.
@@ -79,11 +87,36 @@ final class Belt {
 
     boolean holding() { return fp != null; }
 
+    /** An ICON board this can't speak to, in words for the screen; null if there's none. */
+    String otherBoard() {
+        UsbDevice d = new FitPro(ctx).find();
+        return d != null && d.getProductId() != FitPro.PRODUCT_FITPRO1
+                ? "This treadmill's motor board uses a different protocol, which C1250 Deck can't drive yet." : null;
+    }
+
+    private static boolean tested(FitPro f) {
+        for (int m : TESTED) if (f.model == m) return true;
+        return false;
+    }
+
+    /** Answers as a treadmill or incline trainer, with the fields this writes. */
+    private static boolean drivable(FitPro f) {
+        return (f.device == 4 || f.device == 5)
+                && f.supported.contains(FitPro.F_MODE) && f.supported.contains(FitPro.F_KPH) && f.supported.contains(FitPro.F_GRADE);
+    }
+
+    private boolean refuse(FitPro f, String why) {
+        f.close();
+        unsupported = true;
+        problem = why;
+        return false;
+    }
+
     // ---- connection ----
 
     private boolean ensure() {
         if (fp != null) return true;
-        if (suspended) return false;
+        if (suspended || unsupported) return false;
         long now = System.currentTimeMillis();
         if (now < nextTry) return false;
         nextTry = now + 5000;
@@ -108,6 +141,7 @@ final class Belt {
             }
             f.startup();
             if (!f.unlocked) { f.close(); problem = "The motor board didn't accept the security key."; return false; }
+            if (!tested(f) && !drivable(f)) return refuse(f, "This motor board doesn't offer what C1250 Deck needs to drive a treadmill.");
             // iFit's setup for a treadmill that supports REQUIRE_START_REQUESTED.
             Map<Integer, byte[]> setup = new TreeMap<>();
             if (f.supported.contains(FitPro.F_REQUIRE_START)) setup.put(FitPro.F_REQUIRE_START, new byte[]{1});
@@ -116,11 +150,19 @@ final class Belt {
             for (int x : new int[]{FitPro.F_MIN_KPH, FitPro.F_MAX_KPH, FitPro.F_MIN_GRADE, FitPro.F_MAX_GRADE})
                 if (f.supported.contains(x)) limits.add(x);
             Map<Integer, byte[]> v = f.readWrite(setup, limits);
-            if (v.containsKey(FitPro.F_MIN_KPH)) minKph = FitPro.hundredths(v.get(FitPro.F_MIN_KPH));
-            if (v.containsKey(FitPro.F_MAX_KPH)) maxKph = FitPro.hundredths(v.get(FitPro.F_MAX_KPH));
-            if (v.containsKey(FitPro.F_MIN_GRADE)) minGrade = FitPro.hundredths(v.get(FitPro.F_MIN_GRADE));
-            if (v.containsKey(FitPro.F_MAX_GRADE)) maxGrade = FitPro.hundredths(v.get(FitPro.F_MAX_GRADE));
-            if (minKph <= 0 || maxKph <= minKph) { minKph = 1.6; maxKph = 19.3; }
+            boolean known = v.containsKey(FitPro.F_MIN_KPH) && v.containsKey(FitPro.F_MAX_KPH)
+                    && v.containsKey(FitPro.F_MIN_GRADE) && v.containsKey(FitPro.F_MAX_GRADE);
+            if (known) {
+                minKph = FitPro.hundredths(v.get(FitPro.F_MIN_KPH));
+                maxKph = FitPro.hundredths(v.get(FitPro.F_MAX_KPH));
+                minGrade = FitPro.hundredths(v.get(FitPro.F_MIN_GRADE));
+                maxGrade = FitPro.hundredths(v.get(FitPro.F_MAX_GRADE));
+            }
+            if (!known || minKph <= 0 || maxKph <= minKph || maxGrade <= minGrade) {
+                // Never guess another treadmill's limits.
+                if (!tested(f)) return refuse(f, "This motor board didn't report its speed and incline limits, so C1250 Deck won't drive it.");
+                minKph = TESTED_MIN_KPH; maxKph = TESTED_MAX_KPH; minGrade = TESTED_MIN_GRADE; maxGrade = TESTED_MAX_GRADE;
+            }
             f.note(String.format(Locale.US, "Setup: start key asks first%s, idle lockout off; speed %.1f–%.1f kph, incline %.0f to %.0f%%",
                     setup.containsKey(FitPro.F_REQUIRE_START) ? "" : " (not supported here)", minKph, maxKph, minGrade, maxGrade));
             startupLog = f.log.toString();
@@ -139,6 +181,7 @@ final class Belt {
     private void drop(String why) {
         if (fp != null) fp.close();
         fp = null;
+        modes.clear();
         problem = why;
         nextTry = System.currentTimeMillis() + 2000;
     }
@@ -151,6 +194,7 @@ final class Belt {
         if (test != null) finishTest("Stopped: C1250 Deck left the screen.");
         if (fp != null) fp.close();
         fp = null;
+        modes.clear();
         suspended = true;
     }
 
@@ -159,6 +203,7 @@ final class Belt {
     // ---- commands (from the page) ----
 
     void start() {
+        if (fp == null) return;                            // a start never waits: it would run whenever the board came back
         if (mode == 4) modes.add(1);                       // results → idle first
         modes.add(2);
     }
@@ -258,6 +303,7 @@ final class Belt {
             st.put("minKph", minKph); st.put("maxKph", maxKph);
             if (rawDistance >= 0) { st.put("boardDist", rawDistance); st.put("boardTime", rawTime); }
             st.put("minIncline", minGrade); st.put("maxIncline", maxGrade);
+            st.put("compat", tested(fp) ? "tested" : "untested"); st.put("model", fp.model);
             if (startEdge && (mode == 1 || mode == 3)) st.put("startRequested", true);
             if (cmdError != null) { st.put("cmdError", cmdError); cmdError = null; }
         } catch (Exception ignored) {}
@@ -299,6 +345,7 @@ final class Belt {
         StringBuilder s = new StringBuilder("Motor link (C1250 Deck is driving the belt over USB)\n\n");
         if (!ensure()) return s.append(problem == null ? "The board isn't connected." : problem).append('\n').toString();
         s.append(startupLog).append('\n');
+        s.append(tested(fp) ? "This model has been tested with C1250 Deck.\n" : "This model hasn't been tested with C1250 Deck.\n");
         s.append("Supported fields: ").append(fp.supported).append('\n');
         s.append(String.format(Locale.US, "Now: mode %s · set %.2f kph · belt %.2f kph · set %.1f%% · deck %.1f%% · calories raw %d · distance raw %d · time raw %d\n",
                 name(mode), setKph, kph, setGrade, grade, calories, rawDistance, rawTime));

@@ -214,9 +214,11 @@ public class MainActivity extends Activity {
             JSONObject st = belt.tick();
             if (st != null && st.optBoolean("startRequested") && sleeper != null) sleeper.startKey();
             if (st != null) push(st);
-            else if (belt.problem != null) push(error("board", belt.problem));
+            else if (belt.problem != null) push(error(belt.unsupported ? "unsupported" : "board", belt.problem));
             return;
         }
+        String other = belt.otherBoard();
+        if (other != null) { push(error("unsupported", other)); return; }
         if (!ensureReady()) return;
         try {
             JSONObject st = new JSONObject();
