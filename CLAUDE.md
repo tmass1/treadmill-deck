@@ -42,7 +42,7 @@ put a key, a keystore, an APK, a home address or an account id in this repo; it 
 - Home sits on a photo: `bg/` holds four cool-graded Unsplash photos and pre-blurred twins (credits in `bg/CREDITS.md`); cards are frosted by lining the blurred twin up behind them (`placeFrost`), never with `backdrop-filter`.
 
 ## Publishing an update
-1. `bash android/release.sh <version> "<notes>"`: bumps the version, builds and signs, writes the APK and `manifest.json` to the private repo's `releases/`, and puts both in KV (`upd:*`) with wrangler (needs `CLOUDFLARE_API_TOKEN`; the account id is in `secrets.env`).
+1. `bash android/release.sh <version> "<notes>"`: bumps the version, builds and signs, writes the APK and `manifest.json` to the private repo's `releases/`, and puts both in KV (`upd:*`) with wrangler (its own login, or `CLOUDFLARE_API_TOKEN` if set; the account id is in `secrets.env`).
 2. Commit the version bump here and `releases/` in the private repo; push both.
 3. Site or Worker changes: `npx wrangler@4 deploy` (runs `tools/make-site.mjs`).
 4. The app reads `<site>/update/manifest.json` (`Updater.DEFAULT_MANIFEST`) with the key. It must stay reachable: moving it needs a release from the old URL first.

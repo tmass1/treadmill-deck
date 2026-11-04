@@ -10,7 +10,8 @@
 # Settings > Check for updates.
 #
 # The same signing key must sign every release: Android refuses an update signed with another key.
-# Publishing needs CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (from the environment or secrets.env).
+# Publishing uses wrangler's own login (npx wrangler@4 login) or CLOUDFLARE_API_TOKEN if set, and
+# CLOUDFLARE_ACCOUNT_ID (from the environment or secrets.env).
 set -euo pipefail
 
 APP="$(cd "$(dirname "$0")" && pwd)"
@@ -43,16 +44,12 @@ json.dump({"versionCode": int(code), "versionName": name, "apk": apk, "sha256": 
            "size": int(size), "notes": notes}, open(out, "w"), indent=2)
 PY
 echo
-if [ -n "${CLOUDFLARE_API_TOKEN:-}" ]; then
-  cd "$APP/.."
-  if npx -y wrangler@4 kv key put "upd:$APK" --path "$OUT/$APK" --binding REPORTS --remote >/dev/null \
-     && npx -y wrangler@4 kv key put "upd:manifest.json" --path "$OUT/manifest.json" --binding REPORTS --remote >/dev/null; then
-    echo "Published $VNAME to the update channel."
-  else
-    echo "Publishing failed; the files are in $OUT."
-  fi
+cd "$APP/.."
+if npx -y wrangler@4 kv key put "upd:$APK" --path "$OUT/$APK" --binding REPORTS --remote >/dev/null \
+   && npx -y wrangler@4 kv key put "upd:manifest.json" --path "$OUT/manifest.json" --binding REPORTS --remote >/dev/null; then
+  echo "Published $VNAME to the update channel."
 else
-  echo "Set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID to publish; the files are in $OUT."
+  echo "Publishing failed (log in with npx wrangler@4 login, or set CLOUDFLARE_API_TOKEN); the files are in $OUT."
 fi
 echo "Release $VNAME (versionCode $NEW). Commit the version bump here, and releases/ in the private repo."
 cat "$OUT/manifest.json"

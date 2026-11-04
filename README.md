@@ -82,7 +82,7 @@ bash android/release.sh 1.9.3 "What's new"
 ```
 
 It bumps the version, builds, writes the APK and manifest to the private folder's `releases/`, and
-publishes both to the update channel (Cloudflare KV; needs `CLOUDFLARE_API_TOKEN`). Consoles offer the
+publishes both to the update channel (Cloudflare KV; needs wrangler's login or `CLOUDFLARE_API_TOKEN`). Consoles offer the
 update within 6 hours, or straight away from Settings → Check for updates. Site changes deploy with
 `npx wrangler@4 deploy`.
 
