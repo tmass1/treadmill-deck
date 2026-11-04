@@ -42,6 +42,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle saved) {
         super.onCreate(saved);
+        Reports.load(this);
         // A crash leaves its stack trace in crash.txt, sent to the site's report box (kind "crash") next start.
         final Thread.UncaughtExceptionHandler prev = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
@@ -58,7 +59,7 @@ public class MainActivity extends Activity {
         // The display stays powered (Android's own screen-off might not wake on a tap on this console);
         // sleep is the page's black screen plus the backlight turned off (setBacklightOff).
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        WebView.setWebContentsDebuggingEnabled(true);
+        if ((getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) WebView.setWebContentsDebuggingEnabled(true);
 
         web = new WebView(this);
         WebSettings s = web.getSettings();
@@ -371,7 +372,17 @@ public class MainActivity extends Activity {
             }, "deck-run").start();
         }
 
-        /** Cameras: Home Assistant's own sign-in (HomeAuth). base is like http://192.168.4.31:80. */
+        /** Are backups and reports on? Only once the site's owner has typed in the key (Reports). */
+        @JavascriptInterface public boolean syncOn() { return Reports.on(); }
+        /** Saves the site key once the site accepts it; the answer comes back as {type:'syncKey'}. */
+        @JavascriptInterface public void setSyncKey(String key) {
+            new Thread(() -> {
+                String why = Reports.setKey(a, key);
+                try { a.pushHr(new JSONObject().put("type", "syncKey").put("ok", why == null).put("why", why == null ? "" : why)); } catch (Exception ignored) {}
+            }, "deck-key").start();
+        }
+
+        /** Cameras: Home Assistant's own sign-in (HomeAuth). base is like http://192.168.1.20:8123. */
         @JavascriptInterface public void haSignIn(String base) { a.ha.signIn(base); }
         @JavascriptInterface public boolean haSignedIn() { return a.ha.signedIn(); }
         @JavascriptInterface public String haBase() { return a.ha.base(); }

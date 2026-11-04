@@ -95,6 +95,7 @@ public class KeepFront extends Service {
 
     @Override public void onCreate() {
         super.onCreate();
+        Reports.load(this);
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         Notification.Builder b;
         if (Build.VERSION.SDK_INT >= 26) {

@@ -35,7 +35,7 @@ import java.util.concurrent.Executors;
 public class Updater {
     public interface Sink { void send(JSONObject msg); }
 
-    static final String DEFAULT_MANIFEST = Secrets.SITE + "/update/manifest.json";
+    static final String DEFAULT_MANIFEST = Secrets.SITE + "/app/manifest.json";   // the public channel (worker/index.js)
     static final String ACTION_STATUS = "com.massaro.c1250deck.INSTALL_STATUS";
 
     /** The live updater, so UpdateReceiver can report install results back to the screen. */
@@ -193,7 +193,6 @@ public class Updater {
 
     private static byte[] get(String url) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
-        c.setRequestProperty("X-Deck-Key", Secrets.DECK_KEY);   // the update channel is private (worker/index.js)
         c.setConnectTimeout(10000);
         c.setReadTimeout(15000);
         c.setUseCaches(false);
@@ -211,7 +210,6 @@ public class Updater {
 
     private void download(URL url, File out, long expected) throws Exception {
         HttpURLConnection c = (HttpURLConnection) url.openConnection();
-        c.setRequestProperty("X-Deck-Key", Secrets.DECK_KEY);
         c.setConnectTimeout(10000);
         c.setReadTimeout(20000);
         c.setUseCaches(false);

@@ -3,6 +3,15 @@
 What's next for the treadmill console, in order. Tick items off as they ship (version in brackets).
 Started 22 Oct 2026, after 1.8.5. Each release goes out over the air (Settings → Check for updates).
 
+## Sharing it with other owners
+The current goal, in this order. Until it's done, the app isn't ready to hand to anyone else.
+- [ ] **A key-free public build**: one APK with nothing private in it, on a public update channel; backups and reports only for the site's owner.
+- [ ] **Treadmill check**: the screen reads the treadmill's real speed and incline limits, checks the treadmill is compatible, and asks for a safety agreement before the belt moves.
+- [ ] **Setup wizard**: first-run setup, including an optional Home Assistant step that lists the owner's own devices to pick from. Without Home Assistant, those buttons stay hidden.
+- [ ] **Install guide**: on the site, with photos, including blocking iFit's updates and going back to iFit.
+- [ ] **Private test**: 2–3 owners, ideally on another model.
+- [ ] **FAQs**, from what those owners ask. Then go public.
+
 ## 1. Your runs, kept
 - [x] **Workout history** (1.9.0): every run of a minute or more is saved on the console: date, workout, time, miles, pace, climb, heart rate, the run over time. A History sheet from Home: this week's runs, miles and time, the streak, personal bests, and every run, each opening its own summary.
 - [x] **Personal bests** (1.9.0): longest run, longest time, fastest pace over a mile, most climb. A new best says so on the Done screen.

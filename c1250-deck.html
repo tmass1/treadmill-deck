@@ -2320,10 +2320,12 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
   <div class="overlay" id="diagSheet" hidden>
     <div class="panel dialog wide" role="dialog" aria-modal="true" aria-labelledby="diagTitle" data-density="touch">
       <h2 id="diagTitle">Diagnostics</h2>
-      <p>How this console reaches the motor: the hardware C1250 Deck can see, and what the iFit apps' code mentions. Each result goes to Claude by itself — no photos needed.</p>
+      <p>How this console reaches the motor: the hardware C1250 Deck can see, and what the iFit apps' code mentions.<span id="diagSends" hidden> Each result goes to Claude by itself — no photos needed.</span></p>
       <pre class="diagtext cb-t-code" id="diagText">Running…</pre>
       <p id="diagSent" hidden></p>
       <p id="diagShare" hidden></p>
+      <div class="srow" id="syncRow" hidden><div class="t"><b>Site key</b><span id="syncText"></span></div>
+        <div class="btns" style="flex-wrap:nowrap;flex:none"><input class="cb-input" id="syncKey" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Site key" style="width:220px"><button class="pill raised" id="syncSave" type="button">Save</button></div></div>
       <div class="btns"><button class="pill raised" id="diagRun" type="button">Run again</button><button class="pill raised" id="diagMotor" type="button" hidden>Motor link</button><button class="pill raised" id="diagBelt" type="button" hidden>Belt test</button><button class="pill raised" id="diagShareBtn" type="button">Share iFit apps</button><button class="pill ghost" id="diagDone" type="button">Done</button></div>
     </div>
   </div>
@@ -2935,7 +2937,7 @@ window.__deckNative = st => {
       nativeErr = st.error;
       setConn('lost', st.error === 'certs' ? 'Setup incomplete' : st.error === 'board' ? 'Motor not connected' : 'Motor service offline');
       toast(st.error === 'certs'
-        ? '<b>The treadmill’s certificates aren’t on this console yet.</b> Send a photo of this message to Claude.<br><small>' + esc(st.message || '') + '</small>'
+        ? '<b>The treadmill’s certificates aren’t on this console yet.</b> Take a photo of this message.<br><small>' + esc(st.message || '') + '</small>'
         : st.error === 'board'
         ? '<b>Can’t reach the motor.</b> ' + esc(st.message || '') + ' Retrying…'
         : '<b>Can’t reach the treadmill’s motor service.</b> Retrying… If this keeps up, restart the treadmill.', false, st.error !== 'service');
@@ -3283,6 +3285,11 @@ $('setDone').addEventListener('click', closeSheets);
 $('helpBtn').addEventListener('click', () => openSheet('help'));
 /* Diagnostics: how iFit reaches the motor on this console (see Diagnostics.java). */
 let diagWant = 'report';   // the sheet shows only the result you asked for last; every result is still sent
+function paintSync(){
+  const on = NATIVE.syncOn();
+  $('diagSends').hidden = !on;
+  setText('syncText', on ? 'On. Runs back up and reports go to the site.' : 'For the site’s owner, to back up runs and send reports. Anyone else can ignore this.');
+}
 if(NATIVE && NATIVE.runDiagnostics){
   $('diagBtn').hidden = false;
   const runDiag = () => { diagWant = 'report'; $('diagSent').hidden = true; $('diagText').textContent = 'Running… this takes a few seconds.'; NATIVE.runDiagnostics(); };
@@ -3297,6 +3304,17 @@ if(NATIVE && NATIVE.runDiagnostics){
     setText('diagShareBtn', 'Stop sharing');
   });
   $('diagDone').addEventListener('click', () => { stopShare(); closeSheets(); });
+  /* The site key: the app ships without one, so only the site's owner has this to type in. It turns on backups and reports. */
+  if(NATIVE.setSyncKey){
+    $('syncRow').hidden = false;
+    paintSync();
+    $('syncSave').addEventListener('click', () => {
+      const typed = $('syncKey').value.trim();
+      if(!typed) return $('syncKey').focus();
+      setText('syncText', 'Checking…');
+      NATIVE.setSyncKey(typed);
+    });
+  }
   /* The USB motor link (Belt.java, FitPro.java): how the board answered, and what it says now. Moves nothing. */
   if(NATIVE.motorTest){
     $('diagMotor').hidden = false;
@@ -3691,7 +3709,7 @@ if(haCan()){
     if(haIn()){ NATIVE.haSignOut(); stopLive(); if(HA.ws) HA.ws.close(); HA.cams = []; paintCamRow(); return; }
     store.set('deck.ha', $('haAddr').value.trim());
     const b = haBase();
-    if(!b){ $('haAddr').focus(); toast('Put Home Assistant’s address in first, like 192.168.4.31:80.'); return; }
+    if(!b){ $('haAddr').focus(); toast('Put Home Assistant’s address in first, like 192.168.1.20:8123.'); return; }
     NATIVE.haSignIn(b);
   });
   setTimeout(haConnect, 2500);
@@ -3833,8 +3851,16 @@ window.__deckHr = msg => {
     return;
   }
   if(msg.type === 'diag'){ if(!msg.kind || msg.kind === diagWant) $('diagText').textContent = msg.text; return; }
+  if(msg.type === 'syncKey'){
+    if(!msg.ok) return setText('syncText', msg.why);
+    $('syncKey').value = '';
+    paintSync();
+    syncRuns();   // anything that waited for the key
+    return;
+  }
   if(msg.type === 'diagSent'){
     if(msg.kind && msg.kind !== diagWant) return;
+    if(!NATIVE.syncOn()) return;
     $('diagSent').hidden = false;
     $('diagSent').textContent = msg.ok ? 'Sent to Claude. You can tap Done.' : 'Couldn’t send it (' + msg.why + '). Photos still work.';
     return;

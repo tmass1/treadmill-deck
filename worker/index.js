@@ -1,10 +1,14 @@
 // Treadmill Deck site Worker. The static site in ./site (the project page at /, the web console at
-// /console/) plus three private parts, each behind the deck key (the DECK_KEY secret, sent as the
-// X-Deck-Key header or ?k=):
+// /console/), the public update channel, and three private parts, each behind the deck key (the
+// DECK_KEY secret, sent as the X-Deck-Key header or ?k=).
 //
-//   GET  /update/manifest.json, /update/<apk>   the app's update channel, from KV (upd:<name>);
-//                                              release.sh puts them there. UPDATE_OPEN=1 lets it
-//                                              through without the key (consoles older than 1.9.3).
+//   GET  /app/manifest.json, /app/<apk>         the public update channel, from KV (pub:<name>);
+//                                              release.sh puts them there, once it has checked the
+//                                              APK holds no key. It can reach nothing but pub:.
+//
+//   GET  /update/manifest.json, /update/<apk>   the old channel, from KV (upd:<name>), for consoles
+//                                              before the public one. Those APKs hold the key, so it
+//                                              stays private. UPDATE_OPEN=1 would open it: don't.
 //
 // /diag/, the console's report box:
 //
@@ -28,6 +32,7 @@ const MAX = 512 * 1024;
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
+    if (url.pathname.startsWith('/app/')) return channel(env, url.pathname.slice('/app/'.length), 'pub:', 'public');
     if (url.pathname.startsWith('/update/')) return update(req, env, url);
     if (url.pathname === '/runs' || url.pathname.startsWith('/runs/')) return runs(req, env, url);
     if (url.pathname === '/console') return Response.redirect(url.origin + '/console/', 301);
@@ -71,17 +76,20 @@ const keyed = (req, env, url) => {
   return !!env.DECK_KEY && key === env.DECK_KEY;
 };
 
-// ---- the update channel, from KV ----
+// ---- the update channels, from KV ----
 async function update(req, env, url) {
   if (!keyed(req, env, url) && env.UPDATE_OPEN !== '1') return new Response('Not found', { status: 404 });
-  const name = url.pathname.slice('/update/'.length);
+  return channel(env, url.pathname.slice('/update/'.length), 'upd:', 'private');
+}
+
+async function channel(env, name, prefix, cache) {
   if (!/^[\w.-]+$/.test(name)) return new Response('Not found', { status: 404 });
-  const body = await env.REPORTS.get('upd:' + name, 'arrayBuffer');
+  const body = await env.REPORTS.get(prefix + name, 'arrayBuffer');
   if (!body) return new Response('Not found', { status: 404 });
   const apk = name.endsWith('.apk');
   return new Response(body, { headers: {
     'content-type': apk ? 'application/vnd.android.package-archive' : 'application/json; charset=utf-8',
-    'cache-control': apk ? 'private, max-age=31536000, immutable' : 'no-store',
+    'cache-control': apk ? cache + ', max-age=31536000, immutable' : 'no-store',
   } });
 }
 

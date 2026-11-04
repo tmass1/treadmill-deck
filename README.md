@@ -18,8 +18,8 @@ generation, but it hasn't been tried on any.
 - **Heart rate** from any Bluetooth heart-rate strap, or an Apple Watch through a broadcast app.
 - **After the run:** heart rate, speed and incline over time, and time in each zone.
 - **History:** every run kept, with weekly totals, a streak and personal bests.
-- **Apple Fitness:** runs go to the site, and an iPhone Shortcut logs them as workouts so they count
-  toward the rings (steps below).
+- **Apple Fitness:** for now only with your own site and key: runs go to the site, and an iPhone
+  Shortcut logs them as workouts so they count toward the rings (steps below).
 - **Calories** from your weight, as active calories (what Apple Fitness counts); a distance calibration.
 - **Home Assistant** (optional): a gym lights button and a TV remote (arrows, OK, Back, Home,
   Play/Pause, volume, and Netflix, Prime Video and Spotify).
@@ -36,8 +36,10 @@ generation, but it hasn't been tried on any.
   first, since only one app can hold the board. Older consoles with iFit's separate GlassOS service are
   driven over its local gRPC API instead (`GlassOS.java`).
 - **The site** (`worker/index.js` on Cloudflare Workers, data in KV): the project page, the web
-  console, and three parts behind a private key: the app's update channel, the Diagnostics report box,
-  and the run store that feeds Apple Fitness.
+  console, the app's public update channel, and three parts behind a private key: the old update
+  channel, the Diagnostics report box, and the run store that feeds Apple Fitness.
+- **What leaves the treadmill:** the app checks the site for updates. Without a site key (Settings →
+  Treadmill → Diagnostics), it uploads nothing, and runs stay on the console.
 
 ## Layout
 
@@ -66,8 +68,10 @@ That gives `android/c1250-deck.apk`. Private settings come from a folder next to
   `CLOUDFLARE_ACCOUNT_ID`
 - `keystore/c1250deck.jks`, the signing key
 
-Without it, the build makes a throwaway signing key and leaves uploads and updates off. Keep your
-signing key safe: a console only takes updates signed with the key it was installed with.
+Without it, the build makes a throwaway signing key. The site key never goes in the APK: you type it
+into the console (Settings → Treadmill → Diagnostics → Site key), and `release.sh` stops if the APK
+holds it. Keep your signing key safe: a console only takes updates signed with the key it was
+installed with.
 
 ## Install on a treadmill
 
@@ -81,8 +85,8 @@ In the app, Settings → Start on power-up makes it the treadmill's home screen.
 bash android/release.sh 1.9.3 "What's new"
 ```
 
-It bumps the version, builds, writes the APK and manifest to the private folder's `releases/`, and
-publishes both to the update channel (Cloudflare KV; needs wrangler's login or `CLOUDFLARE_API_TOKEN`). Consoles offer the
+It bumps the version, builds, checks the APK holds nothing private, writes the APK and manifest to the
+private folder's `releases/`, and publishes both to the update channels (Cloudflare KV; needs wrangler's login or `CLOUDFLARE_API_TOKEN`). Consoles offer the
 update within 6 hours, or straight away from Settings → Check for updates. Site changes deploy with
 `npx wrangler@4 deploy`.
 
