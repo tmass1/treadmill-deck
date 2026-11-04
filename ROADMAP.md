@@ -5,7 +5,7 @@ Started 22 Oct 2026, after 1.8.5. Each release goes out over the air (Settings â
 
 ## Sharing it with other owners
 The current goal, in this order. Until it's done, the app isn't ready to hand to anyone else.
-- [ ] **A key-free public build**: one APK with nothing private in it, on a public update channel; backups and reports only for the site's owner.
+- [x] **A key-free public build** (1.12.0): one APK with nothing private in it, on a public update channel; backups and reports only for the site's owner.
 - [ ] **Treadmill check**: the screen reads the treadmill's real speed and incline limits, checks the treadmill is compatible, and asks for a safety agreement before the belt moves.
 - [ ] **Setup wizard**: first-run setup, including an optional Home Assistant step that lists the owner's own devices to pick from. Without Home Assistant, those buttons stay hidden.
 - [ ] **Install guide**: on the site, with photos, including blocking iFit's updates and going back to iFit.
