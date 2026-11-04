@@ -1844,7 +1844,9 @@ code{font-family:var(--font-mono);font-size:.9em;padding:2px 6px;border-radius:v
 .closing h2{margin:0;font-size:clamp(28px,4vw,40px);font-weight:400;letter-spacing:-.02em}
 .closing p{margin:12px auto 0;max-width:56ch;color:var(--muted-foreground);font-size:17px}
 footer{padding:48px 0 56px;color:var(--muted-foreground);font-size:14px;display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
-footer a{color:var(--foreground)}
+/* The signature bar's Inter. Chrome ignores @font-face inside a shadow root, so it's declared here too;
+   signature.js stays identical to the shared copy. */
+@font-face{font-family:SignatureInter;font-weight:100 900;font-display:swap;src:url(/signature/assets/inter.woff2) format("woff2")}
 
 @media (max-width:980px){
   .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -1992,9 +1994,11 @@ footer a{color:var(--foreground)}
 
   <footer>
     <span>Not affiliated with NordicTrack, iFit or ICON. The console's STOP key and safety key always override the app.</span>
-    <span>By <a href="https://tommymassaro.com">Tommy Massaro</a> · Photos from Unsplash</span>
+    <span>Photos from Unsplash</span>
   </footer>
 </div>
+<tommy-signature appearance="dark" current-product="c1250-deck"></tommy-signature>
+<script type="module" src="/signature/signature.js"></script>
 <script>
 // The top bar: gathers into a floating pane once the page scrolls, marks the section in view, and opens
 // a menu on narrow screens.

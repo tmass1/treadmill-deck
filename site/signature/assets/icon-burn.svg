@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+<title>Burn — Midnight app icon</title>
+<desc>Editable vector recreation of the Burn Ring concept with soft dimensional red gradients.</desc>
+<defs>
+ <linearGradient id="tile" x1="120" y1="32" x2="790" y2="992" gradientUnits="userSpaceOnUse"><stop stop-color="#253550"/><stop offset=".44" stop-color="#111929"/><stop offset="1" stop-color="#0B1322"/></linearGradient>
+ <linearGradient id="rim" x1="512" y1="32" x2="512" y2="992" gradientUnits="userSpaceOnUse"><stop stop-color="#6B84AA" stop-opacity=".55"/><stop offset=".38" stop-color="#6B84AA" stop-opacity=".04"/><stop offset="1" stop-color="#6B84AA" stop-opacity=".3"/></linearGradient>
+ <linearGradient id="red" x1="317" y1="766" x2="703" y2="245" gradientUnits="userSpaceOnUse"><stop stop-color="#BD0029"/><stop offset=".38" stop-color="#E20C29"/><stop offset=".76" stop-color="#FA3435"/><stop offset="1" stop-color="#FF583F"/></linearGradient>
+ <linearGradient id="shine" x1="375" y1="280" x2="622" y2="791" gradientUnits="userSpaceOnUse"><stop stop-color="#FFBC92" stop-opacity=".58"/><stop offset=".23" stop-color="#FF8064" stop-opacity=".25"/><stop offset=".6" stop-color="#FF524D" stop-opacity="0"/><stop offset="1" stop-color="#FF5339" stop-opacity=".25"/></linearGradient>
+ <linearGradient id="flame" x1="646" y1="322" x2="698" y2="169" gradientUnits="userSpaceOnUse"><stop stop-color="#C6002B"/><stop offset=".48" stop-color="#F32132"/><stop offset="1" stop-color="#FF6043"/></linearGradient>
+ <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%"><feGaussianBlur stdDeviation="12"/></filter>
+ <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="7"/></filter>
+ <mask id="symbol"><path d="M 480,326 C 350,319 242,416 238,550 C 233,694 344,800 483,800 C 632,800 746,692 746,551 C 746,512 740,479 729,449" stroke="white" stroke-width="116" stroke-linecap="round"/><path d="M 679,139 C 669,191 720,216 727,261 C 735,303 705,337 674,367 C 668,331 628,319 624,279 C 618,232 654,188 679,139 Z" fill="white"/></mask>
+</defs>
+<rect x="32" y="32" width="960" height="960" rx="211" fill="url(#tile)"/>
+<rect x="35" y="35" width="954" height="954" rx="208" stroke="url(#rim)" stroke-width="6"/>
+<g transform="translate(0 16)" opacity=".3" filter="url(#shadow)"><path d="M 480,326 C 350,319 242,416 238,550 C 233,694 344,800 483,800 C 632,800 746,692 746,551 C 746,512 740,479 729,449" stroke="#390311" stroke-width="116" stroke-linecap="round"/><path d="M 679,139 C 669,191 720,216 727,261 C 735,303 705,337 674,367 C 668,331 628,319 624,279 C 618,232 654,188 679,139 Z" fill="#390311"/></g>
+<path d="M 480,326 C 350,319 242,416 238,550 C 233,694 344,800 483,800 C 632,800 746,692 746,551 C 746,512 740,479 729,449" stroke="url(#red)" stroke-width="116" stroke-linecap="round"/>
+<path d="M 679,139 C 669,191 720,216 727,261 C 735,303 705,337 674,367 C 668,331 628,319 624,279 C 618,232 654,188 679,139 Z" fill="url(#flame)"/>
+<g mask="url(#symbol)">
+ <path d="M 480,326 C 350,319 242,416 238,550 C 233,694 344,800 483,800 C 632,800 746,692 746,551 C 746,512 740,479 729,449" transform="translate(-13 -17)" stroke="url(#shine)" stroke-width="68" stroke-linecap="round" filter="url(#soft)"/>
+ <path d="M 669,170 C 649,229 629,268 650,297" stroke="#FFB28C" stroke-opacity=".45" stroke-width="10" stroke-linecap="round" filter="url(#soft)"/>
+ <path d="M 273,641 C 315,756 433,796 524,779" stroke="#FF563E" stroke-opacity=".38" stroke-width="15" filter="url(#soft)"/>
+</g>
+</svg>

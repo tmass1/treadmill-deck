@@ -103,6 +103,8 @@ off that app's own workout saving, or each run counts twice.
 ## License
 
 MIT (see `LICENSE`). The Home photos keep the Unsplash License, and the libraries their own.
+`site/signature/` is Tommy's shared signature bar and isn't covered by the MIT License: its product
+names, icons and wordmark stay his, and Inter has its own license (`assets/INTER-LICENSE.txt` there).
 
 ## Credits
 
