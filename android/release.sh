@@ -61,7 +61,8 @@ json.dump({"versionCode": int(code), "versionName": name, "apk": apk, "sha256": 
 PY
 echo
 cd "$APP/.."
-put() { npx -y wrangler@4 kv key put "$1" --path "$2" --binding REPORTS --remote >/dev/null; }
+# Wrangler's login lasts an hour, and the first request after it lapses can be refused: try once more.
+put() { npx -y wrangler@4 kv key put "$1" --path "$2" --binding REPORTS --remote >/dev/null || npx -y wrangler@4 kv key put "$1" --path "$2" --binding REPORTS --remote >/dev/null; }
 if put "pub:$APK" "$OUT/$APK" && put "pub:manifest.json" "$OUT/manifest.json" \
    && put "upd:$APK" "$OUT/$APK" && put "upd:manifest.json" "$OUT/manifest.json"; then
   echo "Published $VNAME to the update channels."
