@@ -2914,14 +2914,14 @@ const quickMph = () => clamp(quick().mph, SPEED_MIN, SPEED_MAX);
 const quickName = () => quick().name || PROGRAMS.free.name;   // 'Just run' unless the quick start has a name
 
 /* ---------- demo driver ---------- */
-const Demo = { setSpeed(k){ S.tKph = k; }, setIncline(i){ S.tInc = i; }, start(){}, pause(){ S.tKph = 0; }, stop(){ S.tKph = 0; } };
+const Demo = { setSpeed(k){ S.tKph = k; }, setIncline(i){ S.tInc = i; }, start(){}, pause(){ S.tKph = 0; }, stop(){ S.tKph = 0; S.tInc = 0; } };
 
 /* ---------- Bluetooth FTMS driver ---------- */
 const FTMS = { dev:null, ctrl:null, q:Promise.resolve(),
   send(bytes){ this.q = this.q.then(() => { if(!this.ctrl) return; const v = new Uint8Array(bytes); return this.ctrl.writeValueWithResponse ? this.ctrl.writeValueWithResponse(v) : this.ctrl.writeValue(v); }).catch(e => console.warn('FTMS', e)); return this.q; },
   setSpeed(k){ S.tKph = k; const v = Math.round(k*100); this.send([0x02, v & 255, (v >> 8) & 255]); },
   setIncline(i){ S.tInc = i; const v = Math.round(i*10) & 0xffff; this.send([0x03, v & 255, (v >> 8) & 255]); },
-  start(){ this.send([0x07]); }, pause(){ this.send([0x08, 0x02]); }, stop(){ this.send([0x08, 0x01]); },
+  start(){ this.send([0x07]); }, pause(){ this.send([0x08, 0x02]); }, stop(){ this.setIncline(0); this.send([0x08, 0x01]); },
 };
 function parseTreadmill(dv){
   const r = {}; let o = 0; const f = dv.getUint16(o, true); o += 2;

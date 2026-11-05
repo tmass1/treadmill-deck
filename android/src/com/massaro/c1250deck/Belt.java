@@ -28,6 +28,7 @@ import java.util.TreeMap;
  *
  * The workout mode (field 12) is the switch: 2 runs, 3 pauses, 4 ends (results), 1 is idle.
  * Speed and incline are only sent while the belt is running; a value set before that waits.
+ * The one exception is the end of a workout, which takes the deck back to 0% (levelUntil).
  * The console's STOP key and the safety key act on the board directly and always win: the next
  * read shows the board's new mode and the page follows it.
  *
@@ -69,6 +70,11 @@ final class Belt {
     private int sentMode = -1;
     private long sentModeAt, resultsSince;
     private String cmdError;
+    // A workout ended: ask for 0% with the stop, then every tick until the board reads it back at idle,
+    // or this time passes (0: not levelling). A pulled safety key cancels it, and never starts it:
+    // clipping the key back on isn't asking the deck to move.
+    private static final long LEVEL_MS = 20_000;
+    private long levelUntil;
 
     // The belt test (Diagnostics), run inside tick() so STOP still works during it.
     interface Done { void report(String text); }
@@ -182,6 +188,7 @@ final class Belt {
         if (fp != null) fp.close();
         fp = null;
         modes.clear();
+        levelUntil = 0;
         problem = why;
         nextTry = System.currentTimeMillis() + 2000;
     }
@@ -195,6 +202,7 @@ final class Belt {
         if (fp != null) fp.close();
         fp = null;
         modes.clear();
+        levelUntil = 0;
         suspended = true;
     }
 
@@ -204,6 +212,7 @@ final class Belt {
 
     void start() {
         if (fp == null) return;                            // a start never waits: it would run whenever the board came back
+        levelUntil = 0;                                    // the new workout sets its own incline
         if (mode == 4) modes.add(1);                       // results → idle first
         modes.add(2);
     }
@@ -213,7 +222,7 @@ final class Belt {
     void stop() {
         wantKph = null; wantGrade = null;
         if (test != null && !testStopped) { testStopped = true; testLog.append("STOP pressed.\n"); }
-        if (running(mode) || mode == 3) modes.add(4);
+        if (running(mode) || mode == 3) { modes.add(4); levelUntil = System.currentTimeMillis() + LEVEL_MS; }
         else if (!modes.isEmpty()) modes.clear();          // a start still queued: don't send it
     }
 
@@ -239,6 +248,8 @@ final class Belt {
             if (wantKph != null) { w.put(FitPro.F_KPH, FitPro.hundredths(wantKph)); wantKph = null; }
             if (wantGrade != null) { w.put(FitPro.F_GRADE, FitPro.hundredths(wantGrade)); wantGrade = null; }
         }
+        double flat = Math.max(minGrade, Math.min(maxGrade, 0));
+        if (levelUntil != 0) w.put(FitPro.F_GRADE, FitPro.hundredths(flat));
         List<Integer> r = new ArrayList<>();
         for (int x : new int[]{FitPro.F_KPH, FitPro.F_GRADE, FitPro.F_MODE, FitPro.F_ACTUAL_KPH, FitPro.F_ACTUAL_GRADE,
                 FitPro.F_START_REQUESTED, FitPro.F_CALORIES, FitPro.F_DISTANCE, FitPro.F_RUN_TIME})
@@ -284,6 +295,10 @@ final class Belt {
             if (resultsSince == 0) resultsSince = now;
             if (now - resultsSince > 2500 && modes.isEmpty()) { modes.add(1); resultsSince = Long.MAX_VALUE / 2; }
         } else resultsSince = 0;
+
+        // The workout ended, whoever ended it (our stop, or the console's STOP key): level the deck.
+        if ((running(was) || was == 3) && (mode == 4 || mode == 1) && modes.isEmpty()) levelUntil = now + LEVEL_MS;
+        if (levelUntil != 0 && (mode == 8 || now > levelUntil || (mode == 1 && Math.abs(setGrade - flat) < 0.05))) levelUntil = 0;
 
         if (test != null) testStep(now, v, was);
 

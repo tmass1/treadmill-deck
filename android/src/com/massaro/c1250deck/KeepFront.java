@@ -19,6 +19,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.os.SystemClock;
 
 import java.text.SimpleDateFormat;
@@ -105,7 +106,10 @@ public class KeepFront extends Service {
         notif = b.setSmallIcon(R.drawable.ic_launcher).setContentTitle("C1250 Deck").setContentText("Keeping the console in front").build();
         startForeground(7, notif);
         screen = new BroadcastReceiver() {
-            @Override public void onReceive(Context c, Intent i) { note("screen: " + i.getAction()); extend(120); }
+            @Override public void onReceive(Context c, Intent i) {
+                note("screen: " + i.getAction());
+                if (!Intent.ACTION_SCREEN_OFF.equals(i.getAction())) extend(120);
+            }
         };
         IntentFilter f = new IntentFilter(Intent.ACTION_SCREEN_ON);
         f.addAction(Intent.ACTION_USER_PRESENT);
@@ -144,7 +148,7 @@ public class KeepFront extends Service {
     private void tick() {
         long now = SystemClock.elapsedRealtime();
         if (now > until) { ticking = false; note("window over (" + relaunches + " relaunches)"); return; }
-        if (!visible && now - leftAt > 10 * 60_000L) {
+        if (!visible && screenOn() && now - leftAt > 10 * 60_000L) {
             // At most 20 tries a window (about a minute of trying): past that, whatever is in front
             // is probably there on purpose (privileged mode, Android settings), so leave it.
             if (windowTries >= 20) { ticking = false; until = 0; note("gave up after 20 tries" + lockState()); report("Gave up: something else stayed in front"); return; }
@@ -162,7 +166,7 @@ public class KeepFront extends Service {
     private void watch() {
         h.postDelayed(this::watch, 2000);
         long now = SystemClock.elapsedRealtime();
-        if (visible || now < pauseUntil || now - leftAt < 10 * 60_000L || !usageAccess(this)) return;
+        if (visible || !screenOn() || now < pauseUntil || now - leftAt < 10 * 60_000L || !usageAccess(this)) return;
         String fg = front(this);
         if (!fg.startsWith("com.ifit.")) return;
         while (!recent.isEmpty() && now - recent.peekFirst() > 60_000L) recent.pollFirst();
@@ -174,6 +178,11 @@ public class KeepFront extends Service {
         try {
             startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
         } catch (Exception e) { note("relaunch refused: " + e.getMessage()); }
+    }
+
+    /** With the screen off, the app not being "in front" is just sleep: bringing it forward would wake the console. */
+    private boolean screenOn() {
+        try { return ((PowerManager) getSystemService(POWER_SERVICE)).isInteractive(); } catch (Exception e) { return true; }
     }
 
     /** " · kiosk lock: locked" when a lock task is holding the screen. */

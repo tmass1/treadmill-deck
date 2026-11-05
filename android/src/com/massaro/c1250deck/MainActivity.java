@@ -126,10 +126,21 @@ public class MainActivity extends Activity {
     protected void onStart() {
         super.onStart();
         KeepFront.visible = true;
-        // Coming back to the screen always wakes it.
+        if (hw != null) hw.execute(() -> belt.resume());
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Coming back to the screen always wakes it. Android can also run this with the screen off, if
+        // something starts the app while it sleeps: nobody came back, so it stays asleep.
+        if (((android.os.PowerManager) getSystemService(POWER_SERVICE)).isInteractive()) wakePage();
+    }
+
+    /** Someone came back: the page wakes, and tells ScreenSleep to hold the screen again. */
+    void wakePage() {
         setBacklightOff(false);
         if (web != null) web.evaluateJavascript("window.__deckWake && window.__deckWake()", null);
-        if (hw != null) hw.execute(() -> belt.resume());
     }
 
     @Override

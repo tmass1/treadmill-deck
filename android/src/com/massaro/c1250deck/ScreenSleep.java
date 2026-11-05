@@ -161,6 +161,10 @@ final class ScreenSleep {
             String by = wokeBy != null ? wokeBy : "tap";
             holdScreen();
             result(by);
+        } else if (sleeping) {
+            // A tap the moment the screen went off comes back without the activity ever pausing, so nothing
+            // else tells the page. Wait a second: this console has said "on" just before "off" (3 Nov report).
+            h.postDelayed(() -> { if (sleeping && pm.isInteractive()) a.wakePage(); }, 1000);
         }
         wokeBy = null;
     }
@@ -168,6 +172,7 @@ final class ScreenSleep {
     private void result(String r) {
         testing = false;
         if (r.equals("tap") || r.equals("start")) setEnabled(true);
+        else if (r.equals("timer")) setEnabled(false);   // nothing woke it: never leave it able to go dark for good
         if (!r.equals("permission")) prefs.edit().putString("result", r).apply();
         note("result: " + r);
         try { push.push(new JSONObject().put("type", "screenTest").put("result", r).put("status", new JSONObject(status()))); } catch (Exception ignored) {}
