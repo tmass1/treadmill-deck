@@ -327,6 +327,11 @@ public class MainActivity extends Activity {
             });
         }
 
+        /** Diagnostics → Sleep log: what the page saw, what the screen did, and what the keep-in-front helper did. */
+        @JavascriptInterface public void sleepReport(String page) {
+            a.reportLater("sleep", page + "\n\nThe screen (seconds):\n" + a.sleeper.log() + "\nKeeping the console in front:\n" + KeepFront.log());
+        }
+
         /** The belt test: the slowest speed for 10 seconds, then stop (Belt.beltTest). */
         @JavascriptInterface public void beltTest() {
             a.hw.execute(() -> {

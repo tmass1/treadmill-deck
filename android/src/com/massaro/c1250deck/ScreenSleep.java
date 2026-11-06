@@ -86,6 +86,7 @@ final class ScreenSleep {
 
     /** The page went to sleep (black) or woke. */
     void sleep(boolean on) {
+        note(on ? "the page went black" + (enabled() ? ", letting the screen go off" : ", screen off isn't on") : "the page woke");
         sleeping = on;
         a.setBacklightOff(on);
         if (on && enabled()) letScreenGo();
@@ -179,6 +180,8 @@ final class ScreenSleep {
         final String text = "Screen off test: " + r + "\n" + status() + "\n\n" + log;
         new Thread(() -> Reports.send("sleep", "", text), "deck-sleep").start();
     }
+
+    synchronized String log() { return log.toString(); }
 
     private synchronized void note(String s) {
         if (log.length() > 4000) log.delete(0, 1000);

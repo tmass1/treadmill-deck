@@ -71,6 +71,9 @@ public class KeepFront extends Service {
            .append(" (+").append(SystemClock.elapsedRealtime() / 1000).append("s) ").append(s).append('\n');
     }
 
+    /** The newest of what it's seen and done, for Diagnostics → Sleep log. */
+    static synchronized String log() { return LOG.substring(Math.max(0, LOG.length() - 3000)); }
+
     /** Has Usage access been granted (Settings → Keep iFit away)? It's how we see which app is in front. */
     static boolean usageAccess(Context c) {
         try {

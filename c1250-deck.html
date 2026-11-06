@@ -2351,7 +2351,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
       <p id="diagShare" hidden></p>
       <div class="srow" id="syncRow" hidden><div class="t"><b>Site key</b><span id="syncText"></span></div>
         <div class="btns" style="flex-wrap:nowrap;flex:none"><input class="cb-input" id="syncKey" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Site key" style="width:220px"><button class="pill raised" id="syncSave" type="button">Save</button></div></div>
-      <div class="btns"><button class="pill raised" id="diagRun" type="button">Run again</button><button class="pill raised" id="diagMotor" type="button" hidden>Motor link</button><button class="pill raised" id="diagBelt" type="button" hidden>Belt test</button><button class="pill raised" id="diagShareBtn" type="button">Share iFit apps</button><button class="pill ghost" id="diagDone" type="button">Done</button></div>
+      <div class="btns"><button class="pill raised" id="diagRun" type="button">Run again</button><button class="pill raised" id="diagMotor" type="button" hidden>Motor link</button><button class="pill raised" id="diagBelt" type="button" hidden>Belt test</button><button class="pill raised" id="diagSleep" type="button" hidden>Sleep log</button><button class="pill raised" id="diagShareBtn" type="button">Share iFit apps</button><button class="pill ghost" id="diagDone" type="button">Done</button></div>
     </div>
   </div>
 
@@ -3032,7 +3032,7 @@ window.__deckNative = st => {
   }
   // The console's own Start key: the board asks (REQUIRE_START_REQUESTED) and the page answers.
   if(st.startRequested){
-    if(typeof wakeScreen === 'function') wakeScreen();
+    if(typeof wakeScreen === 'function') wakeScreen('the Start key');
     if(S.state === 'paused') start();
     else if((S.state === 'idle' || S.state === 'done') && $('countdown').hidden) begin('free');
   }
@@ -3558,7 +3558,7 @@ function onDing(ev){
   const t = ev && ev.variables && ev.variables.trigger; if(!t) return;
   const from = t.from_state, to = t.to_state;
   if(!from || !to || from.state === to.state || /unavailable|unknown/.test(from.state) || to.state === 'unavailable') return;
-  if(typeof wakeScreen === 'function') wakeScreen();   // the doorbell wakes a sleeping console
+  if(typeof wakeScreen === 'function') wakeScreen('the doorbell');   // the doorbell wakes a sleeping console
   openLive(t.entity_id.replace(/^event\./, 'camera.').replace(/_ding$/, '_live_view'), true);
 }
 
@@ -4060,33 +4060,53 @@ if(NATIVE && NATIVE.updateCheck){
 // touch (a paused workout waits at least 20), a minute of dim with a countdown, then black, and the app
 // turns the backlight off (NATIVE.setSleep). A tap on the countdown snoozes it for 20 minutes, however
 // short the setting. Asleep, a tap, the console's Start key, the doorbell or the app coming back wakes it.
-const SLEEP = { min:(() => { const v = parseInt(store.get('deck.sleepMin'), 10); return isNaN(v) ? 10 : v; })(), last:Date.now(), stage:0, floor:0, state:S.state };
-const SLEEP_COUNT_S = 60, SNOOZE_MIN = 20, PAUSED_MIN = 20;
-const sleepOk = () => S.state !== 'running' && $('countdown').hidden && $('camLive').hidden
-  && UP.state !== 'downloading' && UP.state !== 'installing' && UP.state !== 'confirm';
+// A live camera or an update under way holds sleep off, but only for 30 minutes after the last touch: a
+// view left open, or an update prompt nobody answered, must not keep the screen lit for good.
+// Diagnostics → Sleep log shows what happened and why (sleepReport).
+const SLEEP = { min:(() => { const v = parseInt(store.get('deck.sleepMin'), 10); return isNaN(v) ? 10 : v; })(), last:Date.now(), touch:Date.now(), stage:0, floor:0, state:S.state, hold:'', holdAt:0, log:[] };
+const SLEEP_COUNT_S = 60, SNOOZE_MIN = 20, PAUSED_MIN = 20, HOLD_MAX_MIN = 30;
+function sleepLog(s){ SLEEP.log.push(new Date().toLocaleTimeString() + '  ' + s); if(SLEEP.log.length > 80) SLEEP.log.shift(); }
+const sleepHold = () => !$('countdown').hidden ? 'the workout countdown' : !$('camLive').hidden ? 'a live camera'
+  : UP.state === 'downloading' || UP.state === 'installing' || UP.state === 'confirm' ? 'an update (' + UP.state + ')' : '';
+const sleepHeld = () => SLEEP.hold && Date.now() - Math.max(SLEEP.holdAt, SLEEP.touch) < HOLD_MAX_MIN*60000;
 const sleepAt = () => Math.max(SLEEP.last + (S.state === 'paused' ? Math.max(SLEEP.min, PAUSED_MIN) : SLEEP.min)*60000, SLEEP.floor);
 function sleepStage(n){
   if(SLEEP.stage === n) return;
   SLEEP.stage = n;
+  sleepLog(n === 2 ? 'black' : n === 1 ? 'countdown' : 'awake');
   $('sleep').hidden = n === 0;
   $('sleep').classList.toggle('dark', n === 2);
+  if(n === 2 && !$('camLive').hidden){ stopLive(); closeSheets(); }   // nobody's watching: stop the stream
   if(NATIVE && NATIVE.setSleep) NATIVE.setSleep(n === 2);
 }
-function wakeScreen(){ SLEEP.last = Date.now(); sleepStage(0); }
-window.__deckWake = wakeScreen;
+function wakeScreen(why){ if(SLEEP.stage) sleepLog('woken by ' + (why || 'something else')); SLEEP.last = SLEEP.touch = Date.now(); sleepStage(0); }
+// Worth noting even when awake: the app coming back restarts the timer, so often enough would stop sleep.
+window.__deckWake = () => { sleepLog('the app came back to the screen'); wakeScreen('the app coming back'); };
 $('sleep').addEventListener('click', () => {
-  if(SLEEP.stage !== 1) return wakeScreen();   // asleep: the tap just wakes it
+  if(SLEEP.stage !== 1) return wakeScreen('a tap');   // asleep: the tap just wakes it
   SLEEP.floor = Date.now() + SNOOZE_MIN*60000;
-  wakeScreen();
+  wakeScreen('Snooze');
   toast('<b>Snoozed.</b> Sleep in ' + SNOOZE_MIN + ' minutes.');
 });
 // Any touch or key keeps it awake (while it's awake; asleep, the overlay takes the tap).
-['pointerdown', 'touchstart', 'keydown'].forEach(t => addEventListener(t, () => { if(!SLEEP.stage) SLEEP.last = Date.now(); }, true));
+['pointerdown', 'touchstart', 'keydown'].forEach(t => addEventListener(t, () => { if(!SLEEP.stage) SLEEP.last = SLEEP.touch = Date.now(); }, true));
+const sleepAgo = at => { const m = Math.round((Date.now() - at)/60000); return m + ' min ago'; };
+function sleepReportText(){
+  const left = sleepAt() - Date.now();
+  return ['Sleep log',
+    'Sleep setting: ' + (SLEEP.min ? SLEEP.min + ' min' : 'Never') + ' · workout: ' + S.state + ' · stage: ' + ['awake', 'countdown', 'black'][SLEEP.stage],
+    'Held off by: ' + (S.state === 'running' ? 'the belt running' : sleepHeld() ? SLEEP.hold : 'nothing'),
+    'Last touch: ' + sleepAgo(SLEEP.touch) + ' · sleep due in: ' + (SLEEP.min ? Math.max(0, Math.round(left/60000)) + ' min' : 'never'),
+    'Update: ' + UP.state + ' · screen off: ' + (NATIVE && NATIVE.screenStatus ? NATIVE.screenStatus() : '?'),
+    '', 'What happened:'].concat(SLEEP.log.length ? SLEEP.log : ['Nothing yet since the app started.']).join('\n');
+}
 if(NATIVE && NATIVE.setSleep){
   setInterval(() => {
     // A workout starting, pausing or ending, from here or the console's own keys, means someone's there.
-    if(S.state !== SLEEP.state){ SLEEP.state = S.state; wakeScreen(); }
-    if(!SLEEP.min || !sleepOk()){ SLEEP.last = Date.now(); if(SLEEP.stage) sleepStage(0); return; }
+    if(S.state !== SLEEP.state){ sleepLog('workout: ' + SLEEP.state + ' to ' + S.state); SLEEP.state = S.state; wakeScreen('the workout changing'); }
+    const hold = sleepHold();
+    if(hold !== SLEEP.hold){ sleepLog(hold ? 'held off by ' + hold : 'no longer held off'); SLEEP.hold = hold; SLEEP.holdAt = Date.now(); }
+    if(!SLEEP.min || S.state === 'running' || sleepHeld()){ SLEEP.last = Date.now(); if(SLEEP.stage) sleepStage(0); return; }
     const left = sleepAt() - Date.now();
     if(left <= 0) sleepStage(2);
     else if(left <= SLEEP_COUNT_S*1000){ setText('sleepLeft', String(Math.ceil(left/1000))); sleepStage(1); }
@@ -4130,6 +4150,14 @@ if(NATIVE && NATIVE.screenStatus){
   paintScreen();
   const prevWake = window.__deckWake;
   window.__deckWake = () => { if(prevWake) prevWake(); paintScreen(); };   // back from Android's settings
+}
+if(NATIVE && NATIVE.sleepReport && NATIVE.runDiagnostics){
+  $('diagSleep').hidden = false;
+  $('diagSleep').addEventListener('click', () => {
+    diagWant = 'sleep'; $('diagSent').hidden = true;
+    $('diagText').textContent = 'Reading the sleep log…';
+    NATIVE.sleepReport(sleepReportText());
+  });
 }
 
 /* ---------- Home ---------- */
