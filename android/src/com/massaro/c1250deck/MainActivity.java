@@ -38,6 +38,7 @@ public class MainActivity extends Activity {
     private HomeAuth ha;
     private boolean hrResumed = false;
     ScreenSleep sleeper;
+    PhoneLink phone;
 
     @Override
     protected void onCreate(Bundle saved) {
@@ -71,6 +72,8 @@ public class MainActivity extends Activity {
         updater = new Updater(this, this::pushHr);
         ha = new HomeAuth(this, this::pushHr);
         sleeper = new ScreenSleep(this, this::pushHr);
+        phone = new PhoneLink(this, this::pushHr);
+        phone.startIfOn();
         web.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView v, String url) {
                 if (!hrResumed) { hrResumed = true; hr.resume(); updater.startup(); }
@@ -174,6 +177,12 @@ public class MainActivity extends Activity {
         new Thread(() -> reportOut(kind, text), "deck-report").start();
     }
 
+    /** A pause from the phone that the page didn't answer: the belt can't wait for it. */
+    void phoneHalt() { command("pause", () -> belt.pause(), () -> glass.pause()); }
+
+    /** Can a phone start the belt right now? Only with this app in front, or asleep in front, holding the board. */
+    boolean phoneCanStart() { return KeepFront.visible || (sleeper != null && sleeper.sleeping); }
+
     /** Is the USB motor board the driver? (It is whenever one is plugged in.) */
     private boolean usb() { return belt.holding() || belt.attached(); }
 
@@ -193,6 +202,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         Diagnostics.stopShare();
+        if (phone != null) phone.shutdown();
         if (hr != null) hr.shutdown();
         if (hw != null) { hw.execute(() -> belt.suspend()); hw.shutdown(); }
         if (web != null) web.destroy();
@@ -407,6 +417,18 @@ public class MainActivity extends Activity {
         /** A current access token for Home Assistant's websocket, or "" (may take a moment: it refreshes when due). */
         @JavascriptInterface public String haToken() { return a.ha.token(); }
         @JavascriptInterface public void haSignOut() { a.ha.signOut(); }
+        /** The phone companion (PhoneLink): workouts built on a phone. */
+        @JavascriptInterface public String phoneStatus() { return a.phone.status(); }
+        @JavascriptInterface public void phoneOn(boolean on) { a.phone.setOn(on); }
+        @JavascriptInterface public void phoneForget() { a.phone.forget(); }
+        @JavascriptInterface public String phoneData() { return a.phone.data(); }
+        @JavascriptInterface public void phoneNext(String id) { a.phone.setNext(id); }
+        @JavascriptInterface public void phoneTell(double mphMin, double mphMax, double incMin, double incMax, boolean busy) { a.phone.tell(mphMin, mphMax, incMin, incMax, busy); }
+        /** Control from phone: off until someone allows it here. Commands reach the page as {type:'phoneCmd'}, and it answers with phoneAnswer. */
+        @JavascriptInterface public void phoneControl(boolean on) { a.phone.setControl(on); }
+        @JavascriptInterface public String phoneRun(String json) { return a.phone.run(json); }
+        @JavascriptInterface public void phoneAnswer(double id, boolean ok, String why) { a.phone.answer((long) id, ok, why); }
+
         @JavascriptInterface public void setSleep(boolean on) { a.sleeper.sleep(on); }
         @JavascriptInterface public String screenStatus() { return a.sleeper.status(); }
         @JavascriptInterface public void screenOffEnabled(boolean on) { a.sleeper.setEnabled(on); }

@@ -1636,17 +1636,18 @@ img{display:block;max-width:100%;height:auto}
   transition:transform .16s ease,box-shadow .2s ease,background .16s ease}
 .pill:active{transform:scale(.97)}
 .pill .ico{width:20px;height:20px}
-/* The one action: the aqua-to-blue fill lit from above (a bright top edge, a faint rim, a deeper foot), a
-   label with a whisper of shadow so white holds on the bright cyan, and on hover a lift, more glow and a
-   sweep of light across. */
-.cta{--rim:inset 0 1px 0 color-mix(in srgb,var(--cta-foreground) 55%,transparent),inset 0 0 0 1px color-mix(in srgb,var(--cta-foreground) 16%,transparent),inset 0 -2px 6px color-mix(in srgb,var(--cta-to) 70%,var(--background));
-  position:relative;isolation:isolate;overflow:hidden;background:var(--cta-fill);color:var(--cta-foreground);
-  text-shadow:0 1px 1px color-mix(in srgb,var(--cta-to) 60%,var(--background));box-shadow:var(--rim),var(--shadow-cta)}
+/* Main and raised buttons, as on the console: the depth comes from the edges. Four layers: the fill, a 1px border
+   that's darkest at the bottom, a 1px inner line that's light along the top and faintly dark along the bottom, and a
+   faint neutral shadow. On hover, a small lift and a sweep of light across. */
+:root,[data-theme="dark"]{--paint-btn-drop:0 1px 2px #00000080;--paint-btn-lift:0 8px 16px -8px #00000099;--paint-cta-edge:linear-gradient(180deg,#3fc3d8,#1f7fcf);--paint-cta-press:linear-gradient(180deg,#1fcbe0,#2a8fe6);--paint-cta-ink:#0b1a24;--paint-cta-hi:#ffffff4d;--paint-cta-ring:#ffffff14;--paint-cta-lo:#0b1a241f;--paint-raised-edge:linear-gradient(180deg,#3a3d44,#0a0b0d);--paint-raised-hi:#ffffff14;--paint-raised-ring:#ffffff08;--paint-raised-lo:#00000040}
+[data-theme="light"]{--paint-btn-drop:0 1px 2px #1213161f;--paint-btn-lift:0 8px 16px -8px #12131640;--paint-raised-edge:linear-gradient(180deg,#e2e4e8,#b4b8bf);--paint-raised-hi:#ffffffcc;--paint-raised-ring:#ffffff00;--paint-raised-lo:#1213160f}
+.cta{--rim:inset 0 1px 0 var(--paint-cta-hi),inset 0 0 0 1px var(--paint-cta-ring),inset 0 -1px 0 var(--paint-cta-lo);
+  position:relative;isolation:isolate;overflow:hidden;border:1px solid transparent;background:var(--cta-fill) padding-box,var(--paint-cta-edge) border-box;color:var(--paint-cta-ink);box-shadow:var(--rim),var(--paint-btn-drop)}
 .cta::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transform:translateX(-110%);
   background:linear-gradient(105deg,transparent 30%,color-mix(in srgb,var(--cta-foreground) 38%,transparent) 50%,transparent 70%);transition:transform .7s cubic-bezier(.3,.7,.2,1)}
-.cta:hover{transform:translateY(-1px);box-shadow:var(--rim),var(--shadow-cta),0 16px 36px -10px color-mix(in srgb,var(--cta-to) 80%,transparent)}
+.cta:hover{transform:translateY(-1px);box-shadow:var(--rim),var(--paint-btn-drop),var(--paint-btn-lift)}
 .cta:hover::after{transform:translateX(110%)}
-.cta:active{transform:scale(.97)}
+.cta:active{transform:scale(.97);background:var(--paint-cta-press) padding-box,var(--paint-cta-edge) border-box}
 .cta:focus-visible{outline:none;box-shadow:var(--rim),var(--focus-ring)}
 .cta .ico{stroke-width:2.25}
 /* the play button's own chip, at the leading end */
@@ -1654,8 +1655,8 @@ img{display:block;max-width:100%;height:auto}
   background:color-mix(in srgb,var(--cta-foreground) 22%,transparent);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--cta-foreground) 45%,transparent);transition:background .16s ease,transform .2s ease}
 .go .ico{width:14px;height:14px;stroke-width:2.5;margin-left:2px}
 .cta:hover .go{background:color-mix(in srgb,var(--cta-foreground) 32%,transparent);transform:scale(1.06)}
-.raised{background:var(--lit-raised);color:var(--foreground);box-shadow:var(--shadow-raised),inset 0 0 0 1px var(--border)}
-.raised:hover{background:var(--lit-raised-hover);transform:translateY(-1px)}
+.raised{border:1px solid transparent;background:var(--lit-raised) padding-box,var(--paint-raised-edge) border-box;color:var(--foreground);box-shadow:inset 0 1px 0 var(--paint-raised-hi),inset 0 0 0 1px var(--paint-raised-ring),inset 0 -1px 0 var(--paint-raised-lo),var(--paint-btn-drop)}
+.raised:hover{background:var(--lit-raised-hover) padding-box,var(--paint-raised-edge) border-box;transform:translateY(-1px)}
 .raised:active{transform:scale(.97)}
 .raised:focus-visible{outline:none;box-shadow:var(--focus-ring)}
 .ico{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}

@@ -1636,8 +1636,14 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 [data-finish="lit"] .panel{background:var(--lit-surface);box-shadow:var(--shadow-lit)}
 
 /* raised pressables, wells and the CTA follow the finish */
+/* Main and raised buttons (1.14.0): the depth comes from the edges. This sits on top of Cabin's Lit finish, in this product only.
+   Four layers: the fill, a 1px border that's darkest at the bottom, a 1px inner line that's light along the top and
+   faintly dark along the bottom, and a faint neutral shadow in place of a coloured glow. The border is a gradient under
+   the fill (padding-box over border-box), which also stops the fill repeating under a transparent border. */
+:root,[data-theme="dark"]{--paint-btn-drop:0 1px 2px #00000080;--paint-cta-edge:linear-gradient(180deg,#3fc3d8,#1f7fcf);--paint-cta-press:linear-gradient(180deg,#1fcbe0,#2a8fe6);--paint-cta-ink:#0b1a24;--paint-cta-hi:#ffffff4d;--paint-cta-ring:#ffffff14;--paint-cta-lo:#0b1a241f;--paint-cta-shade:#0b1a2433;--paint-raised-edge:linear-gradient(180deg,#3a3d44,#0a0b0d);--paint-raised-hi:#ffffff14;--paint-raised-ring:#ffffff08;--paint-raised-lo:#00000040}
+[data-theme="light"]{--paint-btn-drop:0 1px 2px #1213161f;--paint-raised-edge:linear-gradient(180deg,#e2e4e8,#b4b8bf);--paint-raised-hi:#ffffffcc;--paint-raised-ring:#ffffff00;--paint-raised-lo:#1213160f}
 .raised{background:var(--secondary);color:var(--secondary-foreground);transition:transform .1s ease}
-[data-finish="lit"] .raised{background:var(--lit-raised);box-shadow:var(--shadow-raised)}
+[data-finish="lit"] .raised{border:1px solid transparent;background:var(--lit-raised) padding-box,var(--paint-raised-edge) border-box;box-shadow:inset 0 1px 0 var(--paint-raised-hi),inset 0 0 0 1px var(--paint-raised-ring),inset 0 -1px 0 var(--paint-raised-lo),var(--paint-btn-drop)}
 .raised:active{transform:scale(.97)}
 [data-finish="lit"] .raised:active{box-shadow:var(--shadow-pressed)}
 .well{background:var(--muted)}
@@ -1646,9 +1652,10 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 [data-finish="lit"] .well,.app[data-photo] .home .seg.well{box-shadow:inset 0 1px 2px var(--scrim)}
 .fill{background:var(--primary)}
 [data-finish="lit"] .fill{background:var(--glow-fill);box-shadow:var(--shadow-glow)}
-.cta{background:var(--primary);color:var(--primary-foreground);transition:transform .1s ease}
-[data-finish="lit"] .cta{background:var(--cta-fill);color:var(--cta-foreground);box-shadow:var(--shadow-cta)}
+.cta{background:var(--primary);color:var(--paint-cta-ink);transition:transform .1s ease}
+[data-finish="lit"] .cta{border:1px solid transparent;background:var(--cta-fill) padding-box,var(--paint-cta-edge) border-box;box-shadow:inset 0 1px 0 var(--paint-cta-hi),inset 0 0 0 1px var(--paint-cta-ring),inset 0 -1px 0 var(--paint-cta-lo),var(--paint-btn-drop)}
 .cta:active{transform:scale(.97)}
+[data-finish="lit"] .cta:active{background:var(--paint-cta-press) padding-box,var(--paint-cta-edge) border-box;box-shadow:inset 0 1px 2px var(--paint-cta-shade),inset 0 0 0 1px var(--paint-cta-ring),var(--paint-btn-drop)}
 .accent{color:var(--info)}
 [data-finish="lit"] .accent{color:var(--glow)}
 
@@ -1686,7 +1693,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .seg button{flex:1;height:52px;border-radius:9999px;font-size:17px;font-weight:500;color:var(--muted-foreground)}
 .seg button b{font-weight:600;margin-left:6px;color:var(--foreground)}
 .seg button[aria-checked="true"]{color:var(--foreground);font-weight:600;background:var(--card);box-shadow:var(--shadow-card)}
-[data-finish="lit"] .seg button[aria-checked="true"]{background:var(--lit-raised);box-shadow:var(--shadow-raised)}
+[data-finish="lit"] .seg button[aria-checked="true"]{border:1px solid transparent;background:var(--lit-raised) padding-box,var(--paint-raised-edge) border-box;box-shadow:inset 0 1px 0 var(--paint-raised-hi),inset 0 0 0 1px var(--paint-raised-ring),inset 0 -1px 0 var(--paint-raised-lo),var(--paint-btn-drop)}
 .go{margin-top:auto;display:flex;align-items:center;gap:22px}
 .dial{position:relative;width:clamp(152px,24vh,200px);height:clamp(152px,24vh,200px);display:grid;place-items:center;flex-shrink:0}
 .dial > svg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;transform:rotate(-90deg);display:none}
@@ -1694,7 +1701,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .dial .track{fill:none;stroke:var(--background);stroke-width:8}
 .dial .arc{fill:none;stroke:var(--glow);stroke-width:8;stroke-linecap:round;transition:stroke-dasharray .3s ease}
 .startdisc{position:relative;width:74%;height:74%;border-radius:9999px;display:grid;place-items:center}
-.startdisc .ico{width:44px;height:44px;stroke-width:2}
+.startdisc .ico{width:44px;height:44px;stroke-width:2.5}
 .go b{display:block;font-size:22px;font-weight:600}
 .go span{font-size:16px;color:var(--muted-foreground)}
 .whead{display:flex;align-items:center;justify-content:space-between;min-height:24px;margin:-10px 0}
@@ -1907,6 +1914,9 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .no-flexgap .goalline > * + *{margin-left:16px}
 .no-flexgap .sleep .dialog > * + *{margin-top:22px}
 .no-flexgap .sleep .hero > * + *{margin-top:4px}
+.no-flexgap .phonesheet > * + *{margin-top:22px}
+.no-flexgap .phonepair > * + *{margin-left:28px}
+.no-flexgap .phonefacts > * + *{margin-top:14px}
 /* Cabin's scrim assumes a backdrop blur, which the console can't afford; two layers of it (64% dark, 42% light) do the blur's job of pushing the screen back. */
 .overlay{position:absolute;top:0;right:0;bottom:0;left:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(var(--scrim),var(--scrim)),var(--scrim)}
 .dialog{width:min(520px,100%);padding:32px;display:flex;flex-direction:column;gap:22px;max-height:100%;overflow:auto}
@@ -1935,6 +1945,10 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .gymrow{grid-template-columns:repeat(auto-fit,minmax(0,1fr))}
 .gymrow .pill{height:64px;font-size:18px;gap:0;padding:0 16px}
 .gymrow .pill .ico{width:24px;height:24px;margin-right:12px}
+.overlay.count{z-index:21}   /* over Paused, for a resume from the phone */
+.overlay.count.fromphone{background:var(--background)}
+.count.fromphone p{font-size:24px}
+.count.fromphone .pill{height:84px;padding:0 72px;font-size:24px}
 .count b{font-size:220px;font-weight:200;line-height:1;letter-spacing:-.05em}
 .count .wrap{display:flex;flex-direction:column;align-items:center;gap:18px}
 .count p{margin:0;font-size:20px;color:var(--foreground)}
@@ -1943,6 +1957,19 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
 .srow + .srow{border-top:1px solid var(--border)}
 .srow .t{display:flex;flex-direction:column;gap:2px;min-width:0}
 .srow .t b{font-size:18px;font-weight:600}
+/* Pairing a phone (1.14.0). A QR code is dark on white in either theme, or cameras won't read it. */
+.qr{--paint-qr-bg:#fff;--paint-qr-ink:#000;flex:none;width:280px;height:280px;border-radius:20px;background:var(--paint-qr-bg);overflow:hidden}
+.qr svg{display:block;width:100%;height:100%}
+.qr path{fill:var(--paint-qr-ink)}
+.phonepair{display:flex;align-items:center;gap:28px}
+.phonefacts{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
+.phonefacts b{display:block;margin-top:2px;font-size:26px;line-height:1.2;font-weight:600;letter-spacing:.02em;overflow-wrap:anywhere}
+.phonefacts .addr{font-size:22px;white-space:nowrap}
+.phonefacts p{font-size:15px}
+.actions.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.phonesheet ul{margin:0;padding-left:20px;font-size:17px;line-height:1.45;color:var(--muted-foreground)}
+.phonesheet li + li{margin-top:8px}
+.actions.three .pill{padding:0 12px;font-size:17px}
 .srow .t span{font-size:15px;color:var(--muted-foreground)}
 .srow .seg{width:240px;flex:none}
 .srow .seg button{height:44px;font-size:15px}
@@ -2065,7 +2092,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
     <div class="topbar">
       <div class="left"><button class="pill raised" id="gymRunBtn" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" ><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><span class="gymText">Gym lights</span></button><button class="pill raised" id="tvRunBtn" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="m17 2-5 5-5-5"/></svg>TV</button><button class="pill raised" id="camRunBtn" type="button" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 13 5.2 3.5a.5.5 0 0 0 .8-.4V7.9a.5.5 0 0 0-.8-.4L16 11"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>Cameras</button></div>
       <div class="title"><span class="eyebrow" id="runTitle">Just run</span></div>
-      <div class="right"><span class="zonebadge tnum" id="runZone" hidden></span><span class="clock tnum" id="runClock" style="font-size:22px">--:--</span></div>
+      <div class="right"><span class="eyebrow" id="runPhone" hidden>Phone connected</span><span class="zonebadge tnum" id="runZone" hidden></span><span class="clock tnum" id="runClock" style="font-size:22px">--:--</span></div>
     </div>
 
     <div class="mid">
@@ -2195,6 +2222,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
         <div class="srow" id="gymRow" hidden><div class="t"><b>Home Assistant</b><span>For Gym lights and the TV remote. Address and port, like 192.168.1.20:8123</span></div>
           <div class="btns" style="flex-wrap:nowrap;flex:none"><input class="cb-input" id="haAddr" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="192.168.1.20:8123" style="width:190px"><button class="pill raised" id="haTest" type="button">Try it</button></div></div>
         <div class="srow" id="camRow" hidden><div class="t"><b>Cameras</b><span id="camText">Sign in to Home Assistant to see your Ring cameras here.</span></div><button class="pill raised" id="camSignBtn" type="button">Sign in</button></div>
+        <div class="srow" id="phoneRow" hidden><div class="t"><b>Phone</b><span id="phoneText"></span></div><button class="pill raised" id="phoneOpen" type="button">Set up</button></div>
         <div class="srow" id="awayRow" hidden><div class="t"><b>Keep iFit away</b><span id="awayText">Let C1250 Deck see which app is in front, so it can close iFit's screens when they pop up.</span></div><button class="pill raised" id="awayBtn" type="button">Allow</button></div>
         <div class="srow" id="homeRow" hidden><div class="t"><b>Start on power-up</b><span id="homeText">Make C1250 Deck the home screen so the treadmill opens here, not iFit.</span></div><button class="pill raised" id="homeBtn" type="button">Set up</button></div>
         <div class="srow" id="sleepRow" hidden><div class="t"><b>Sleep</b><span id="sleepText">The screen goes dark when the belt's stopped and nobody's touched it for a while. Tap to wake.</span></div><div class="seg well" id="sleepSeg" role="radiogroup" aria-label="Sleep after, in minutes"></div></div>
@@ -2281,6 +2309,48 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webki
       </div>
       <div class="tvapps"><button class="pill appbtn" id="tvNetflix" type="button" data-app="netflix">Netflix</button><button class="pill appbtn" id="tvPrime" type="button" data-app="prime">Prime Video</button><button class="pill appbtn" id="tvSpotify" type="button" data-app="spotify">Spotify</button></div>
       <p class="tvnote" id="tvNote" hidden></p>
+    </div>
+  </div>
+
+  <!-- The phone companion (PhoneLink.java): pair a phone, and the workouts it has sent -->
+  <div class="overlay" id="phoneSheet" hidden>
+    <div class="panel dialog wide phonesheet" role="dialog" aria-modal="true" aria-labelledby="phoneTitle" data-density="touch">
+      <h2 id="phoneTitle">Phone</h2>
+      <p id="phoneWords"></p>
+      <div class="phonepair" id="phonePair" hidden>
+        <div class="qr" id="phoneQr" role="img" aria-label="Code to scan with your phone’s camera"></div>
+        <div class="phonefacts">
+          <div><span class="eyebrow">Pairing code</span><b class="tnum" id="phoneCode"></b></div>
+          <div><span class="eyebrow">Or open this address</span><b class="tnum addr" id="phoneAddr"></b></div>
+          <p id="phoneSeen"></p>
+        </div>
+      </div>
+      <div class="srow" id="phoneCtlRow" hidden><div class="t"><b>Control from phone</b><span id="phoneCtlText"></span></div><button class="pill raised" id="phoneCtl" type="button">Turn on</button></div>
+      <div class="actions" id="phoneActs">
+        <button class="pill lg ghost" id="phoneForget" type="button" hidden>Forget phones</button>
+        <button class="pill lg ghost" id="phoneTurn" type="button">Turn on</button>
+        <button class="pill lg raised" id="phoneDone" type="button">Done</button>
+      </div>
+    </div>
+  </div>
+  <div class="overlay" id="phoneCtlSheet" hidden>
+    <div class="panel dialog wide phonesheet" role="dialog" aria-modal="true" aria-labelledby="phoneCtlTitle" data-density="touch">
+      <h2 id="phoneCtlTitle">Let a phone move the belt?</h2>
+      <p>A paired phone will be able to start, change and stop the belt, even from another room.</p>
+      <ul>
+        <li>Starting takes a long press on the phone, then a 5-second countdown on this screen. The safety key has to be in.</li>
+        <li>Take the safety key out when you’re done, especially with children or pets around. Without it, nothing can start the belt, the phone included.</li>
+        <li>This screen, the console’s Stop and the safety key always work, whatever the phone is doing.</li>
+      </ul>
+      <div class="actions"><button class="pill lg raised" id="phoneCtlNo" type="button">Not now</button><button class="pill lg cta" id="phoneCtlYes" type="button">Allow</button></div>
+    </div>
+  </div>
+  <div class="overlay" id="phoneList" hidden>
+    <div class="panel dialog wide phonesheet" role="dialog" aria-modal="true" aria-labelledby="phoneListTitle" data-density="touch">
+      <h2 id="phoneListTitle">My workouts</h2>
+      <p>Built on your phone. Pick one, then start it here.</p>
+      <div id="phoneRows"></div>
+      <div class="actions one"><button class="pill lg raised" id="phoneListDone" type="button">Done</button></div>
     </div>
   </div>
 
@@ -2905,6 +2975,11 @@ Object.assign(PROGRAMS.intervals, buildIntervals(IV));
 // Quick starts: a pace (and for Incline, a grade) to begin at, then free running. A named one titles the run and Done.
 const QUICK = [{ id:'walk', label:'Walk', mph:3.0 }, { id:'jog', label:'Jog', mph:5.0 }, { id:'run', label:'Run', mph:7.0 },
   { id:'incline', label:'Incline', mph:3.8, inc:10, name:'Incline Workout' }];
+/* Workouts built on a phone (PhoneLink.java holds them). Each one is a program keyed ph_<id>; PHONE.next is the one waiting on Home. */
+const PHONE = { list:[], next:'', on:false, control:false, seenAgo:-1 };
+const PHONE_COUNT = 5, PHONE_RESUME_COUNT = 3;
+const phoneKey = id => 'ph_' + id;
+const isPhoneKey = k => k.indexOf('ph_') === 0;
 const total = p => p.segs.reduce((a,s) => a + s.d, 0);
 function segAt(p, t){ let acc = 0; for(let i=0;i<p.segs.length;i++){ if(t < acc + p.segs[i].d) return { i, seg:p.segs[i], left: acc + p.segs[i].d - t, start: acc }; acc += p.segs[i].d; } return null; }
 
@@ -2974,6 +3049,7 @@ function takeBoard(st){
   BOARD.seen = seen; BOARD.compat = st.compat || 'untested'; BOARD.model = st.model || 0;
   if(st.minKph > 0 && st.maxKph > st.minKph){ SPEED_MIN = Math.round(st.minKph/MPH*10)/10; SPEED_MAX = Math.round(st.maxKph/MPH*10)/10; }
   if(st.maxIncline > st.minIncline){ INC_MIN = st.minIncline; INC_MAX = st.maxIncline; }
+  phoneTell();
   // The Intervals sheet offers only what this treadmill can do.
   IV_ROWS.forEach(r => {
     if(r.k === 'runMph' || r.k === 'recMph'){ r.min = SPEED_MIN; r.max = SPEED_MAX; }
@@ -3113,30 +3189,38 @@ function resetSession(){
 }
 let wake = null;
 async function holdScreen(on){ try{ if(on && navigator.wakeLock && !wake){ wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => wake = null); } if(!on && wake){ await wake.release(); wake = null; } }catch(_){} }
-function begin(prog){
+function begin(prog, from){
   if(!canMove()) return;
-  // From Home: 3, 2, 1, then the belt starts.
+  // From Home: 3, 2, 1, then the belt starts. From a phone it's 5: whoever tapped may still have to step on.
   resetSession(); S.prog = prog;
   const p = PROGRAMS[prog];
   // A quick start carries the goal set on Home (programs end on their own).
   if(!p.segs.length && GOAL.kind !== 'none') S.goal = { kind:GOAL.kind, value:GOAL.kind === 'time' ? GOAL.min*60 : GOAL.mi, cool:GOAL.cool };
   const first = p.segs.length ? clamp(p.segs[0].mph, SPEED_MIN, SPEED_MAX) : quickMph();
   const firstInc = p.segs.length ? 0 : clamp(quick().inc || 0, INC_MIN, INC_MAX);
-  setText('countLine', 'Then ' + first.toFixed(1) + ' mph' + (firstInc ? ' at ' + firstInc + '%' : ''));
-  let n = 3; setText('countNum', '3'); show('countdown', true);
+  countThen(from === 'phone' ? PHONE_COUNT : 3, (from === 'phone' ? 'Started from your phone. ' : '') + 'Then ' + first.toFixed(1) + ' mph' + (firstInc ? ' at ' + firstInc + '%' : ''), start, from === 'phone');
+}
+function countThen(n, line, then, fromPhone){
+  // Someone here may not know it's coming, so one from the phone is hard to miss, with its Cancel easy to hit.
+  $('countdown').classList.toggle('fromphone', !!fromPhone);
+  setText('countLine', line); setText('countNum', String(n)); show('countdown', true);
   clearInterval(begin.t);
   begin.t = setInterval(() => {
-    n--; if(n > 0) return setText('countNum', String(n));
-    clearInterval(begin.t); show('countdown', false); start();
+    n--; if(n > 0){ setText('countNum', String(n)); phoneRunTell(); return; }   // the phone's countdown keeps step
+    clearInterval(begin.t); show('countdown', false); then(); phoneRunTell();
   }, 1000);
+  phoneRunTell();
 }
-$('countCancel').addEventListener('click', () => { clearInterval(begin.t); show('countdown', false); });
+function cancelCount(){ clearInterval(begin.t); show('countdown', false); }
+$('countCancel').addEventListener('click', () => { cancelCount(); phoneRunTell(); });
 function start(){
+  cancelCount();   // whichever way it started, one countdown can't start it again
   const resuming = S.state === 'paused';
   if(!resuming && !canMove()) return;   // the motor could have gone during the countdown
   if(S.state === 'done') resetSession();
   if(!S.runId) S.runId = Date.now();
   S.state = 'running'; drv().start();
+  if(!resuming) gymOnForWorkout();   // a new workout from here, the phone or the console's Start key; not a resume
   const p = PROGRAMS[S.prog];
   if(p.segs.length) S.segIdx = -1;                 // the loop re-applies the current segment
   else drv().setSpeed((resuming && S.resumeKph > 0 ? S.resumeKph : (S.tKph > 0 ? S.tKph : quickMph()*MPH)));
@@ -3144,13 +3228,15 @@ function start(){
   holdScreen(true);
 }
 function pause(){ if(S.state !== 'running') return; S.resumeKph = S.tKph || S.kph; S.state = 'paused'; drv().pause(); holdScreen(false); }
-function stop(){ drv().stop(); S.tKph = 0; if(S.state !== 'idle') finish(true); holdScreen(false); }
+function stop(){ cancelCount(); drv().stop(); S.tKph = 0; if(S.state !== 'idle') finish(true); holdScreen(false); }
 function finish(stopped){
+  cancelCount();   // a resume counting down must not start the belt after the workout has ended
   if(S.state === 'done') return;
   S.state = 'done'; drv().stop(); S.tKph = 0; holdScreen(false);
   const sum = summary();
   if(PROGRAMS[S.prog].segs.length && sum.secs > 60 && !TOUR){
     store.set('deck.lastProg', S.prog); S.pick = S.prog;
+    if(PHONE.next && S.prog === phoneKey(PHONE.next)) phoneSetNext('');   // it's been run: nothing's waiting now
     store.set('deck.last.' + S.prog, JSON.stringify({ at:Date.now(), miles:sum.miles, pace:sum.pace }));
   }
   const lastT = S.trace.length ? S.trace[S.trace.length - 1].t : -1;
@@ -3341,7 +3427,7 @@ function toast(html, withHelp, stay){
 $('toastClose').addEventListener('click', () => $('toast').hidden = true);
 
 /* ---------- sheets ---------- */
-const SHEETS = ['settings', 'upSheet', 'hrSheet', 'help', 'diagSheet', 'tvSheet', 'histSheet', 'meSheet', 'camSheet', 'camLive', 'ivSheet', 'goalSheet', 'safetySheet'];
+const SHEETS = ['settings', 'upSheet', 'hrSheet', 'help', 'diagSheet', 'tvSheet', 'histSheet', 'meSheet', 'camSheet', 'camLive', 'ivSheet', 'goalSheet', 'safetySheet', 'phoneSheet', 'phoneList', 'phoneCtlSheet'];
 function openSheet(id){ SHEETS.forEach(s => show(s, s === id)); const b = $(id).querySelector('button'); if(b) b.focus({ preventScroll:true }); }
 function closeSheets(){ SHEETS.forEach(s => show(s, false)); unscroll(); }
 // The page never scrolls, but Android's keyboard (and focusing a field) can push the whole screen up inside
@@ -3424,7 +3510,8 @@ if(NATIVE && NATIVE.runDiagnostics){
   }
 }
 /* Home Assistant, by webhook (no token; HA only takes them from the local network):
-   c1250-deck-gym toggles the gym's Workout scene; c1250-deck-tv takes {cmd} for the gym Apple TV and the Sonos Beam. */
+   c1250-deck-gym is the gym's Workout scene: {} is the button, which can also turn it off; {scene:'on'} only ever turns it on.
+   c1250-deck-tv takes {cmd} for the gym Apple TV and the Sonos Beam. */
 const HOOKS = { gym:'c1250-deck-gym', tv:'c1250-deck-tv' };
 function haUrl(hook){
   let a = (store.get('deck.ha') || '').trim().replace(/\/+$/, '');
@@ -3446,6 +3533,13 @@ function gymPress(){
   if(!haReady()) return;
   gymSay('Sending…');
   NATIVE.homeCall(haUrl(HOOKS.gym), '{}', 'gym');
+}
+/* A workout starting turns the scene on. Nobody tapped anything, so it never opens Settings or shows an error,
+   and the belt doesn't wait for it. */
+function gymOnForWorkout(){
+  if(!(NATIVE && NATIVE.homeCall)) return;
+  const url = haUrl(HOOKS.gym);
+  if(url) NATIVE.homeCall(url, JSON.stringify({ scene:'on' }), 'gymOn');
 }
 function tvSend(cmd){ if(haReady()) NATIVE.homeCall(haUrl(HOOKS.tv), JSON.stringify({ cmd }), 'tv'); }
 function openTv(){ if(haReady()){ $('tvNote').hidden = true; openSheet('tvSheet'); } }
@@ -3836,7 +3930,7 @@ function paintAway(){
 }
 if(NATIVE && NATIVE.openUsageAccess) $('awayBtn').addEventListener('click', () => NATIVE.openUsageAccess());
 function paintSettings(){
-  paintHomeRow(); paintMe(); paintAway(); if(typeof paintCamRow === 'function') paintCamRow();
+  paintHomeRow(); paintMe(); paintAway(); paintPhone(); if(typeof paintCamRow === 'function') paintCamRow();
   setText('setHr', HR.state === 'connected' ? 'Connected to ' + (HR.name || 'your monitor') : HR.name ? HR.name + ' · not connected' : 'Not connected');
   setText('setHrBtn', HR.state === 'connected' ? 'Manage' : 'Connect');
   setText('setUp', UP.state === 'available' ? 'Version ' + UP.version + ' is ready · you’re on ' + UP.current : 'C1250 Deck ' + (UP.current || '1.4'));
@@ -3927,6 +4021,7 @@ window.__deckHr = msg => {
       if(!msg.ok){ $('tvNote').hidden = false; $('tvNote').textContent = 'Couldn’t reach Home Assistant. ' + (msg.why || '') + ' Check the address in Settings.'; }
       return;
     }
+    if(msg.kind === 'gymOn'){ if(msg.ok) gymSay('Sent'); return; }
     if(msg.ok) gymSay('Sent');
     else { gymSay('Gym lights'); toast('<b>Couldn’t reach Home Assistant.</b> ' + esc(msg.why || '') + ' Check the address in Settings.'); }
     return;
@@ -3947,6 +4042,8 @@ window.__deckHr = msg => {
     return;
   }
   if(msg.type === 'update') return onUpdate(msg);
+  if(msg.type === 'phone') return onPhone(msg);
+  if(msg.type === 'phoneCmd') return onPhoneCmd(msg);
   if(msg.type === 'screenTest') return onScreenTest(msg);
   if(msg.type === 'bpm') return onBpm(msg.bpm, msg.name);
   if(msg.type === 'devices') return renderHrList(msg.list || []);
@@ -4081,7 +4178,7 @@ function sleepStage(n){
 }
 function wakeScreen(why){ if(SLEEP.stage) sleepLog('woken by ' + (why || 'something else')); SLEEP.last = SLEEP.touch = Date.now(); sleepStage(0); }
 // Worth noting even when awake: the app coming back restarts the timer, so often enough would stop sleep.
-window.__deckWake = () => { sleepLog('the app came back to the screen'); wakeScreen('the app coming back'); };
+window.__deckWake = () => { sleepLog('the app came back to the screen'); wakeScreen('the app coming back'); phoneLoad(); if(S.state === 'idle') paintHome(); };
 $('sleep').addEventListener('click', () => {
   if(SLEEP.stage !== 1) return wakeScreen('a tap');   // asleep: the tap just wakes it
   SLEEP.floor = Date.now() + SNOOZE_MIN*60000;
@@ -4177,8 +4274,287 @@ function profileBars(p){
     return `<i class="${cls}" style="flex:${(s.d/T*100).toFixed(2)} 1 0;height:${h.toFixed(0)}%"></i>`;
   }).join('');
 }
+/* ---------- Phone (1.14.0): workouts built on a phone page that this app serves on the home Wi-Fi ----------
+   PhoneLink.java holds them and checks them on the way in. Nothing about them moves the belt: the one marked
+   next shows on Home, and someone still taps Start here. A workout in use (under way, or in its countdown)
+   keeps the version it started with, until Home next shows. */
+function phoneSummary(segs){
+  const T = segs.reduce((a, s) => a + s.d, 0), top = Math.max(...segs.map(s => s.mph)), inc = Math.max(...segs.map(s => s.inc));
+  return Math.round(T/60) + ' min · up to ' + top.toFixed(1) + ' mph' + (inc > 0 ? ' at ' + numStr(inc) + '%' : '');
+}
+function applyPhone(d){
+  PHONE.list = (d && d.list) || []; PHONE.next = (d && d.next) || '';
+  const inUse = S.state !== 'idle' || !$('countdown').hidden ? S.prog : '';
+  Object.keys(PROGRAMS).filter(k => isPhoneKey(k) && k !== inUse).forEach(k => { delete PROGRAMS[k]; });
+  PHONE.list.forEach(w => {
+    const k = phoneKey(w.id);
+    if(k !== inUse) PROGRAMS[k] = { name:w.name, short:w.name, summary:phoneSummary(w.segs), segs:w.segs };
+  });
+}
+function phoneLoad(){ if(!(NATIVE && NATIVE.phoneData)) return; try{ applyPhone(JSON.parse(NATIVE.phoneData())); }catch(_){} }
+function phoneTell(){ if(NATIVE && NATIVE.phoneTell) NATIVE.phoneTell(SPEED_MIN, SPEED_MAX, INC_MIN, INC_MAX, S.state !== 'idle'); }
+function phoneSetNext(id){ PHONE.next = id; if(NATIVE && NATIVE.phoneNext) NATIVE.phoneNext(id); }
+function pickProg(k){ if(PHONE.next && phoneKey(PHONE.next) !== k) phoneSetNext(''); S.pick = k; paintHome(); }
+function onPhone(msg){
+  const before = PHONE.next;
+  applyPhone(msg.data);
+  paintPhone();
+  if(S.state !== 'idle') return;
+  paintHome();
+  const w = PHONE.list.find(x => x.id === PHONE.next);
+  if(w && PHONE.next !== before && !SLEEP.stage) toast('<b>From your phone.</b> ' + esc(w.name) + ' is up next.');
+}
+const agoWords = s => s < 60 ? 'just now' : s < 3600 ? Math.round(s/60) + ' min ago' : s < 86400 ? Math.round(s/3600) + ' hr ago' : Math.round(s/86400) + ' days ago';
+function paintPhone(){
+  if(!(NATIVE && NATIVE.phoneStatus)) return;
+  let st = {}; try{ st = JSON.parse(NATIVE.phoneStatus()); }catch(_){}
+  const n = PHONE.list.length;
+  $('phoneRow').hidden = false;
+  setText('phoneText', st.on ? 'On. ' + (n ? n + (n === 1 ? ' workout' : ' workouts') + ' saved.' : 'Scan the code to pair a phone.') : 'Build workouts on your phone and send them here.');
+  setText('phoneOpen', st.on ? 'Open' : 'Set up');
+  const ready = st.on && st.up && st.url;
+  PHONE.on = !!st.on; PHONE.control = !!st.control;
+  setText('phoneWords', !st.on ? 'Build workouts on your phone and send them here. Control from phone is separate, and stays off until you turn it on.'
+    : st.error ? 'It couldn’t start: ' + st.error + '. Try restarting the treadmill.'
+    : !st.url ? 'This treadmill isn’t on a network. Connect it to Wi-Fi first.'
+    : 'Scan this with your phone’s camera. Your phone needs to be on the same Wi-Fi as this treadmill.');
+  $('phonePair').hidden = !ready;
+  if(ready){
+    const qr = $('phoneQr');
+    if(qr.__u !== st.url){ qr.__u = st.url; qr.innerHTML = qrSvg(st.url); }
+    setText('phoneCode', st.code.slice(0, 4) + '-' + st.code.slice(4));
+    setText('phoneAddr', st.address);
+    setText('phoneSeen', st.seenAgo < 0 ? 'No phone has connected yet.' : 'Last phone connection: ' + agoWords(st.seenAgo));
+  }
+  $('phoneCtlRow').hidden = !st.on;
+  setText('phoneCtlText', st.control ? 'On. A paired phone can start, change and stop the belt.' : 'Off. A phone can send workouts, but can’t move the belt.');
+  setText('phoneCtl', st.control ? 'Turn off' : 'Turn on');
+  $('phoneActs').classList.toggle('three', !!st.on);
+  $('phoneForget').hidden = !st.on;
+  setText('phoneTurn', st.on ? 'Turn all off' : 'Turn on');
+  $('phoneTurn').className = st.on ? 'pill lg ghost' : 'pill lg cta';
+}
+function paintPhoneList(){
+  const el = $('phoneRows'); el.textContent = '';
+  PHONE.list.forEach(w => {
+    const p = PROGRAMS[phoneKey(w.id)]; if(!p) return;
+    const r = document.createElement('div'); r.className = 'srow';
+    r.innerHTML = '<div class="t"><b></b><span class="tnum"></span></div><button class="pill raised" type="button">Pick</button>';
+    r.querySelector('b').textContent = w.name; r.querySelector('span').textContent = p.summary;
+    r.querySelector('button').addEventListener('click', () => { phoneSetNext(w.id); closeSheets(); paintHome(); });
+    el.appendChild(r);
+  });
+}
+$('phoneOpen').addEventListener('click', () => { paintPhone(); openSheet('phoneSheet'); });
+$('phoneDone').addEventListener('click', () => openSheet('settings'));
+$('phoneListDone').addEventListener('click', closeSheets);
+$('phoneTurn').addEventListener('click', () => {
+  if(!NATIVE) return;
+  let st = {}; try{ st = JSON.parse(NATIVE.phoneStatus()); }catch(_){}
+  if(st.on) NATIVE.phoneControl(false);   // so turning the link back on later can't quietly bring back control of the belt
+  NATIVE.phoneOn(!st.on); paintPhone();
+});
+$('phoneForget').addEventListener('click', () => { if(!NATIVE) return; NATIVE.phoneForget(); paintPhone(); toast('<b>New code.</b> Phones need to scan it again.'); });
+setInterval(() => { if(!$('phoneSheet').hidden) paintPhone(); }, 3000);   // so it shows the phone arriving
+$('phoneCtl').addEventListener('click', () => {
+  if(!NATIVE) return;
+  if(PHONE.control){ NATIVE.phoneControl(false); paintPhone(); phoneRunTell(); return; }   // turning it off needs no asking
+  openSheet('phoneCtlSheet');
+});
+$('phoneCtlNo').addEventListener('click', () => openSheet('phoneSheet'));
+$('phoneCtlYes').addEventListener('click', () => { if(NATIVE) NATIVE.phoneControl(true); paintPhone(); phoneRunTell(); openSheet('phoneSheet'); });
+
+/* Control from phone: PhoneLink passes each command here, and it's treated like a tap on this page's own
+   buttons. Starting and resuming go through canMove, and a countdown shows on this screen with its Cancel.
+   Speeding up is held to about what holding the console's own button does; slowing down is never held back. */
+function moveBlock(){
+  if(!NATIVE) return '';
+  if(connState !== 'live') return nativeErr ? 'The treadmill can’t reach its motor.' : lastConsole === 'SAFETY_KEY' ? 'The safety key is out. Clip it back on first.' : 'The treadmill is still connecting to its motor.';
+  if(needsAgreement()) return 'Agree to the safety points on the treadmill first.';
+  return '';
+}
+const PHONE_UPS = { speed:[], incline:[] };
+function phoneUpOk(kind, d, perSecond){
+  const now = performance.now(), l = PHONE_UPS[kind];
+  while(l.length && now - l[0].t > 1000) l.shift();
+  if(d <= 0) return true;
+  if(l.reduce((a, x) => a + x.d, 0) + d > perSecond + 0.001) return false;
+  l.push({ t:now, d });
+  return true;
+}
+function phoneDo(c){
+  if(c.cmd === 'cancel'){ if($('countdown').hidden) return 'There’s no countdown to cancel.'; cancelCount(); return ''; }
+  if(c.cmd === 'start'){
+    if(S.state === 'running' || S.state === 'paused') return 'A workout is already under way.';
+    if(!$('countdown').hidden) return 'The belt is already about to start.';
+    const block = moveBlock(); if(block) return block;
+    if(c.what === 'next' && !(PHONE.next && PROGRAMS[phoneKey(PHONE.next)])) return 'Nothing is up next on the treadmill.';
+    const prog = c.what === 'next' ? phoneKey(PHONE.next) : 'free';
+    S.viewing = false; closeSheets(); wakeScreen('a start from the phone');   // it can't start in the dark
+    begin(prog, 'phone');
+    return '';
+  }
+  if(c.cmd === 'done'){ if(S.state !== 'done') return 'That workout has ended.'; $('doneBtn').click(); return ''; }
+  // Everything else is about one run, so a tab left open from an earlier one can't touch this one.
+  if(!S.runId || c.run !== S.runId) return 'That workout has ended.';
+  if(c.cmd === 'speed'){
+    if(S.state !== 'running') return 'The belt isn’t running.';
+    if(!phoneUpOk('speed', c.d, 1)) return 'That’s speeding up too quickly.';
+    nudgeSpeed(c.d); return '';
+  }
+  if(c.cmd === 'incline'){
+    if(S.state !== 'running') return 'The belt isn’t running.';
+    if(!phoneUpOk('incline', c.d, 5)) return 'That’s raising the incline too quickly.';
+    nudgeIncline(c.d); return '';
+  }
+  if(c.cmd === 'pause'){ if(S.state !== 'running') return 'The belt isn’t running.'; pause(); return ''; }
+  if(c.cmd === 'stop'){ if(S.state !== 'done') stop(); return ''; }
+  if(c.cmd === 'resume'){
+    if(S.state !== 'paused') return 'The workout isn’t paused.';
+    if(!$('countdown').hidden) return 'The belt is already about to start.';
+    const block = moveBlock(); if(block) return block;
+    wakeScreen('a resume from the phone');
+    countThen(PHONE_RESUME_COUNT, 'Resuming from your phone', () => { if(S.state === 'paused' && !moveBlock()) start(); }, true);
+    return '';
+  }
+  return 'The treadmill couldn’t do that.';
+}
+function onPhoneCmd(m){
+  let why;
+  try{ why = phoneDo(m.cmd || {}); }catch(e){ why = 'The treadmill couldn’t do that.'; }
+  phoneRunTell();
+  if(NATIVE && NATIVE.phoneAnswer) NATIVE.phoneAnswer(m.id, !why, why || '');
+}
+function phoneRunNow(){
+  const counting = !$('countdown').hidden, block = moveBlock(), q = quick();
+  const o = { st:counting ? 'countdown' : S.state, ready:!block, why:block, quick:{ name:quickName(), mph:quickMph(), inc:q.inc || 0 } };
+  if(counting){ o.count = parseInt($('countNum').textContent, 10) || 0; o.line = $('countLine').textContent; }
+  if(counting || S.state !== 'idle'){
+    const p = PROGRAMS[S.prog] || PROGRAMS.free, sum = summary();
+    o.id = S.runId || 0; o.paused = S.state === 'paused';
+    o.name = p.segs.length ? p.name : quickName();
+    o.mph = Math.round((S.state === 'running' && S.tKph > 0 ? S.tKph : S.kph)/MPH*10)/10;
+    o.inc = Math.round(S.tInc*2)/2;
+    o.secs = Math.round(sum.secs); o.miles = Math.round(sum.miles*100)/100;
+    const hr = currentHr(); if(hr) o.hr = Math.round(hr);
+    const at = p.segs.length ? segAt(p, S.progT) : null;
+    if(at){
+      const nx = p.segs[at.i + 1];
+      o.step = { label:at.seg.label, left:Math.round(at.left), share:Math.round(S.progT/total(p)*1000)/1000 };
+      if(nx) o.step.next = { label:nx.label, mph:nx.mph, inc:nx.inc };
+    }
+  }
+  return o;
+}
+function phoneRunTell(){
+  if(!(PHONE.on && NATIVE && NATIVE.phoneRun)) return;
+  try{ const r = JSON.parse(NATIVE.phoneRun(JSON.stringify(phoneRunNow()))); PHONE.control = !!r.control; PHONE.seenAgo = r.seenAgo; }catch(_){}
+  $('runPhone').hidden = !(PHONE.control && PHONE.seenAgo >= 0 && PHONE.seenAgo < 15);
+}
+setInterval(phoneRunTell, 1000);
+
+/* A QR code for the pairing link: byte mode, error correction M, versions 1 to 6, which holds up to 106 bytes.
+   Written out here so it needs nothing from the internet. Returns null if the text won't fit. */
+function qrMatrix(text){
+  const bytes = Array.from(new TextEncoder().encode(text));
+  const SIZES = [null, [16, 10, 1], [28, 16, 1], [44, 26, 1], [64, 18, 2], [86, 24, 2], [108, 16, 4]];   // data codewords, error codewords per block, blocks
+  let v = 1; while(v <= 6 && bytes.length + 2 > SIZES[v][0]) v++;
+  if(v > 6) return null;
+  const D = SIZES[v][0], EC = SIZES[v][1], BL = SIZES[v][2];
+  const bits = [], put = (val, n) => { for(let i = n - 1; i >= 0; i--) bits.push((val >> i) & 1); };
+  put(4, 4); put(bytes.length, 8); bytes.forEach(b => put(b, 8));
+  put(0, Math.min(4, D*8 - bits.length));
+  while(bits.length % 8) bits.push(0);
+  const code = []; for(let i = 0; i < bits.length; i += 8) code.push(parseInt(bits.slice(i, i + 8).join(''), 2));
+  for(let pad = 0xEC; code.length < D; pad ^= 0xEC ^ 0x11) code.push(pad);
+  // Reed-Solomon over GF(256)
+  const exp = new Array(512), log = new Array(256);
+  for(let i = 0, x = 1; i < 255; i++){ exp[i] = x; log[x] = i; x <<= 1; if(x & 256) x ^= 0x11D; }
+  for(let i = 255; i < 512; i++) exp[i] = exp[i - 255];
+  const mul = (a, b) => a && b ? exp[log[a] + log[b]] : 0;
+  let gen = [1];
+  for(let i = 0; i < EC; i++){ const g = new Array(gen.length + 1).fill(0); gen.forEach((c, j) => { g[j] ^= c; g[j + 1] ^= mul(c, exp[i]); }); gen = g; }
+  const ecOf = block => { const r = new Array(EC).fill(0); block.forEach(b => { const f = b ^ r.shift(); r.push(0); for(let i = 0; i < EC; i++) r[i] ^= mul(gen[i + 1], f); }); return r; };
+  const size = D/BL, blocks = [], ecs = [];
+  for(let b = 0; b < BL; b++){ const part = code.slice(b*size, (b + 1)*size); blocks.push(part); ecs.push(ecOf(part)); }
+  const all = [];
+  for(let i = 0; i < size; i++) blocks.forEach(b => all.push(b[i]));
+  for(let i = 0; i < EC; i++) ecs.forEach(e => all.push(e[i]));
+  // The fixed patterns
+  const N = 17 + 4*v, M = Array.from({ length:N }, () => new Array(N).fill(0)), F = Array.from({ length:N }, () => new Array(N).fill(false));
+  const set = (r, c, on) => { M[r][c] = on ? 1 : 0; F[r][c] = true; };
+  [[0, 0], [0, N - 7], [N - 7, 0]].forEach(([r0, c0]) => {
+    for(let r = -1; r <= 7; r++) for(let c = -1; c <= 7; c++){
+      const R = r0 + r, C = c0 + c; if(R < 0 || C < 0 || R >= N || C >= N) continue;
+      set(R, C, r >= 0 && r <= 6 && c >= 0 && c <= 6 && (r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4)));
+    }
+  });
+  for(let i = 8; i < N - 8; i++){ set(6, i, i % 2 === 0); set(i, 6, i % 2 === 0); }
+  if(v >= 2){ const a = 10 + 4*v; for(let r = -2; r <= 2; r++) for(let c = -2; c <= 2; c++) set(a + r, a + c, Math.max(Math.abs(r), Math.abs(c)) !== 1); }
+  for(let i = 0; i < 9; i++){ F[8][i] = true; F[i][8] = true; }
+  for(let i = 0; i < 8; i++){ F[8][N - 1 - i] = true; F[N - 1 - i][8] = true; }
+  // The data, in the zigzag
+  let at = 0;
+  for(let c = N - 1; c > 0; c -= 2){
+    if(c === 6) c = 5;
+    for(let k = 0; k < N; k++){
+      const r = ((c + 1) & 2) === 0 ? N - 1 - k : k;
+      for(let d = 0; d < 2; d++){
+        if(F[r][c - d]) continue;
+        M[r][c - d] = at >> 3 < all.length ? (all[at >> 3] >> (7 - (at & 7))) & 1 : 0;
+        at++;
+      }
+    }
+  }
+  // The mask that scans best, with the format bits that name it
+  const MASKS = [(r, c) => (r + c) % 2 === 0, r => r % 2 === 0, (r, c) => c % 3 === 0, (r, c) => (r + c) % 3 === 0, (r, c) => (Math.floor(r/2) + Math.floor(c/3)) % 2 === 0,
+    (r, c) => r*c % 2 + r*c % 3 === 0, (r, c) => (r*c % 2 + r*c % 3) % 2 === 0, (r, c) => ((r + c) % 2 + r*c % 3) % 2 === 0];
+  const withMask = m => {
+    const G = M.map(row => row.slice());
+    for(let r = 0; r < N; r++) for(let c = 0; c < N; c++) if(!F[r][c] && MASKS[m](r, c)) G[r][c] ^= 1;
+    let rem = m; for(let i = 0; i < 10; i++) rem = (rem << 1) ^ ((rem >> 9)*0x537);
+    const fmt = ((m << 10) | rem) ^ 0x5412, bit = i => (fmt >> i) & 1;
+    for(let i = 0; i <= 5; i++) G[i][8] = bit(i);
+    G[7][8] = bit(6); G[8][8] = bit(7); G[8][7] = bit(8);
+    for(let i = 9; i < 15; i++) G[8][14 - i] = bit(i);
+    for(let i = 0; i < 8; i++) G[8][N - 1 - i] = bit(i);
+    for(let i = 8; i < 15; i++) G[N - 15 + i][8] = bit(i);
+    G[N - 8][8] = 1;
+    return G;
+  };
+  const penalty = G => {
+    let p = 0, dark = 0;
+    const lineScore = line => {
+      let run = 1; const s = line.join('');
+      for(let i = 1; i < N; i++){ if(line[i] === line[i - 1]){ run++; if(run === 5) p += 3; else if(run > 5) p++; } else run = 1; }
+      let from = 0, hit;
+      while((hit = s.indexOf('10111010000', from)) >= 0){ p += 40; from = hit + 1; }
+      from = 0;
+      while((hit = s.indexOf('00001011101', from)) >= 0){ p += 40; from = hit + 1; }
+    };
+    for(let r = 0; r < N; r++){ lineScore(G[r]); lineScore(G.map(row => row[r])); }
+    for(let r = 0; r < N; r++) for(let c = 0; c < N; c++){
+      dark += G[r][c];
+      if(r < N - 1 && c < N - 1 && G[r][c] === G[r][c + 1] && G[r][c] === G[r + 1][c] && G[r][c] === G[r + 1][c + 1]) p += 3;
+    }
+    return p + Math.floor(Math.abs(dark*20/(N*N) - 10))*10;
+  };
+  let best = null, bestP = Infinity;
+  for(let m = 0; m < 8; m++){ const G = withMask(m), pen = penalty(G); if(pen < bestP){ bestP = pen; best = G; } }
+  return best;
+}
+function qrSvg(text){
+  const m = qrMatrix(text); if(!m) return '';
+  const q = 4, n = m.length + q*2; let d = '';
+  m.forEach((row, r) => row.forEach((on, c) => { if(on) d += 'M' + (c + q) + ' ' + (r + q) + 'h1v1h-1z'; }));
+  return '<svg viewBox="0 0 ' + n + ' ' + n + '" shape-rendering="crispEdges" aria-hidden="true"><path d="' + d + '"/></svg>';
+}
+
 function paintHome(){
   paintHistBtn();
+  // A workout sent from the phone is the card until it's run, or something else is picked.
+  if(PHONE.next && PROGRAMS[phoneKey(PHONE.next)]) S.pick = phoneKey(PHONE.next);
+  if(!PROGRAMS[S.pick]) S.pick = 'intervals';   // the phone deleted the one that was here
   // quick start
   const q = quickMph(), share = q/12, C = 2*Math.PI*70;
   $('qsArc').setAttribute('stroke-dasharray', (C*share).toFixed(1) + ' ' + C.toFixed(1));
@@ -4191,25 +4567,32 @@ function paintHome(){
   const p = PROGRAMS[S.pick]; let last = null;
   try{ last = JSON.parse(store.get('deck.last.' + S.pick) || 'null'); }catch(_){}
   const isLast = S.pick === (store.get('deck.lastProg') || '');
-  setText('wEyebrow', isLast && last ? 'Last workout · ' + dayName(last.at) : 'Workout');
+  const fromPhone = PHONE.next && S.pick === phoneKey(PHONE.next);
+  setText('wEyebrow', fromPhone ? 'Up next · from your phone' : isLast && last ? 'Last workout · ' + dayName(last.at) : 'Workout');
   setText('wName', p.name);
   setText('wSummary', p.summary);
   setHTML('wProfile', profileBars(p));
   $('wStats').hidden = !last;
   if(last){ setHTML('wDist', last.miles.toFixed(1) + '<small>mi</small>'); setHTML('wPace', (last.pace ? fmtTime(last.pace) : '--:--') + '<small>/mi</small>'); }
-  setText('wStartText', isLast && last ? 'Repeat workout' : 'Start workout');
+  setText('wStartText', isLast && last && !fromPhone ? 'Repeat workout' : 'Start workout');
   $('wAdjust').hidden = S.pick !== 'intervals';
   // more
-  const more = $('more'); const key = S.pick;
+  const more = $('more'); const key = S.pick + '|' + PHONE.list.length;
   if(more.__k !== key){
     more.__k = key;
     while(more.children.length > 1) more.removeChild(more.lastChild);
-    Object.keys(PROGRAMS).filter(k => k !== 'free').forEach(k => {
+    Object.keys(PROGRAMS).filter(k => k !== 'free' && !isPhoneKey(k)).forEach(k => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'pill ghost';
       b.textContent = PROGRAMS[k].short; b.setAttribute('aria-pressed', String(k === S.pick));
-      b.addEventListener('click', () => { S.pick = k; paintHome(); });
+      b.addEventListener('click', () => pickProg(k));
       more.appendChild(b);
     });
+    if(PHONE.list.length){
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'pill ghost';
+      b.textContent = 'My workouts'; b.setAttribute('aria-pressed', String(isPhoneKey(S.pick)));
+      b.addEventListener('click', () => { paintPhoneList(); openSheet('phoneList'); });
+      more.appendChild(b);
+    }
   }
 }
 seg('qsSeg', QUICK.map(q => ({ value:q.id, html:esc(q.label) + '<b class="tnum">' + q.mph.toFixed(1) + '</b>' })), S.quick, v => { S.quick = v; store.set('deck.quick', v); paintHome(); });
@@ -4401,7 +4784,7 @@ function render(){
   const now = new Date(); const ck = fmtClock(now);
   if(ck !== lastClock){ lastClock = ck; setText('clock', ck); setText('runClock', ck); setText('day', DAYS[now.getDay()]); }
   const screen = S.state === 'idle' ? 'home' : 'run';
-  if(screen !== lastScreen){ lastScreen = screen; unscroll(); show('home', screen === 'home'); show('run', screen === 'run'); if(screen === 'home'){ paintHome(); if(photoOn()) nextPhoto(); } applyPhoto(); }
+  if(screen !== lastScreen){ lastScreen = screen; unscroll(); show('home', screen === 'home'); show('run', screen === 'run'); if(screen === 'home'){ phoneLoad(); paintHome(); if(photoOn()) nextPhoto(); } applyPhoto(); phoneTell(); }
   show('paused', S.state === 'paused');
   show('done', S.state === 'done' || !!S.viewing);
   if(screen !== 'run') return;
@@ -4600,6 +4983,7 @@ function recoverInflight(){
   saveHist(h); syncRuns(); paintHome();
   toast('<b>Saved your last workout.</b> The app closed mid-run, so it\u2019s in History as of ' + fmtTime(run.secs) + ', ' + run.miles.toFixed(2) + ' mi.');
 }
+phoneLoad(); phoneTell(); paintPhone();
 paintHr(); paintHome(); setConn('demo', 'Demo · simulated');
 // Flex gap (Chrome 84+): measure it once, and fall back to margins on the console's older WebView.
 (function(){

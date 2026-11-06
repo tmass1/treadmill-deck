@@ -9,6 +9,7 @@ The current goal, in this order. Until it's done, the app isn't ready to hand to
 - [x] **Treadmill check** (1.13.0): the screen reads the treadmill's real speed and incline limits, checks the treadmill is compatible, and asks for a safety agreement before the belt moves.
 - [ ] **Setup wizard**: first-run setup, including an optional Home Assistant step that lists the owner's own devices to pick from. Without Home Assistant, those buttons stay hidden.
 - [ ] **Install guide**: on the site, with photos, including blocking iFit's updates and going back to iFit.
+- [ ] **Decide what a shared build allows**: Control from phone can start the belt from another room. Take that to the legal consult before anyone else gets it.
 - [ ] **Private test**: 2–3 owners, ideally on another model.
 - [ ] **FAQs**, from what those owners ask. Then go public.
 
@@ -22,7 +23,8 @@ The current goal, in this order. Until it's done, the app isn't ready to hand to
 ## 2. Smarter workouts
 - [ ] **Heart-rate mode**: pick a zone; speed (or incline) adjusts to hold you in it. Needs the Polar H10.
 - [x] **Goals** (1.11.0): a quick start runs to a time or a distance (Home → Goal), with what's left under the time and miles, then eases to a walk at 0% for a cool-down (3 minutes by default) and ends. Keep going skips the cool-down.
-- [ ] **Workout builder**: make workouts on the Mac or phone (intervals, hills, pace targets); they appear on the treadmill.
+- [x] **Workout builder** (1.14.0): build workouts on a phone over the home Wi-Fi (steps, repeats, starting from a template) and send one to the treadmill, where it waits on Home until someone taps Start.
+- [x] **Phone control** (1.14.0): start, change, pause, resume and end a run from the phone. Its own switch, off until allowed at the console. Starting takes a long press and a 5-second countdown on the treadmill, with the safety key in.
 - [x] **Calories from your weight** (1.9.2): Settings → You sets your weight; calories are active calories (what Apple Fitness counts), from speed, incline and weight.
 - [x] **Distance calibration** (1.9.2): a ±% setting in You, from a tape-on-the-belt check. Each run also keeps the motor board's own distance and time counters, to calibrate against.
 - [x] **Check the board's distance** (checked 1 Nov 2026, six runs): the board's time counter matches the app's to the second, but its distance counter reads 0 on every run, so it can't be used. Distance stays the app's own, with the calibration in You.

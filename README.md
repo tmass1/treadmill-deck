@@ -23,6 +23,10 @@ generation, but it hasn't been tried on any.
 - **Calories** from your weight, as active calories (what Apple Fitness counts); a distance calibration.
 - **Home Assistant** (optional): a gym lights button and a TV remote (arrows, OK, Back, Home,
   Play/Pause, volume, and Netflix, Prime Video and Spotify).
+- **Phone companion** (optional, off until you turn it on): build workouts on your phone and send them
+  to the treadmill over your home Wi-Fi, with no App Store or account. A second switch, Control from
+  phone, also lets the phone start, change and stop a run. The console's Stop and the safety key always
+  work. Take the safety key out when you're done: without it, nothing can start the belt.
 - **Starts on power-up** in place of iFit, and **updates itself** over Wi-Fi.
 
 ## How it works
@@ -38,14 +42,19 @@ generation, but it hasn't been tried on any.
 - **The site** (`worker/index.js` on Cloudflare Workers, data in KV): the project page, the web
   console, the app's public update channel, and three parts behind a private key: the old update
   channel, the Diagnostics report box, and the run store that feeds Apple Fitness.
+- **Phone page:** `phone.html`, served by the app itself on the home Wi-Fi (`PhoneLink.java`), paired
+  with a code shown on the console. Commands go through the console's own page, with the same checks as
+  its own buttons.
 - **What leaves the treadmill:** the app checks the site for updates. Without a site key (Settings →
-  Treadmill → Diagnostics), it uploads nothing, and runs stay on the console.
+  Treadmill → Diagnostics), it uploads nothing, and runs stay on the console. The phone companion
+  stays on your Wi-Fi.
 
 ## Layout
 
 | Path | What |
 |---|---|
 | `c1250-deck.html` | The console UI (one file) |
+| `phone.html` | The phone companion's page (one file), served by the app |
 | `android/` | The app: Java source, build and release scripts |
 | `installer/` | Putting the app on a treadmill |
 | `site/`, `tools/` | The project page; `tools/make-site.mjs` builds the web console into `site/console/` |

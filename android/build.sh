@@ -44,6 +44,10 @@ PY
 # Home background photos (see bg/CREDITS.md) ride along next to the page.
 rm -rf "$APP/assets/www/bg" && mkdir -p "$APP/assets/www/bg" && cp "$APP"/../bg/*.webp "$APP/assets/www/bg/"
 
+# The phone companion's page and its home-screen icon, served by the app on the home Wi-Fi (PhoneLink.java).
+cp "$APP/../phone.html" "$APP/assets/www/phone.html"
+cp "$APP/../site/apple-touch-icon.png" "$APP/assets/www/icon.png"
+
 echo "== resources"
 "$BT/aapt2" compile --dir "$APP/res" -o "$B/res.zip"
 "$BT/aapt2" link -o "$B/base.apk" -I "$PLATFORM" --manifest "$APP/AndroidManifest.xml" \
