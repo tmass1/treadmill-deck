@@ -57,6 +57,7 @@ final class PhoneLink {
     private static final int MAX_HEAD = 8 * 1024, MAX_BODY = 64 * 1024, MAX_WORKOUTS = 30;
     private static final int MAX_BLOCKS = 40, MAX_INNER = 8, MIN_TIMES = 2, MAX_TIMES = 30, MAX_SEGS = 300;
     private static final int MIN_SECS = 15, MAX_SECS = 2 * 3600, MAX_TOTAL = 4 * 3600, MAX_NAME = 40;
+    private static final double MIN_MILES = 0.05, MAX_MILES = 20;   // a step by distance (1.14.1)
     private static final String CODE_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";   // nothing that reads as another letter
     private static final int CODE_LEN = 8;
     private static final long LOCK_MS = 1000;
@@ -475,7 +476,7 @@ final class PhoneLink {
         if (blocks.length() > MAX_BLOCKS) throw new Refused("That workout has too many steps.");
 
         JSONArray cleanBlocks = new JSONArray(), segs = new JSONArray();
-        int total = 0;
+        double total = 0;   // seconds; a distance step counts at its own speed
         for (int i = 0; i < blocks.length(); i++) {
             JSONObject b = blocks.optJSONObject(i);
             if (b == null) throw new Refused("The treadmill couldn't read that.");
@@ -491,14 +492,14 @@ final class PhoneLink {
                 for (int t = 1; t <= times; t++) {
                     for (int k = 0; k < cleanSteps.length(); k++) {
                         JSONObject st = cleanSteps.getJSONObject(k);
-                        total += st.getInt("d");
+                        total += secs(st);
                         segs.put(seg(st, "run".equals(st.getString("ph")) ? "Rep " + t + " of " + times : null));
                     }
                 }
             } else {
                 JSONObject st = step(b);
                 cleanBlocks.put(st);
-                total += st.getInt("d");
+                total += secs(st);
                 segs.put(seg(st, null));
             }
             if (segs.length() > MAX_SEGS) throw new Refused("That workout has too many steps.");
@@ -518,18 +519,33 @@ final class PhoneLink {
         if (in == null) throw new Refused("The treadmill couldn't read that.");
         String ph = in.optString("ph", "");
         if (label(ph) == null) throw new Refused("The treadmill couldn't read that.");
-        double d = in.optDouble("d"), mph = in.optDouble("mph"), inc = in.optDouble("inc");
-        if (bad(d) || bad(mph) || bad(inc)) throw new Refused("The treadmill couldn't read that.");
-        int secs = (int) Math.max(MIN_SECS, Math.min(MAX_SECS, Math.round(d / MIN_SECS) * MIN_SECS));
-        return new JSONObject().put("ph", ph).put("d", secs)
-                .put("mph", Math.round(Math.max(mphMin, Math.min(mphMax, mph)) * 10) / 10.0)
+        double mph = in.optDouble("mph"), inc = in.optDouble("inc");
+        if (bad(mph) || bad(inc)) throw new Refused("The treadmill couldn't read that.");
+        JSONObject out = new JSONObject().put("ph", ph);
+        // A step ends after a time (d, seconds) or a distance (mi), never both.
+        if (in.has("mi")) {
+            double mi = in.optDouble("mi");
+            if (bad(mi) || in.has("d")) throw new Refused("The treadmill couldn't read that.");
+            out.put("mi", Math.round(Math.max(MIN_MILES, Math.min(MAX_MILES, mi)) * 100) / 100.0);
+        } else {
+            double d = in.optDouble("d");
+            if (bad(d)) throw new Refused("The treadmill couldn't read that.");
+            out.put("d", (int) Math.max(MIN_SECS, Math.min(MAX_SECS, Math.round(d / MIN_SECS) * MIN_SECS)));
+        }
+        return out.put("mph", Math.round(Math.max(mphMin, Math.min(mphMax, mph)) * 10) / 10.0)
                 .put("inc", Math.round(Math.max(incMin, Math.min(incMax, inc)) * 2) / 2.0);
+    }
+
+    /** How long a step takes: a distance at its own speed. */
+    private static double secs(JSONObject st) throws JSONException {
+        return st.has("mi") ? st.getDouble("mi") * 3600 / Math.max(0.5, st.getDouble("mph")) : st.getInt("d");
     }
 
     private static boolean bad(double v) { return Double.isNaN(v) || Double.isInfinite(v); }
 
     private static JSONObject seg(JSONObject st, String label) throws JSONException {
-        return new JSONObject().put("d", st.getInt("d")).put("mph", st.getDouble("mph")).put("inc", st.getDouble("inc"))
+        JSONObject out = st.has("mi") ? new JSONObject().put("mi", st.getDouble("mi")) : new JSONObject().put("d", st.getInt("d"));
+        return out.put("mph", st.getDouble("mph")).put("inc", st.getDouble("inc"))
                 .put("label", label != null ? label : label(st.getString("ph"))).put("ph", st.getString("ph"));
     }
 

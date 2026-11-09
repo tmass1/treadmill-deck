@@ -2980,8 +2980,33 @@ const PHONE = { list:[], next:'', on:false, control:false, seenAgo:-1 };
 const PHONE_COUNT = 5, PHONE_RESUME_COUNT = 3;
 const phoneKey = id => 'ph_' + id;
 const isPhoneKey = k => k.indexOf('ph_') === 0;
-const total = p => p.segs.reduce((a,s) => a + s.d, 0);
-function segAt(p, t){ let acc = 0; for(let i=0;i<p.segs.length;i++){ if(t < acc + p.segs[i].d) return { i, seg:p.segs[i], left: acc + p.segs[i].d - t, start: acc }; acc += p.segs[i].d; } return null; }
+/* A step lasts a time (d, seconds) or, from a phone (1.14.1), a distance (mi). A distance step ends on the run's own
+   distance, so speeding up ends it sooner; its time is a guess, at its own speed until it's under way. */
+const MI_M = 1609.344;
+const segSecs = s => s.mi ? s.mi*3600/Math.max(0.5, s.mph) : s.d;
+const total = p => p.segs.reduce((a,s) => a + segSecs(s), 0);
+// By time: only for programs of timed steps (the built-ins, the demos and the tour).
+function segAt(p, t){ let acc = 0; for(let i=0;i<p.segs.length;i++){ const d = segSecs(p.segs[i]); if(t < acc + d) return { i, seg:p.segs[i], left: acc + d - t, start: acc }; acc += d; } return null; }
+/* Where a run is in its program: S.segI is the step, S.segT the seconds spent in it, S.segFrom the run's distance (m)
+   when it began. Every program runs on this; S.progT is the time since the start. */
+const runM = () => S.devDist ?? S.distM;
+function segNow(p){
+  const seg = p.segs[S.segI]; if(!seg) return null;
+  if(!seg.mi) return { i:S.segI, seg, left:Math.max(0, seg.d - S.segT), frac:Math.min(1, S.segT/seg.d), leftMi:null };
+  const leftM = Math.max(0, seg.mi*MI_M - (runM() - S.segFrom)), mph = S.state === 'running' && S.tKph/MPH > 0.5 ? S.tKph/MPH : seg.mph;   // at the speed it's set to
+  return { i:S.segI, seg, left:leftM/(mph*MPH/3.6), frac:Math.min(1, 1 - leftM/(seg.mi*MI_M)), leftMi:leftM/MI_M };
+}
+const progLeft = p => { const at = segNow(p); return at ? at.left + p.segs.slice(at.i + 1).reduce((a, s) => a + segSecs(s), 0) : 0; };
+// Past the end of the step: on to the next, carrying the overshoot so a timed program keeps its exact length.
+function segsDone(p){
+  for(let seg = p.segs[S.segI]; seg && (seg.mi ? runM() - S.segFrom >= seg.mi*MI_M : S.segT >= seg.d); seg = p.segs[S.segI]){
+    if(seg.mi){ S.segFrom += seg.mi*MI_M; S.segT = 0; } else { S.segT -= seg.d; S.segFrom = runM(); }
+    S.segI++;
+  }
+  return S.segI >= p.segs.length;
+}
+// Put a timed program at time t (the demos and the tour).
+function seekSeg(p, t){ const at = segAt(p, t); if(at){ S.segI = at.i; S.segT = t - at.start; S.segFrom = runM(); } return at; }
 
 /* ---------- state ---------- */
 const S = {
@@ -2989,7 +3014,7 @@ const S = {
   kph:0, incline:0, tKph:0, tInc:0,
   distM:0, climbM:0, elapsed:0, kcal:0, hr:null, hrSum:0, hrN:0,
   devDist:null, devElapsed:null, devKcal:null, devHr:null,
-  prog:'free', progT:0, progDist:0, segIdx:-1,
+  prog:'free', progT:0, progDist:0, segIdx:-1, segI:0, segT:0, segFrom:0,
   quick: store.get('deck.quick') || 'walk',
   pick: store.get('deck.lastProg') || 'intervals',
   resumeKph:0,
@@ -3183,7 +3208,7 @@ const drv = () => S.driver === 'ftms' ? FTMS : S.driver === 'native' ? Native : 
 
 /* ---------- session ---------- */
 function resetSession(){
-  Object.assign(S, { runId:0, state:'idle', board0:null, board1:null, distM:0, climbM:0, elapsed:0, kcal:0, progT:0, progDist:0, segIdx:-1, tKph:0, tInc:0, hr:null, hrSum:0, hrN:0, devDist:null, devElapsed:null, devKcal:null, devHr:null, resumeKph:0, trace:[], zoneT:[0,0,0,0,0], nextSample:0, goal:null, goalHit:false, cool:null });
+  Object.assign(S, { runId:0, state:'idle', board0:null, board1:null, distM:0, climbM:0, elapsed:0, kcal:0, progT:0, progDist:0, segIdx:-1, segI:0, segT:0, segFrom:0, tKph:0, tInc:0, hr:null, hrSum:0, hrN:0, devDist:null, devElapsed:null, devKcal:null, devHr:null, resumeKph:0, trace:[], zoneT:[0,0,0,0,0], nextSample:0, goal:null, goalHit:false, cool:null });
   dropDoneChart();
   if(S.driver === 'demo'){ S.kph = 0; S.incline = 0; }
 }
@@ -4271,7 +4296,7 @@ function profileBars(p){
   return p.segs.map(s => {
     const e = effort(s), h = max === min ? 76 : 26 + (e - min)/(max - min)*74;
     const cls = s.ph === 'warm' || s.ph === 'cool' ? 'easy' : e >= max - (max - min)*0.25 ? 'hot' : '';
-    return `<i class="${cls}" style="flex:${(s.d/T*100).toFixed(2)} 1 0;height:${h.toFixed(0)}%"></i>`;
+    return `<i class="${cls}" style="flex:${(segSecs(s)/T*100).toFixed(2)} 1 0;height:${h.toFixed(0)}%"></i>`;
   }).join('');
 }
 /* ---------- Phone (1.14.0): workouts built on a phone page that this app serves on the home Wi-Fi ----------
@@ -4279,8 +4304,8 @@ function profileBars(p){
    next shows on Home, and someone still taps Start here. A workout in use (under way, or in its countdown)
    keeps the version it started with, until Home next shows. */
 function phoneSummary(segs){
-  const T = segs.reduce((a, s) => a + s.d, 0), top = Math.max(...segs.map(s => s.mph)), inc = Math.max(...segs.map(s => s.inc));
-  return Math.round(T/60) + ' min · up to ' + top.toFixed(1) + ' mph' + (inc > 0 ? ' at ' + numStr(inc) + '%' : '');
+  const T = segs.reduce((a, s) => a + segSecs(s), 0), top = Math.max(...segs.map(s => s.mph)), inc = Math.max(...segs.map(s => s.inc));
+  return (segs.some(s => s.mi) ? 'About ' : '') + Math.round(T/60) + ' min · up to ' + top.toFixed(1) + ' mph' + (inc > 0 ? ' at ' + numStr(inc) + '%' : '');
 }
 function applyPhone(d){
   PHONE.list = (d && d.list) || []; PHONE.next = (d && d.next) || '';
@@ -4437,10 +4462,11 @@ function phoneRunNow(){
     o.inc = Math.round(S.tInc*2)/2;
     o.secs = Math.round(sum.secs); o.miles = Math.round(sum.miles*100)/100;
     const hr = currentHr(); if(hr) o.hr = Math.round(hr);
-    const at = p.segs.length ? segAt(p, S.progT) : null;
+    const at = p.segs.length ? segNow(p) : null;
     if(at){
-      const nx = p.segs[at.i + 1];
-      o.step = { label:at.seg.label, left:Math.round(at.left), share:Math.round(S.progT/total(p)*1000)/1000 };
+      const nx = p.segs[at.i + 1], left = progLeft(p);
+      o.step = { label:at.seg.label, left:Math.round(at.left), share:Math.round(S.progT/Math.max(1, S.progT + left)*1000)/1000 };
+      if(at.leftMi != null) o.step.mi = Math.round(at.leftMi*100)/100;
       if(nx) o.step.next = { label:nx.label, mph:nx.mph, inc:nx.inc };
     }
   }
@@ -4765,10 +4791,9 @@ function tick(now){
     if(S.elapsed >= S.nextSample && S.trace.length < 4320){ sample(hr); S.nextSample = S.elapsed + 5; }
     const p = PROGRAMS[S.prog];
     if(p.segs.length){
-      S.progT += dt; S.progDist += mps*dt;
-      const at = segAt(p, S.progT);
-      if(!at) finish(false);
-      else if(at.i !== S.segIdx){ S.segIdx = at.i; drv().setSpeed(at.seg.mph*MPH); drv().setIncline(at.seg.inc); }
+      S.progT += dt; S.progDist += mps*dt; S.segT += dt;
+      if(segsDone(p)) finish(false);
+      else if(S.segI !== S.segIdx){ const seg = p.segs[S.segI]; S.segIdx = S.segI; drv().setSpeed(seg.mph*MPH); drv().setIncline(seg.inc); }
     } else if(S.goal && !S.goalHit && goalLeft() <= 0) reachGoal();
     else if(S.cool && S.elapsed >= S.cool.until){ S.cool = null; finish(false); }
   }
@@ -4809,13 +4834,13 @@ function render(){
 
   if(hasProg){
     show('headline', false); show('repCard', true);
-    const at = segAt(p, S.progT) || { i:p.segs.length - 1, seg:p.segs[p.segs.length - 1], left:0 };
+    const at = segNow(p) || { i:p.segs.length - 1, seg:p.segs[p.segs.length - 1], left:0, frac:1, leftMi:p.segs[p.segs.length - 1].mi ? 0 : null };
     const next = p.segs[at.i + 1];
     setText('repNow', at.seg.label + ' · ' + at.seg.mph.toFixed(1) + ' mph');
-    setText('repLeft', fmtTime(at.left));
+    setText('repLeft', at.leftMi != null ? at.leftMi.toFixed(2) + ' mi' : fmtTime(at.left));
     setText('repNext', next ? 'Next: ' + next.label + ' · ' + next.mph.toFixed(1) + ' mph' + (next.inc !== at.seg.inc ? ' at ' + next.inc + '%' : '') : 'Next: finish');
-    setText('repTotal', fmtTime(total(p) - S.progT) + ' left');
-    $('repBar').style.width = (100*(1 - at.left/at.seg.d)).toFixed(1) + '%';
+    setText('repTotal', (p.segs.some(x => x.mi) ? 'About ' : '') + fmtTime(progLeft(p)) + ' left');
+    $('repBar').style.width = (100*at.frac).toFixed(1) + '%';
     setText('m4Label', 'Elapsed'); setText('m4', fmtTime(sum.secs));
   } else {
     show('headline', !S.cool); show('repCard', false);
@@ -4851,7 +4876,7 @@ function render(){
     setText('pDist', sum.miles.toFixed(2));
     setText('pPace', sum.pace ? fmtTime(sum.pace) : '--:--');
     setText('pHr', sum.hr ? String(sum.hr) : '--');
-    const back = hasProg ? (segAt(p, S.progT) || p.segs[p.segs.length - 1]).seg : null;
+    const back = hasProg ? (segNow(p) || { seg:p.segs[p.segs.length - 1] }).seg : null;
     const r = back ? back.mph : (S.resumeKph || quickMph()*MPH)/MPH;
     setText('pLine', 'Belt stopped. Resume ramps back to ' + r.toFixed(1) + ' mph.');
   }
@@ -4894,8 +4919,8 @@ function seedDemo(kind){
     if(kind === 'paused'){ pause(); S.kph = 0; }
   } else if(kind === 'workout'){
     const p = PROGRAMS.intervals; S.prog = 'intervals'; S.progT = 4*60 + 2*180 + 18; S.elapsed = S.progT;
-    const at = segAt(p, S.progT); S.segIdx = at.i; S.tKph = S.kph = at.seg.mph*MPH; S.tInc = S.incline = at.seg.inc;
-    S.distM = S.progDist = 1351.7; S.kcal = 120; S.hr = 158; S.hrSum = 140*600; S.hrN = 600; S.state = 'running';
+    S.distM = S.progDist = 1351.7;
+    const at = seekSeg(p, S.progT); S.segIdx = at.i; S.tKph = S.kph = at.seg.mph*MPH; S.tInc = S.incline = at.seg.inc; S.kcal = 120; S.hr = 158; S.hrSum = 140*600; S.hrN = 600; S.state = 'running';
   } else if(kind === 'done'){
     // the Intervals program as it would have run: speed and incline from its segments, heart rate lagging behind them
     const p = PROGRAMS.intervals; S.prog = 'intervals';
@@ -4934,9 +4959,9 @@ function skipTo(t){
     S.trace.push({ t:k, mph:at.seg.mph, inc:at.seg.inc, hr:Math.round(hr) });
     if(k){ S.hrSum += hr*5; S.hrN += 5; S.zoneT[zoneOf(hr) - 1] += 5; d += at.seg.mph*MPH/3.6*5; }
   }
-  const at = segAt(p, t);
-  Object.assign(S, { progT:t, elapsed:t, nextSample:t + 5, distM:d, progDist:d, kcal:t/60*5.5, hr, segIdx:at.i,
-    kph:at.seg.mph*MPH, tKph:at.seg.mph*MPH, incline:at.seg.inc, tInc:at.seg.inc });
+  Object.assign(S, { progT:t, elapsed:t, nextSample:t + 5, distM:d, progDist:d, kcal:t/60*5.5, hr });
+  const at = seekSeg(p, t);
+  Object.assign(S, { segIdx:at.i, kph:at.seg.mph*MPH, tKph:at.seg.mph*MPH, incline:at.seg.inc, tInc:at.seg.inc });
 }
 async function runTour(){
   ['gymBadge', 'tvBadge', 'gymRunBtn', 'tvRunBtn'].forEach(id => $(id).hidden = false);

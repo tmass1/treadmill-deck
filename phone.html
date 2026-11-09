@@ -2085,37 +2085,73 @@ button { touch-action: manipulation; }
 [data-finish="lit"] .cb-btn--secondary:hover:not(:disabled) { background:var(--lit-raised-hover) padding-box, var(--paint-raised-edge) border-box; }
 .cb-btn svg { stroke-width:2.25; }
 
-/* Bottom bar: the screen's verb, always in reach of a thumb. */
-.bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-chrome); background: var(--card); box-shadow: var(--shadow-lit); padding: var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom)); }
-.bar__in { max-width: 560px; margin-inline: auto; display: flex; gap: var(--space-2); }
+/* Bottom bar: the screen's verb, always in reach of a thumb. It floats over a fade rather than sitting in a band. */
+.bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-chrome); background: linear-gradient(180deg, transparent 0%, var(--background) 42%); padding: var(--space-6) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom)); pointer-events: none; }
+.bar__in { max-width: 560px; margin-inline: auto; display: flex; gap: var(--space-2); pointer-events: auto; }
 .bar .cb-btn { flex: 1; }
 .bar .cb-btn--secondary { flex: none; }
+.bar .cb-btn--secondary.wide { flex: 1; }
+/* A main button that can't be pressed keeps its pill, so it still reads as the button it will be. */
+[data-finish="lit"] .cb-btn--default:disabled { box-shadow: inset 0 0 0 1px var(--border); }
 
-/* The workout's shape, the same bars as the console's workout card. */
-.profile { height: 88px; display: flex; align-items: flex-end; gap: var(--profile-gap, 3px); overflow: hidden; }
-.profile i { display: block; min-width: 0; border-radius: var(--radius-sm); background: var(--input); }
-.profile i.easy { background: var(--muted-foreground); opacity: .35; }
-.profile i.hot { background: var(--primary); }
-[data-finish="lit"] .profile i.hot { background: var(--cta-fill); }
-.profile--mini { flex: none; width: 56px; height: 32px; --profile-gap: 1px; }
-.profile--mini i { border-radius: 2px; }
+/* The workout's shape, on one fixed scale so a steady walk is a low quiet band and a sprint stands tall.
+   Height is effort (speed, plus a quarter for each % of incline); the colour says how hard: easy, steady or hard. */
+.shape { display: flex; flex-direction: column; gap: var(--space-1); }
+.shape__bars { display: flex; align-items: flex-end; gap: var(--shape-gap, 2px); height: 72px; border-bottom: 1px solid var(--border); }
+.shape__bars i { display: block; min-width: 2px; border-radius: 3px 3px 0 0; }
+.shape__bars i.easy { background: var(--muted-foreground); opacity: .3; }
+.shape__bars i.mid { background: var(--muted-foreground); opacity: .7; }
+.shape__bars i.hard { background: var(--info); }
+.shape__axis { display: flex; justify-content: space-between; font-size: calc(var(--cb-fs) * .72); color: var(--muted-foreground); font-feature-settings: "tnum" 1; }
+.thumb { flex: none; width: 60px; height: 40px; box-sizing: border-box; padding: 7px 7px 6px; border-radius: var(--radius-md); background: var(--background); box-shadow: var(--shadow-well); display: flex; align-items: flex-end; }
+.thumb .shape__bars { flex: 1; height: 100%; --shape-gap: 1px; border-bottom: 0; }
+.thumb .shape__bars i { border-radius: 1px 1px 0 0; }
 
-/* Up next */
-.next { display: flex; flex-direction: column; gap: var(--space-3); }
+/* Numbers in a row under a label, the way the console sets its own. */
+.stats { display: grid; grid-template-columns: repeat(var(--stats-n, 3), minmax(0, 1fr)); gap: var(--space-3); margin: 0; }
+.stats > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stats dt { font-size: calc(var(--cb-fs) * .72); font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--muted-foreground); white-space: nowrap; }
+.stats dd { margin: 0; font-size: calc(var(--cb-fs) * 1.25); font-weight: 400; letter-spacing: -.01em; font-feature-settings: "tnum" 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stats dd small { font-size: .7em; color: var(--muted-foreground); margin-left: 2px; }
+/* Four numbers don't fit across the smallest phones' cards: two rows of two. */
+@media (max-width: 379px) { .stats--4 { grid-template-columns: 1fr 1fr; } }
+
+/* Up next: the one thing waiting on the treadmill. */
+.next { display: flex; flex-direction: column; gap: var(--space-4); }
+.next__top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 24px; }
+.next__top .cb-btn { margin: calc(var(--space-2) * -1) calc(var(--space-3) * -1) calc(var(--space-2) * -1) 0; }
 .eyebrow { margin: 0; font-size: calc(var(--cb-fs) * .8); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted-foreground); }
-.next__name { margin: 0; font-size: calc(var(--cb-fs) * 1.6); line-height: 1.2; font-weight: 600; letter-spacing: -.01em; overflow-wrap: anywhere; }
-.next__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.eyebrow.is-info { color: var(--info); }
+.next__name { margin: calc(var(--space-2) * -1) 0 0; font-size: calc(var(--cb-fs) * 1.6); line-height: 1.2; font-weight: 600; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.next__foot { display: flex; align-items: flex-start; gap: var(--space-2); margin: 0; font-size: calc(var(--cb-fs) * .87); color: var(--muted-foreground); }
+.next__foot .cb-icon { flex: none; margin-top: 1px; }
 
 /* A saved workout: open it, or send it in one tap. */
 .saved { display: flex; align-items: center; gap: var(--space-2); padding-right: var(--space-3); }
-.saved__open { all: unset; flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-3); min-height: var(--hit-min); padding: var(--space-3) 0 var(--space-3) var(--cb-pad); cursor: pointer; box-sizing: border-box; }
+.saved__open { all: unset; flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-3); min-height: var(--hit-min); padding: var(--space-3) 0 var(--space-3) var(--space-4); cursor: pointer; box-sizing: border-box; }
 .saved__open:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; border-radius: var(--radius-md); }
+.saved__open > .cb-icon { color: var(--muted-foreground); }
+.cb-list__item > .saved__open { width: 100%; }
 .saved__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .saved__name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .saved__sum { font-size: calc(var(--cb-fs) * .82); color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.saved__new { flex: none; width: 60px; height: 40px; box-sizing: border-box; border-radius: var(--radius-md); box-shadow: inset 0 0 0 1px var(--border); display: flex; align-items: center; justify-content: center; color: var(--muted-foreground); }
+.cb-list__rows > .cb-list__item + .cb-list__item { border-top: 1px solid var(--border); }
+.section-head { display: flex; flex-direction: column; gap: 2px; margin: 0 0 var(--space-2) var(--space-1); }
+.section-head h2 { margin: 0; font-size: calc(var(--cb-fs) * 1.06); font-weight: 600; }
+.section-head p { margin: 0; font-size: calc(var(--cb-fs) * .87); color: var(--muted-foreground); }
 
-/* The steps of a workout, with their numbers in columns. */
-.step { all: unset; box-sizing: border-box; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 2.9em 4.1em 2.3em 16px; align-items: center; column-gap: var(--space-1); min-height: var(--hit-min); padding: var(--space-3) var(--space-3) var(--space-3) var(--cb-pad); cursor: pointer; }
+/* A tip for Safari, until it's hidden. */
+.tip { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); border-radius: var(--radius-lg); box-shadow: inset 0 0 0 1px var(--border); font-size: calc(var(--cb-fs) * .87); color: var(--muted-foreground); }
+.tip p { flex: 1; margin: 0; }
+.tip > .cb-icon { flex: none; }
+
+/* The steps of a workout, with their numbers in columns and a mark in the shape's colour. */
+.step { all: unset; box-sizing: border-box; width: 100%; display: grid; grid-template-columns: 12px minmax(0, 1fr) 3.7em 4.1em 2.3em 16px; align-items: center; column-gap: var(--space-1); min-height: var(--hit-min); padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4); cursor: pointer; }
+.step__mark { align-self: stretch; margin: 2px 0; width: 4px; border-radius: 2px; }
+.step__mark.easy { background: var(--muted-foreground); opacity: .3; }
+.step__mark.mid { background: var(--muted-foreground); opacity: .7; }
+.step__mark.hard { background: var(--info); }
 .step:focus-visible, .rep__head:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; border-radius: var(--radius-md); }
 .step + .step, .rep + .step, .step + .rep { border-top: 1px solid var(--border); }
 .step__name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -2130,7 +2166,13 @@ button { touch-action: manipulation; }
 .rep__foot { padding: 0 var(--space-2) var(--space-2); }
 
 /* Summary at the top of a workout */
-.sum { display: flex; align-items: baseline; flex-wrap: wrap; column-gap: var(--space-3); }
+/* Connected, said quietly: a dot and a word. */
+.live { display: inline-flex; align-items: center; gap: var(--space-2); font-size: calc(var(--cb-fs) * .82); font-weight: 500; color: var(--muted-foreground); }
+.live::before { content: ""; width: 8px; height: 8px; border-radius: var(--radius-full); background: var(--success); }
+/* Back sits on the page's edge, so its chevron lines up with what's under it. */
+.cb-toolbar .back { margin-left: calc((var(--cb-h) - 20px) / -2); margin-right: calc(var(--space-2) * -1); }
+/* A % sits against its number. */
+.cb-readout__unit.is-pct { margin-left: calc(var(--space-2) * -1 + 2px); }
 .warn { display: flex; align-items: flex-start; gap: var(--space-2); margin: 0; font-size: calc(var(--cb-fs) * .87); color: var(--muted-foreground); }
 .warn .cb-icon { color: var(--warning); margin-top: 1px; }
 
@@ -2141,17 +2183,36 @@ button { touch-action: manipulation; }
 .row-btns .cb-btn { flex: 1; min-width: 0; padding-inline: var(--space-2); }
 .row-btns .cb-btn--size-icon { flex: none; }
 
-/* A stepper across the sheet, thumbs on the outside. */
+/* A step's sheet: its kind, how it ends (after a time or a distance), its numbers, then move, copy and delete. */
+.cb-seg.kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-radius: var(--radius-lg); }
+.cb-seg.kinds .cb-seg__item { border-radius: calc(var(--radius-lg) - 3px); padding: 0 var(--space-2); }
+.len { display: flex; flex-direction: column; gap: var(--space-4); }
+/* A stepper across the sheet, thumbs on the outside, minus and plus. Its number sits in a well, because it's a field: tap it to type. */
 .cb-stepper.wide { display: flex; justify-content: space-between; }
 .cb-stepper__btn { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-.cb-stepper__val { min-width: 8em; row-gap: 2px; }
+.cb-stepper__val { min-width: 8em; row-gap: var(--space-1); }
+.numtap { all: unset; grid-column: 1 / -1; box-sizing: border-box; width: calc(var(--cb-fs) * 9.5); height: 56px; padding: 0 var(--space-3); border-radius: var(--radius-md); background: var(--background); box-shadow: var(--shadow-well); display: inline-flex; align-items: center; justify-content: center; cursor: text; }
+.numtap:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.numin { grid-column: 1 / -1; box-sizing: border-box; width: calc(var(--cb-fs) * 9.5); height: 56px; padding: 0 var(--space-2); border-radius: var(--radius-md); background: var(--background); border: 0; margin: 0; font: inherit; font-size: calc(var(--cb-fs) * 2.15); letter-spacing: -.02em; text-align: center; color: var(--foreground); outline: none; box-shadow: var(--shadow-well), 0 0 0 2px var(--ring); -webkit-appearance: none; appearance: none; }
+.acts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-1); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.acts .cb-btn { flex-direction: column; height: auto; min-height: var(--hit-min); padding: var(--space-2) 0; gap: var(--space-1); font-size: calc(var(--cb-fs) * .76); font-weight: 500; color: var(--muted-foreground); }
+.acts .cb-btn .cb-icon { color: var(--foreground); }
+.acts .cb-btn:disabled { opacity: .35; background: transparent; }
+.cb-btn.is-danger, .acts .cb-btn.is-danger .cb-icon { color: var(--destructive); }
 
-/* The run: the numbers first, then the two things you change, with Pause under a thumb. */
-.run-nums { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
-.run-num { display: flex; flex-direction: column; gap: 2px; }
-.step-now { display: flex; flex-direction: column; gap: var(--space-2); }
-.step-now__line { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); }
-.step-now__name { font-size: calc(var(--cb-fs) * 1.2); font-weight: 600; overflow-wrap: anywhere; }
+/* The run: where you are in the workout, the numbers, then incline and speed side by side as on the treadmill
+   (incline on the left, speed on the right), each with its own down and up, and Pause under a thumb. */
+.step-now { display: flex; flex-direction: column; gap: var(--space-3); }
+.step-now__line { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); }
+.step-now__name { margin: 0; font-size: calc(var(--cb-fs) * 1.33); line-height: 1.2; font-weight: 600; overflow-wrap: anywhere; }
+.step-now__left { display: flex; align-items: baseline; gap: var(--space-1); flex: none; }
+.step-now__left .cb-t-readout-md { line-height: 1; }
+.step-now__foot { display: flex; justify-content: space-between; gap: var(--space-3); font-size: calc(var(--cb-fs) * .87); color: var(--muted-foreground); font-feature-settings: "tnum" 1; }
+.pads { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.pad { align-items: stretch; gap: var(--space-4); padding: var(--space-4); }
+.pad__btns { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.pad__btns .cb-stepper__btn { width: 100%; height: 56px; border-radius: var(--radius-full); }
+.pad__btns .cb-icon { width: 26px; height: 26px; }
 .counting { min-height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-5); padding: var(--space-6) var(--space-4); text-align: center; }
 .counting__num { font-size: 168px; line-height: 1; font-weight: 200; letter-spacing: -.04em; font-feature-settings: "tnum" 1; }
 .counting .cb-btn { width: min(100%, 440px); }
@@ -2185,8 +2246,8 @@ const num1 = v => String(Math.round(v*10)/10).replace('-', '−');
 
 // Lucide icons at Cabin's 1.75 stroke, from Cabin's own set; repeat is Lucide's.
 const ICONS = {
-  'chevron-left':'<path d="m15 18-6-6 6-6"/>', 'chevron-right':'<path d="m9 18 6-6-6-6"/>', 'chevron-down':'<path d="m6 9 6 6 6-6"/>',
-  plus:'<path d="M5 12h14"/><path d="M12 5v14"/>', x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  'chevron-left':'<path d="m15 18-6-6 6-6"/>', 'chevron-right':'<path d="m9 18 6-6-6-6"/>', 'chevron-down':'<path d="m6 9 6 6 6-6"/>', 'chevron-up':'<path d="m18 15-6-6-6 6"/>',
+  share:'<path d="M12 2v13"/><path d="m16 6-4-4-4 4"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>',  plus:'<path d="M5 12h14"/><path d="M12 5v14"/>', minus:'<path d="M5 12h14"/>', x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
   'trash-2':'<path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
   'circle-check':'<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
   'triangle-alert':'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
@@ -2215,7 +2276,13 @@ const TEMPLATES = [
   { name:'Steady', blocks:[stepOf('warm', 4, 3.5, 1), stepOf('run', 14, 5.5, 1), stepOf('cool', 2, 3.2, 0)] },
   { name:'Walk', blocks:[stepOf('walk', 30, 3.2, 2)] },
 ];
-const MAX_BLOCKS = 40, MAX_INNER = 8, MIN_TIMES = 2, MAX_TIMES = 30;
+const MAX_BLOCKS = 40, MAX_INNER = 8, MIN_TIMES = 2, MAX_TIMES = 30, MAX_HOURS = 4;
+/* A step lasts a time (d, seconds) or a distance (mi). A distance step ends when the belt has covered it, so its
+   time is a guess: at its own speed. */
+const secsOf = s => s.mi ? s.mi*3600/Math.max(0.5, s.mph) : s.d;
+const milesOf = s => s.mi ? s.mi : s.d*s.mph/3600;
+const fmtMi = v => (Math.round(v*100)/100).toFixed(2);
+const lenText = s => s.mi ? fmtMi(s.mi) + ' mi' : fmtTime(s.d);
 
 // A workout's blocks as the steps the belt will run, in order.
 function flatten(blocks){
@@ -2228,25 +2295,42 @@ function flatten(blocks){
 }
 function summary(blocks){
   const f = flatten(blocks);
-  const T = f.reduce((a, s) => a + s.d, 0), miles = f.reduce((a, s) => a + s.d*s.mph/3600, 0);
+  const T = f.reduce((a, s) => a + secsOf(s), 0), miles = f.reduce((a, s) => a + milesOf(s), 0);
   const top = f.length ? Math.max(...f.map(s => s.mph)) : 0, inc = f.length ? Math.max(...f.map(s => s.inc)) : 0;
-  return { T, miles, top, inc, first:f[0] || null, count:f.length };
+  return { T, miles, top, inc, first:f[0] || null, count:f.length, est:f.some(s => s.mi) };
 }
-const sumLine = b => { const s = summary(b); return Math.round(s.T/60) + ' min · up to ' + s.top.toFixed(1) + ' mph' + (s.inc > 0 ? ' at ' + num1(s.inc) + '%' : ''); };
-const sumShort = b => { const s = summary(b); return Math.round(s.T/60) + ' min · ' + s.top.toFixed(1) + ' mph' + (s.inc > 0 ? ' · ' + num1(s.inc) + '%' : ''); };
-// The same shape as the console's workout card: height by effort, warm-ups and cool-downs quiet, the hardest bright.
-function bars(blocks, attrs){
-  const f = flatten(blocks);
-  if(!f.length) return '';
-  const effort = s => s.mph + Math.max(0, s.inc)*0.25;
-  const max = Math.max(...f.map(effort)), min = Math.min(...f.map(effort)), T = f.reduce((a, s) => a + s.d, 0);
-  const gap = f.length > 40 ? '--profile-gap:1px;' : '';
-  return `<div class="profile ${attrs || ''}" aria-hidden="true" style="${gap}">` + f.map(s => {
-    const e = effort(s), h = max === min ? 76 : 26 + (e - min)/(max - min)*74;
-    const cls = s.ph === 'warm' || s.ph === 'cool' ? 'easy' : e >= max - (max - min)*0.25 ? 'hot' : '';
-    return `<i class="${cls}" style="flex:${(s.d/T*100).toFixed(2)} 1 0;height:${h.toFixed(0)}%"></i>`;
-  }).join('') + '</div>';
+const sumShort = b => { const s = summary(b); return (s.est ? 'About ' : '') + Math.round(s.T/60) + ' min · ' + s.top.toFixed(1) + ' mph' + (s.inc > 0 ? ' · ' + num1(s.inc) + '%' : ''); };
+const mins = T => Math.round(T/60) + ' min';
+// Time, distance, top speed and top incline, for the top of a workout and Up next. With distance steps the time is a guess.
+const statsHtml = (blocks, noTime) => { const s = summary(blocks), n = (s.inc > 0 ? 4 : 3) - (noTime ? 1 : 0); return `<dl class="stats${n === 4 ? ' stats--4' : ''}" style="--stats-n:${n}">
+    ${noTime ? '' : `<div><dt>${s.est ? 'About' : 'Time'}</dt><dd>${fmtTime(s.T)}</dd></div>`}
+    <div><dt>Distance</dt><dd>${s.est ? fmtMi(s.miles) : s.miles.toFixed(1)}<small>mi</small></dd></div>
+    <div><dt>Top speed</dt><dd>${s.top.toFixed(1)}<small>mph</small></dd></div>
+    ${s.inc > 0 ? `<div><dt>Incline</dt><dd>${num1(s.inc)}<small>%</small></dd></div>` : ''}
+  </dl>`; };
+/* How hard a step is, on one scale for every workout. Warm-ups, cool-downs and recoveries are easy; a walk or a
+   gentle climb is steady; a run, or a walk or climb steep enough to match one, is hard. The shape and the step rows
+   both use it. */
+const effort = s => s.mph + Math.max(0, s.inc)*0.25;
+const level = s => {
+  if(s.ph === 'warm' || s.ph === 'cool' || s.ph === 'rec') return 'easy';
+  const e = effort(s);
+  return s.ph === 'run' ? (e < 4.2 ? 'mid' : 'hard') : e >= 5.6 ? 'hard' : 'mid';
+};
+const SHAPE_TOP = 9;   // effort that fills the height: about 8 mph flat, or 3.5 mph at 22%
+function shapeBars(f){
+  const top = Math.max(SHAPE_TOP, ...f.map(effort)), T = f.reduce((a, s) => a + secsOf(s), 0);
+  return `<span class="shape__bars"${f.length > 30 ? ' style="--shape-gap:1px"' : ''}>` + f.map(s =>
+    `<i class="${level(s)}" style="flex:${(secsOf(s)/T*100).toFixed(2)} 1 0;height:${Math.max(12, effort(s)/top*100).toFixed(0)}%"></i>`).join('') + '</span>';
 }
+// The big shape, with its time along the bottom.
+function shape(blocks){
+  const f = flatten(blocks); if(!f.length) return '';
+  const T = f.reduce((a, s) => a + secsOf(s), 0), half = T >= 600 ? `<span>${Math.round(T/120)}</span>` : '';
+  return `<div class="shape" aria-hidden="true">${shapeBars(f)}<div class="shape__axis"><span>0</span>${half}<span>${mins(T)}</span></div></div>`;
+}
+// The small one, for a row.
+const thumb = blocks => { const f = flatten(blocks); return `<span class="thumb" aria-hidden="true">${f.length ? shapeBars(f) : ''}</span>`; };
 
 /* ---------- the treadmill ---------- */
 const A = {
@@ -2310,8 +2394,9 @@ function route(){
   paintHome();
 }
 function goHome(){ A.view = 'home'; A.lastSig = ''; route(); }
+// Quiet while all's well, loud when it isn't.
 const statusBadge = () => A.online
-  ? `<span class="cb-badge cb-badge--soft cb-tone--success">${icon('circle-check', '', 14)}Connected</span>`
+  ? `<span class="live">Connected</span>`
   : `<span class="cb-badge cb-badge--soft cb-tone--warning">${icon('wifi-off', '', 14)}Not connected</span>`;
 const offlineNotice = () => A.online ? '' : `
   <div role="alert" class="cb-notice cb-tone--warning">${icon('wifi-off', 'cb-notice__icon')}
@@ -2330,48 +2415,58 @@ function paintHome(){
   const list = st.list || [], next = list.find(w => w.id === st.next);
   const holdToStart = what => `<button class="cb-btn cb-btn--default cb-btn--size-lg cb-btn--hold" style="--cb-hold:${HOLD_MS}ms" type="button" data-hold="start" data-what="${what}"${canStart ? '' : ' disabled'}>Hold to start</button>`;
   const startNote = () => canStart ? 'Then a 5-second countdown on the treadmill.' : (r && r.why) || 'The treadmill isn’t ready.';
+  const foot = words => `<p class="next__foot">${icon(st.control && !canStart ? 'triangle-alert' : 'info', '', 16)}<span>${esc(words)}</span></p>`;
   $('app').innerHTML = `
   <main class="cb-page view" style="--cb-page-w:560px">
     <header class="cb-toolbar cb-toolbar--sticky"><h1 class="cb-toolbar__title">Workouts</h1><div class="cb-toolbar__actions">${statusBadge()}</div></header>
     <div class="flow">
       ${offlineNotice()}
       ${next ? `<section class="cb-card next" aria-label="Up next">
-        <p class="eyebrow">Up next</p>
+        <div class="next__top"><p class="eyebrow is-info">Up next on the treadmill</p>
+          <button class="cb-btn cb-btn--ghost cb-btn--size-sm" type="button" data-act="clear-next">Clear</button></div>
         <h2 class="next__name">${esc(next.name)}</h2>
-        <p class="muted tnum" style="margin:0">${esc(sumLine(next.blocks))}</p>
-        ${bars(next.blocks)}
+        ${statsHtml(next.blocks)}
+        ${shape(next.blocks)}
         ${st.control ? holdToStart('next') : ''}
-        <div class="next__foot"><span class="muted small">${st.control ? esc(startNote()) : st.busy ? 'Ready when the treadmill’s current workout ends.' : 'Waiting on the treadmill. Tap Start workout there.'}</span>
-        <button class="cb-btn cb-btn--ghost cb-btn--size-sm" type="button" data-act="clear-next">Clear</button></div>
+        ${foot(st.control ? startNote() : st.busy ? 'Ready when the treadmill’s current workout ends.' : 'Waiting on the treadmill. Tap Start workout there.')}
       </section>` : st.control && r && r.quick ? `<section class="cb-card next" aria-label="Quick start">
-        <p class="eyebrow">Quick start</p>
+        <div class="next__top"><p class="eyebrow">Quick start</p></div>
         <h2 class="next__name">${esc(r.quick.name)}</h2>
         <p class="muted tnum" style="margin:0">Starts at ${r.quick.mph.toFixed(1)} mph${r.quick.inc ? ' at ' + num1(r.quick.inc) + '%' : ''}. Set the pace as you go.</p>
         ${holdToStart('free')}
-        <p class="muted small" style="margin:0">${esc(startNote())}</p>
+        ${foot(startNote())}
       </section>` : ''}
       ${list.length ? `<section class="cb-list"><h2 class="cb-list__label">Saved</h2><div class="cb-list__rows" role="list">
         ${list.map(w => `<div role="listitem" class="cb-list__item"><div class="saved">
           <button class="saved__open" type="button" data-act="open" data-id="${esc(w.id)}">
-            ${bars(w.blocks, 'profile--mini')}
+            ${thumb(w.blocks)}
             <span class="saved__text"><span class="saved__name">${esc(w.name)}</span><span class="saved__sum tnum">${esc(sumShort(w.blocks))}</span></span>
           </button>
           ${w.id === st.next
             ? `<span class="cb-badge cb-badge--soft cb-tone--info">Up next</span>`
             : `<button class="cb-btn cb-btn--secondary cb-btn--size-sm" type="button" data-act="send" data-id="${esc(w.id)}" aria-label="Send ${esc(w.name)} to the treadmill">Send</button>`}
         </div></div>`).join('')}
-      </div></section>` : `<section class="cb-card empty"><h2 class="cb-card__title" style="margin:0">No workouts yet</h2>
-        <p class="muted" style="margin:0">Build one here and send it to the treadmill, ready for when you start.</p></section>`}
-      ${navigator.standalone ? '' : `<p class="muted small" style="margin:0 var(--cb-pad)">To keep this one tap away, use Share, then Add to Home Screen.</p>`}
+      </div></section>` : `<section class="empty" aria-labelledby="firstTitle">
+        <div class="section-head"><h2 id="firstTitle">Build your first workout</h2><p>Start from one of these and change anything, or start from nothing.</p></div>
+        <div class="cb-list__rows" role="list">${templateRows('tpl')}</div>
+      </section>`}
+      ${navigator.standalone || store.get('phone.tipHidden') ? '' : `<div class="tip">${icon('share', '', 18)}<p>Keep this a tap away: Share, then Add to Home Screen.</p>
+        <button class="cb-btn cb-btn--ghost cb-btn--size-icon" type="button" data-act="hide-tip" aria-label="Hide this tip">${icon('x', '', 18)}</button></div>`}
     </div>
   </main>
-  <div class="bar"><div class="bar__in"><button class="cb-btn ${st.control ? 'cb-btn--secondary' : 'cb-btn--default'} cb-btn--size-lg" style="flex:1" type="button" data-act="new">${icon('plus')}New workout</button></div></div>`;
+  <div class="bar"><div class="bar__in"><button class="cb-btn ${st.control ? 'cb-btn--secondary wide' : 'cb-btn--default'} cb-btn--size-lg" type="button" data-act="new">${icon('plus')}New workout</button></div></div>`;
 }
+// Templates to start from, as rows: on an empty Home (act 'tpl') and in the New workout sheet ('from-template').
+const templateRows = act => TEMPLATES.map((t, i) => `<div role="listitem" class="cb-list__item"><button class="saved__open" style="padding-right:var(--space-4)" type="button" data-act="${act}" data-i="${i}">
+    ${thumb(t.blocks)}<span class="saved__text"><span class="saved__name">${esc(t.name)}</span><span class="saved__sum tnum">${esc(sumShort(t.blocks))}</span></span>${icon('chevron-right', '', 16)}</button></div>`).join('')
+  + `<div role="listitem" class="cb-list__item"><button class="saved__open" style="padding-right:var(--space-4)" type="button" data-act="${act}" data-i="-1">
+    <span class="saved__new">${icon('plus', '', 18)}</span><span class="saved__text"><span class="saved__name">Start from nothing</span><span class="saved__sum">One step, then add your own</span></span>${icon('chevron-right', '', 16)}</button></div>`;
 
 /* ---------- the run: only with Control from phone on, which only the treadmill can allow ---------- */
 function runHtml(r){
   const off = !A.online;
   if(r.st === 'countdown') return `<main class="counting">
+    ${r.name ? `<p class="muted" style="margin:0">${esc(r.name)}</p>` : ''}
     <p class="eyebrow">The belt starts in</p>
     <div class="counting__num" id="rCount" role="timer" aria-live="assertive"></div>
     <p class="muted" id="rLine" style="margin:0"></p>
@@ -2379,31 +2474,36 @@ function runHtml(r){
     <button class="cb-btn cb-btn--default cb-btn--size-lg" type="button" data-act="run-cancel">Cancel</button>
   </main>`;
   const head = `<header class="cb-toolbar cb-toolbar--sticky"><h1 class="cb-toolbar__title" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.name)}</h1><div class="cb-toolbar__actions">${statusBadge()}</div></header>`;
-  const nums = `<div class="run-nums">
-    <section class="cb-card run-num" aria-label="Time"><span class="cb-t-readout-md tnum" id="rTime"></span><span class="muted small">Time</span></section>
-    <section class="cb-card run-num" aria-label="Distance"><span class="cb-t-readout-md tnum" id="rMiles"></span><span class="muted small">Miles</span></section>
-  </div>`;
+  // Time and miles, and heart rate when a strap is on, in one card.
+  const nums = `<section class="cb-card" aria-label="So far"><dl class="stats" style="--stats-n:${r.hr ? 3 : 2}">
+    <div><dt>Time</dt><dd id="rTime"></dd></div>
+    <div><dt>Distance</dt><dd><span id="rMiles"></span><small>mi</small></dd></div>
+    ${r.hr ? `<div><dt>Heart rate</dt><dd><span id="rHr"></span><small>bpm</small></dd></div>` : ''}
+  </dl></section>`;
   if(r.st === 'done') return `<main class="cb-page view" style="--cb-page-w:560px">${head}<div class="flow">
       <section class="cb-card step-now"><p class="eyebrow">Workout ended</p><p class="muted" style="margin:0">The belt has stopped. Your run is saved on the treadmill.</p></section>
       ${nums}</div></main>
     <div class="bar"><div class="bar__in"><button class="cb-btn cb-btn--default cb-btn--size-lg" type="button" data-act="run-done">Done</button></div></div>`;
-  const nudgeHtml = (key, label, unit) => `<section class="cb-card"><div class="cb-stepper wide" role="group" aria-label="${label}">
-      <button type="button" class="cb-stepper__btn" data-nudge="${key}" data-dir="-1" aria-label="Less ${label.toLowerCase()}">${icon('chevron-left')}</button>
-      <div class="cb-stepper__val" aria-live="polite"><span class="cb-stepper__reading"><span class="cb-stepper__num tnum" id="rv_${key}"></span><span class="cb-stepper__unit${unit === '%' ? ' is-tight' : ''}">${unit}</span></span><span class="cb-stepper__label">${label}</span></div>
-      <button type="button" class="cb-stepper__btn" data-nudge="${key}" data-dir="1" aria-label="More ${label.toLowerCase()}">${icon('chevron-right')}</button>
-    </div></section>`;
+  // Down on the left and up on the right, like the treadmill's own keys, under the number they change.
+  const pad = (key, label, unit, less, more) => `<section class="cb-card pad" role="group" aria-label="${label}">
+      <div class="cb-readout cb-readout--lg cb-readout--center" aria-live="polite"><span class="cb-readout__label">${label}</span>
+        <span class="cb-readout__line"><span class="cb-readout__value" id="rv_${key}"></span><span class="cb-readout__unit${unit === '%' ? ' is-pct' : ''}">${unit}</span></span></div>
+      <div class="pad__btns">
+        <button type="button" class="cb-stepper__btn" data-nudge="${key}" data-dir="-1" aria-label="${less}">${icon('chevron-down')}</button>
+        <button type="button" class="cb-stepper__btn" data-nudge="${key}" data-dir="1" aria-label="${more}">${icon('chevron-up')}</button>
+      </div>
+    </section>`;
   const paused = r.st === 'paused';
   return `<main class="cb-page view" style="--cb-page-w:560px">${head}<div class="flow">
       <div id="runNotice"></div>
       ${paused ? `<section class="cb-card step-now"><p class="eyebrow">Paused</p><p class="muted" style="margin:0">Belt stopped. Resuming counts down on the treadmill first.</p></section>`
         : r.step ? `<section class="cb-card step-now" aria-label="This step">
-          <div class="step-now__line"><span class="step-now__name" id="rStep"></span><span class="cb-t-readout-md tnum" id="rLeft"></span></div>
+          <div class="step-now__line"><h2 class="step-now__name" id="rStep"></h2><span class="step-now__left"><span class="cb-t-readout-md tnum" id="rLeft"></span><span class="muted small">left</span></span></div>
           <div class="cb-progress__track"><div class="cb-progress__bar cb-tone--info" id="rShare" style="width:0"></div></div>
-          <span class="muted small tnum" id="rNext"></span>
+          <div class="step-now__foot"><span id="rNext"></span><span id="rDone"></span></div>
         </section>` : ''}
       ${nums}
-      ${nudgeHtml('speed', 'Speed', 'mph')}
-      ${nudgeHtml('inc', 'Incline', '%')}
+      <div class="pads">${pad('inc', 'Incline', '%', 'Less incline', 'More incline')}${pad('speed', 'Speed', 'mph', 'Slower', 'Faster')}</div>
     </div></main>
     <div class="bar"><div class="bar__in">
       <button class="cb-btn cb-btn--secondary cb-btn--size-lg" type="button" data-act="run-stop">End workout</button>
@@ -2414,18 +2514,19 @@ function runHtml(r){
 }
 function paintRun(){
   const r = runNow(); if(!r) return;
-  const sig = [r.st, !!r.step, A.online].join();
+  const sig = [r.st, !!r.step, !!r.hr, A.online].join();
   if(A.runSig !== sig){ A.runSig = sig; $('app').innerHTML = runHtml(r); scrollTo(0, 0); }
   fillRun(r);
 }
 function fillRun(r){
   const put = (id, t) => { const e = $(id); if(e && e.textContent !== t) e.textContent = t; };
   put('rCount', String(r.count || '')); put('rLine', (r.line || '').replace('Started from your phone. ', '').replace(' from your phone', ''));   // those words are for whoever's at the treadmill
-  put('rTime', fmtTime(r.secs || 0)); put('rMiles', (r.miles || 0).toFixed(2));
+  put('rTime', fmtTime(r.secs || 0)); put('rMiles', (r.miles || 0).toFixed(2)); if(r.hr) put('rHr', String(r.hr));
   if(r.step){
-    put('rStep', r.step.label); put('rLeft', fmtTime(r.step.left));
+    put('rStep', r.step.label); put('rLeft', r.step.mi != null ? fmtMi(r.step.mi) + ' mi' : fmtTime(r.step.left));
     const n = r.step.next;
     put('rNext', n ? 'Next: ' + n.label + ' · ' + n.mph.toFixed(1) + ' mph' + (n.inc ? ' at ' + num1(n.inc) + '%' : '') : 'Last step');
+    put('rDone', Math.floor(Math.min(1, r.step.share)*100) + '% done');
     const bar = $('rShare'); if(bar) bar.style.width = Math.min(100, r.step.share*100).toFixed(1) + '%';
   }
   const L = limits(), mph = clamp((r.mph || 0) + NUDGE.speed.wait + NUDGE.speed.sent, L.mphMin, L.mphMax), inc = clamp((r.inc || 0) + NUDGE.inc.wait + NUDGE.inc.sent, L.incMin, L.incMax);
@@ -2506,12 +2607,16 @@ function paintPair(){
 /* ---------- a workout ---------- */
 function saveDraft(){ if(A.draft) store.set('phone.draft', JSON.stringify(A.draft)); }
 function dropDraft(){ store.del('phone.draft'); }
-function touched(){ A.dirty = true; saveDraft(); paintSteps(); paintSum(); paintDiscard(); }
-function paintDiscard(){ const b = $('discard'); if(b) b.hidden = !A.isNew && !A.dirty; }
+function touched(){ A.dirty = true; saveDraft(); paintSteps(); paintSum(); }
 
+/* The editor has a history entry of its own, so the phone's Back leaves it. Leaving another way (Save, Send, Discard)
+   takes that entry back off; a workout opened before that's done gets its entry once it is. */
+let popping = 0, pushAfter = false;
+function pushEdit(){ if(popping) pushAfter = true; else history.pushState({ v:'edit' }, ''); }
+function popped(){ if(!popping) return false; clearTimeout(popping); popping = 0; if(pushAfter){ pushAfter = false; if(A.view === 'edit') history.pushState({ v:'edit' }, ''); } return true; }
 function openDraft(draft, restored){
   A.draft = draft; A.dirty = !!restored; A.isNew = !draft.id; A.view = 'edit';
-  history.pushState({ v:'edit' }, '');
+  pushEdit();
   paintEdit();
 }
 function openWorkout(id){
@@ -2523,32 +2628,29 @@ function paintEdit(){
   $('app').innerHTML = `
   <main class="cb-page view" style="--cb-page-w:560px">
     <header class="cb-toolbar cb-toolbar--sticky">
-      <button class="cb-btn cb-btn--ghost cb-btn--size-icon" type="button" data-act="back" aria-label="Back to workouts">${icon('chevron-left')}</button>
-      <h1 class="cb-toolbar__title">${A.isNew ? 'New workout' : 'Workout'}</h1>
+      <button class="cb-btn cb-btn--ghost cb-btn--size-icon back" type="button" data-act="back" aria-label="Back to workouts">${icon('chevron-left')}</button>
+      <h1 class="cb-toolbar__title">${A.isNew ? 'New workout' : 'Edit workout'}</h1>
     </header>
     <div class="flow">
       <div id="editNotice"></div>
       <div class="cb-field"><label class="cb-field__label" for="wName">Name</label>
         <div class="cb-input"><input id="wName" maxlength="40" autocomplete="off" value="${esc(d.name)}" placeholder="Tuesday hills"></div></div>
-      <section class="cb-card tight" style="gap:var(--space-3)" aria-label="Summary"><div id="sum"></div><div id="shape"></div><div id="warn"></div></section>
+      <section class="cb-card tight" style="gap:var(--space-4)" aria-label="Summary"><div id="sum"></div><div id="shape"></div><div id="stats"></div><div id="warn"></div></section>
       <section class="cb-list"><h2 class="cb-list__label">Steps</h2><div class="cb-list__rows" id="steps"></div>
         <div class="row-btns" style="margin-top:var(--space-1)">
           <button class="cb-btn cb-btn--secondary" type="button" data-act="add-step">${icon('plus')}Add step</button>
           <button class="cb-btn cb-btn--secondary" type="button" data-act="add-repeat">${icon('repeat')}Add repeat</button>
         </div>
       </section>
-      <div class="tight">
-        <button class="cb-btn cb-btn--ghost" type="button" data-act="discard" id="discard">${A.isNew ? 'Discard workout' : 'Discard changes'}</button>
-        ${A.isNew ? '' : `<button class="cb-btn cb-btn--ghost" type="button" data-act="delete-workout" style="color:var(--destructive)">${icon('trash-2')}Delete workout</button>`}
-      </div>
+      ${A.isNew ? '' : `<div class="tight"><button class="cb-btn cb-btn--ghost" type="button" data-act="delete-workout" style="color:var(--destructive)">${icon('trash-2')}Delete workout</button></div>`}
     </div>
   </main>
   <div class="bar"><div class="bar__in">
     <button class="cb-btn cb-btn--secondary cb-btn--size-lg" type="button" data-act="save">Save</button>
     <button class="cb-btn cb-btn--default cb-btn--size-lg" type="button" data-act="send-draft">Send to treadmill</button>
   </div></div>`;
-  $('wName').addEventListener('input', e => { d.name = e.target.value; A.dirty = true; saveDraft(); clearEditError(); paintDiscard(); });
-  paintSteps(); paintSum(); paintEditNotice(); paintDiscard();
+  $('wName').addEventListener('input', e => { d.name = e.target.value; A.dirty = true; saveDraft(); clearEditError(); });
+  paintSteps(); paintSum(); paintEditNotice();
   scrollTo(0, 0);
 }
 function paintEditNotice(){
@@ -2562,19 +2664,20 @@ function paintEditNotice(){
 function clearEditError(){ if(A.why){ A.why = ''; paintEditNotice(); } }
 function paintSum(){
   const s = summary(A.draft.blocks);
-  $('sum').innerHTML = `<div class="sum"><span class="cb-t-readout-lg tnum">${fmtTime(s.T)}</span>
-    <span class="muted tnum">About ${s.miles.toFixed(1)} mi · up to ${s.top.toFixed(1)} mph${s.inc > 0 ? ' at ' + num1(s.inc) + '%' : ''}</span></div>`;
-  $('shape').innerHTML = bars(A.draft.blocks);
-  $('warn').innerHTML = s.first && s.first.mph > 5
-    ? `<p class="warn">${icon('triangle-alert', '', 16)}<span>This starts at ${s.first.mph.toFixed(1)} mph with no warm-up.</span></p>` : '';
-  $('warn').hidden = !$('warn').innerHTML;
+  $('sum').innerHTML = `<div class="cb-readout cb-readout--lg"><span class="cb-readout__label">${s.est ? 'Estimated time' : 'Total time'}</span><span class="cb-readout__line"><span class="cb-readout__value">${fmtTime(s.T)}</span></span></div>`;
+  $('shape').innerHTML = shape(A.draft.blocks);
+  $('stats').innerHTML = statsHtml(A.draft.blocks, true);
+  const warn = s.T > MAX_HOURS*3600 ? `A workout can be up to ${MAX_HOURS} hours long. Shorten a step to send it.`
+    : s.first && s.first.mph > 5 ? `This starts at ${s.first.mph.toFixed(1)} mph with no warm-up.` : '';
+  $('warn').innerHTML = warn ? `<p class="warn">${icon('triangle-alert', '', 16)}<span>${esc(warn)}</span></p>` : '';
+  $('warn').hidden = !warn;
 }
-const stepRow = (s, b, k) => `<button class="step" type="button" data-act="edit-step" data-b="${b}"${k == null ? '' : ` data-s="${k}"`} aria-label="${esc(kind(s.ph).label)}, ${fmtTime(s.d)}, ${s.mph.toFixed(1)} miles an hour, ${num1(s.inc)} percent incline">
-    <span class="step__name">${esc(kind(s.ph).label)}</span><span class="step__num">${fmtTime(s.d)}</span><span class="step__num">${s.mph.toFixed(1)} <small>mph</small></span><span class="step__num">${num1(s.inc)}<small>%</small></span>${icon('chevron-right', '', 16)}
+const stepRow = (s, b, k) => `<button class="step" type="button" data-act="edit-step" data-b="${b}"${k == null ? '' : ` data-s="${k}"`} aria-label="${esc(kind(s.ph).label)}, ${s.mi ? fmtMi(s.mi) + ' miles' : fmtTime(s.d)}, ${s.mph.toFixed(1)} miles an hour, ${num1(s.inc)} percent incline">
+    <span class="step__mark ${level(s)}" aria-hidden="true"></span><span class="step__name">${esc(kind(s.ph).label)}</span><span class="step__num">${s.mi ? fmtMi(s.mi) + ' <small>mi</small>' : fmtTime(s.d)}</span><span class="step__num">${s.mph.toFixed(1)} <small>mph</small></span><span class="step__num">${num1(s.inc)}<small>%</small></span>${icon('chevron-right', '', 16)}
   </button>`;
 function paintSteps(){
   $('steps').innerHTML = A.draft.blocks.map((b, i) => b.kind === 'repeat'
-    ? `<div class="rep"><button class="rep__head" type="button" data-act="edit-repeat" data-b="${i}">${icon('repeat', '', 18)}<span>Repeat ${b.times} times</span><span class="muted tnum small">${fmtTime(b.times*b.steps.reduce((a, s) => a + s.d, 0))}</span>${icon('chevron-right', '', 16)}</button>
+    ? `<div class="rep"><button class="rep__head" type="button" data-act="edit-repeat" data-b="${i}">${icon('repeat', '', 18)}<span>Repeat ${b.times} times</span><span class="muted tnum small">${b.steps.some(s => s.mi) ? 'About ' : ''}${fmtTime(b.times*b.steps.reduce((a, s) => a + secsOf(s), 0))}</span>${icon('chevron-right', '', 16)}</button>
         ${b.steps.map((s, k) => stepRow(s, i, k)).join('')}
         <div class="rep__foot"><button class="cb-btn cb-btn--ghost cb-btn--size-sm" type="button" data-act="add-inner" data-b="${i}"${b.steps.length >= MAX_INNER ? ' disabled' : ''}>${icon('plus', '', 16)}Add a step to repeat</button></div></div>`
     : stepRow(b, i, null)).join('');
@@ -2596,6 +2699,7 @@ function openSheet(title, body, foot, onClose){
   $('sheetBox').focus({ preventScroll:true });
 }
 function closeSheet(){
+  const typing = document.querySelector('.numin'); if(typing) typing.blur();   // a number being typed is kept
   const fn = sheetClose; sheetClose = null;
   $('sheet').innerHTML = '';
   stepCtx = null;
@@ -2614,20 +2718,38 @@ addEventListener('keydown', e => {
   else if(!e.shiftKey && document.activeElement === z){ e.preventDefault(); a.focus(); }
 });
 
-/* A stepper's value updates in place, so the button under a held finger is never replaced. */
-let stepCtx = null;   // { get, title } while a step or repeat sheet is open
+/* A stepper's value updates in place, so the button under a held finger is never replaced. Minus and plus, since
+   it's an amount; the number itself is a field: tap it to type one. */
+let stepCtx = null;   // { get } while a step or repeat sheet is open
+const parseNum = t => /^-?(\d+\.?\d*|\.\d+)$/.test(t) ? parseFloat(t) : NaN;
+// Time is typed in minutes (2.5 is 2:30), or as m:ss or h:mm:ss.
+const parseTime = t => { if(/^(\d+\.?\d*|\.\d+)$/.test(t)) return parseFloat(t)*60;
+  const m = /^(\d+):(\d{1,2})(?::(\d{1,2}))?$/.exec(t); if(!m) return NaN;
+  return m[3] == null ? +m[1]*60 + +m[2] : +m[1]*3600 + +m[2]*60 + +m[3]; };
+/* sizes: [up to, step] pairs, so bigger numbers move in bigger steps (15 s under 2 minutes, 30 s under 10, then
+   minutes; 0.05 mi under a mile, then quarters). snap: what a typed value rounds to. */
 const STEPPERS = {
-  d:{ label:'Time', step:15, min:15, max:7200, show:v => [fmtTime(v), ''] },
-  mph:{ label:'Speed', step:0.1, min:() => limits().mphMin, max:() => limits().mphMax, show:v => [v.toFixed(1), 'mph'] },
-  inc:{ label:'Incline', step:0.5, min:() => limits().incMin, max:() => limits().incMax, show:v => [num1(v), '%'] },
-  times:{ label:'Times', step:1, min:MIN_TIMES, max:MAX_TIMES, show:v => [String(v), ''] },
+  d:{ label:'Time', sizes:[[120, 15], [600, 30], [Infinity, 60]], snap:15, min:15, max:7200, show:v => [fmtTime(v), ''], hint:'Minutes, like 2.5', parse:parseTime },
+  mi:{ label:'Distance', sizes:[[1, 0.05], [Infinity, 0.25]], snap:0.01, min:0.05, max:20, show:v => [fmtMi(v), 'mi'], hint:'Miles, like 0.25', parse:parseNum },
+  mph:{ label:'Speed', sizes:[[Infinity, 0.1]], snap:0.1, min:() => limits().mphMin, max:() => limits().mphMax, show:v => [v.toFixed(1), 'mph'], hint:'Miles an hour', parse:parseNum },
+  inc:{ label:'Incline', sizes:[[Infinity, 0.5]], snap:0.5, min:() => limits().incMin, max:() => limits().incMax, show:v => [num1(v), '%'], hint:'Percent, in halves', parse:parseNum },
+  times:{ label:'Times', sizes:[[Infinity, 1]], snap:1, min:MIN_TIMES, max:MAX_TIMES, show:v => [String(v), ''], hint:'How many times', parse:parseNum },
 };
 const lim = v => typeof v === 'function' ? v() : v;
-const stepperHtml = key => { const c = STEPPERS[key]; return `<div class="cb-stepper wide" role="group" aria-label="${c.label}">
-    <button type="button" class="cb-stepper__btn" data-step="${key}" data-dir="-1" aria-label="Less ${c.label.toLowerCase()}">${icon('chevron-left')}</button>
-    <div class="cb-stepper__val" aria-live="polite"><span class="cb-stepper__reading"><span class="cb-stepper__num tnum" id="val_${key}"></span><span class="cb-stepper__unit${key === 'inc' ? ' is-tight' : ''}" id="unit_${key}"></span></span><span class="cb-stepper__label">${c.label}</span></div>
-    <button type="button" class="cb-stepper__btn" data-step="${key}" data-dir="1" aria-label="More ${c.label.toLowerCase()}">${icon('chevron-right')}</button>
+const snapTo = (v, st) => Math.round(Math.round(v/st)*st*100)/100;
+function tickFrom(v, dir, sizes){
+  const st = sizes.find(([upTo]) => (dir > 0 ? v : v - 1e-6) < upTo)[1];
+  return snapTo(dir > 0 ? (Math.floor(v/st + 1e-6) + 1)*st : (Math.ceil(v/st - 1e-6) - 1)*st, Math.min(st, 0.01));
+}
+const stepperHtml = key => { const c = STEPPERS[key], name = c.label.toLowerCase(); return `<div class="cb-stepper wide" role="group" aria-label="${c.label}">
+    <button type="button" class="cb-stepper__btn" data-step="${key}" data-dir="-1" aria-label="Less ${name}">${icon('minus')}</button>
+    <div class="cb-stepper__val" aria-live="polite">
+      <button type="button" class="numtap" data-type="${key}" aria-label="Type the ${name}"><span class="cb-stepper__reading"><span class="cb-stepper__num tnum" id="val_${key}"></span><span class="cb-stepper__unit${key === 'inc' ? ' is-tight' : ''}" id="unit_${key}"></span></span></button>
+      <span class="cb-stepper__label" id="lab_${key}">${c.label}</span></div>
+    <button type="button" class="cb-stepper__btn" data-step="${key}" data-dir="1" aria-label="More ${name}">${icon('plus')}</button>
   </div>`; };
+// Each length says what it comes to: a distance about how long, a time about how far.
+const lenLabel = (key, o) => key === 'mi' ? `Distance · about ${fmtTime(secsOf(o))}` : key === 'd' && o.ph ? `Time · about ${fmtMi(milesOf(o))} mi` : STEPPERS[key].label;
 function paintSteppers(){
   if(!stepCtx) return;
   const o = stepCtx.get();
@@ -2635,16 +2757,44 @@ function paintSteppers(){
     const el = $('val_' + key); if(!el) return;
     const c = STEPPERS[key], [v, u] = c.show(o[key]);
     el.textContent = v; $('unit_' + key).textContent = u;
+    if(!$('in_' + key)) $('lab_' + key).textContent = lenLabel(key, o);
     document.querySelectorAll(`[data-step="${key}"]`).forEach(b => { b.disabled = +b.dataset.dir < 0 ? o[key] <= lim(c.min) : o[key] >= lim(c.max); });
   });
 }
-function stepBy(key, dir, mult){
+function setVal(key, v){
   const o = stepCtx && stepCtx.get(); if(!o) return;
   const c = STEPPERS[key];
-  const v = clamp(Math.round((o[key] + dir*c.step*(mult || 1))/c.step)*c.step, lim(c.min), lim(c.max));
-  o[key] = c.step < 1 ? Math.round(v*10)/10 : v;
+  o[key] = clamp(v, lim(c.min), lim(c.max));
   delete o.fresh;
   paintSteppers(); touched();
+}
+function stepBy(key, dir, mult){
+  const o = stepCtx && stepCtx.get(); if(!o) return;
+  let v = o[key]; for(let n = 0; n < (mult || 1); n++) v = tickFrom(v, dir, STEPPERS[key].sizes);
+  setVal(key, v);
+}
+// Tap the number to type it, on the phone's number pad. Done or tapping away keeps it; Escape, or something that isn't a number, puts it back.
+function typeValue(key){
+  const c = STEPPERS[key], o = stepCtx && stepCtx.get(), btn = document.querySelector(`[data-type="${key}"]`);
+  if(!o || !btn || $('in_' + key)) return;
+  const box = document.createElement('input');
+  Object.assign(box, { id:'in_' + key, className:'numin tnum', value:c.show(o[key])[0].replace('−', '-'), autocomplete:'off' });
+  box.setAttribute('inputmode', 'decimal'); box.setAttribute('enterkeyhint', 'done'); box.setAttribute('aria-label', c.label);
+  btn.hidden = true; btn.after(box);
+  $('lab_' + key).textContent = c.hint;
+  let over = false;
+  const end = keep => {
+    if(over) return; over = true;
+    const v = c.parse(box.value.trim().replace(',', '.').replace('−', '-'));
+    box.remove(); btn.hidden = false;
+    if(keep && isFinite(v)) setVal(key, snapTo(v, c.snap)); else paintSteppers();
+  };
+  box.addEventListener('blur', () => end(true));
+  box.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); box.blur(); }
+    else if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); end(false); btn.focus(); }
+  });
+  box.focus(); box.select();
 }
 let hold = null, justHeld = false;
 function endHold(){ if(hold){ clearTimeout(hold.t); if(hold.n) justHeld = true; hold = null; } }
@@ -2658,18 +2808,19 @@ addEventListener('pointerdown', e => {
     hold.n++;
     // The run's speed and incline repeat at the pace of the console's own buttons.
     if(b.dataset.nudge){ nudge(b.dataset.nudge, dir); hold.t = setTimeout(run, 120); return; }
-    stepBy(key, dir, key === 'd' ? (hold.n > 30 ? 4 : hold.n > 12 ? 2 : 1) : 1);
+    stepBy(key, dir, hold.n > 30 ? 4 : hold.n > 12 ? 2 : 1);
     hold.t = setTimeout(run, hold.n < 4 ? 170 : hold.n < 14 ? 90 : 50);
   };
   hold = { n:0, t:setTimeout(run, 400) };
 });
 addEventListener('pointerup', endHold); addEventListener('pointercancel', endHold);
 
-const moveRow = (where, canUp, canDown, canDelete) => `<div class="row-btns">
-    <button class="cb-btn cb-btn--secondary cb-btn--size-icon" type="button" data-act="move" data-dir="-1"${canUp ? '' : ' disabled'} aria-label="Move ${where} up">${icon('arrow-up')}</button>
-    <button class="cb-btn cb-btn--secondary cb-btn--size-icon" type="button" data-act="move" data-dir="1"${canDown ? '' : ' disabled'} aria-label="Move ${where} down">${icon('arrow-down')}</button>
-    <button class="cb-btn cb-btn--secondary" type="button" data-act="copy" aria-label="Copy ${where}">${icon('copy', '', 18)}Copy</button>
-    <button class="cb-btn cb-btn--secondary" type="button" data-act="remove"${canDelete ? '' : ' disabled'} aria-label="Delete ${where}" style="color:var(--destructive)">${icon('trash-2', '', 18)}Delete</button>
+// Move, copy and delete: a quiet row under the numbers, each a word as well as an icon.
+const actsRow = (where, canUp, canDown, canCopy, canDelete) => `<div class="acts">
+    <button class="cb-btn cb-btn--ghost" type="button" data-act="move" data-dir="-1"${canUp ? '' : ' disabled'} aria-label="Move ${where} up">${icon('arrow-up')}<span>Move up</span></button>
+    <button class="cb-btn cb-btn--ghost" type="button" data-act="move" data-dir="1"${canDown ? '' : ' disabled'} aria-label="Move ${where} down">${icon('arrow-down')}<span>Move down</span></button>
+    <button class="cb-btn cb-btn--ghost" type="button" data-act="copy"${canCopy ? '' : ' disabled'} aria-label="Copy ${where}">${icon('copy')}<span>Copy</span></button>
+    <button class="cb-btn cb-btn--ghost is-danger" type="button" data-act="remove"${canDelete ? '' : ' disabled'} aria-label="Delete ${where}">${icon('trash-2')}<span>Delete</span></button>
   </div>`;
 const doneBtn = () => `<button class="cb-btn cb-btn--default cb-btn--size-lg" style="flex:1" type="button" data-act="close-sheet">Done</button>`;
 
@@ -2677,41 +2828,45 @@ let target = null;   // { b, s } the block, and the step inside it if it's in a 
 const container = () => target.s == null ? A.draft.blocks : A.draft.blocks[target.b].steps;
 const index = () => target.s == null ? target.b : target.s;
 const holdLimits = s => { s.mph = clamp(s.mph, limits().mphMin, limits().mphMax); s.inc = clamp(s.inc, limits().incMin, limits().incMax); return s; };
+// Time to distance and back, keeping the step about as long: at its own speed, to the nearest 0.05 mi or 15 s.
+const toMiles = s => clamp(snapTo(s.d*s.mph/3600, 0.05), STEPPERS.mi.min, STEPPERS.mi.max);
+const toSecs = s => clamp(Math.round(s.mi*3600/Math.max(0.5, s.mph)/15)*15, STEPPERS.d.min, STEPPERS.d.max);
+// A step nobody has adjusted yet takes its kind's usual numbers, as a distance if it is one.
+function kindNumbers(st, k){ st.mph = k.mph; st.inc = k.inc; st.d = k.d; if(st.mi != null){ st.mi = toMiles(st); delete st.d; } return holdLimits(st); }
+
+const kindSeg = ph => `<div class="cb-seg kinds" role="radiogroup" aria-label="Kind of step">${KINDS.map(k =>
+  `<button type="button" role="radio" class="cb-seg__item${k.ph === ph ? ' is-active' : ''}" aria-checked="${k.ph === ph}" data-act="kind" data-ph="${k.ph}">${k.label}</button>`).join('')}</div>`;
+const lenSeg = byDist => `<div class="cb-seg cb-seg--fill" role="radiogroup" aria-label="The step ends after">${[['time', 'Time', !byDist], ['dist', 'Distance', byDist]].map(([v, l, on]) =>
+  `<button type="button" role="radio" class="cb-seg__item${on ? ' is-active' : ''}" aria-checked="${on}" data-act="len" data-len="${v}">${l}</button>`).join('')}</div>`;
+const segPick = (sel, on) => document.querySelectorAll(sel).forEach(b => { const y = on(b); b.classList.toggle('is-active', y); b.setAttribute('aria-checked', String(y)); });
 
 function openStep(b, s){
   target = { b, s:s == null ? null : s };
   const step = () => container()[index()];
   holdLimits(step());
   stepCtx = { get:step };
-  const c = container(), i = index();
+  const c = container(), i = index(), st = step();
   const canDelete = s == null ? A.draft.blocks.length > 1 : c.length > 1;
-  openSheet('Step', `
-    <div class="cb-field"><label class="cb-field__label" for="stepKind">Type</label>
-      <div class="cb-input cb-select"><select id="stepKind">${KINDS.map(k => `<option value="${k.ph}"${k.ph === step().ph ? ' selected' : ''}>${k.label}</option>`).join('')}</select>${icon('chevron-down', 'cb-select__chevron')}</div></div>
-    ${stepperHtml('d')}${stepperHtml('mph')}${stepperHtml('inc')}
-    ${moveRow('step', i > 0, i < c.length - 1, canDelete)}`, doneBtn());
-  $('stepKind').addEventListener('change', e => {
-    const st = step(), k = kind(e.target.value);
-    st.ph = k.ph;
-    // A step nobody has adjusted yet takes the new kind's usual numbers.
-    if(st.fresh){ st.d = k.d; st.mph = k.mph; st.inc = k.inc; holdLimits(st); }
-    paintSteppers(); touched();
-  });
+  const canCopy = c.length < (s == null ? MAX_BLOCKS : MAX_INNER);
+  openSheet(s == null ? `Step ${i + 1} of ${c.length}` : `Repeat, step ${i + 1} of ${c.length}`, `
+    ${kindSeg(st.ph)}
+    <div class="len">${lenSeg(st.mi != null)}<div id="lenBox">${stepperHtml(st.mi != null ? 'mi' : 'd')}</div></div>
+    ${stepperHtml('mph')}${stepperHtml('inc')}
+    ${actsRow('step', i > 0, i < c.length - 1, canCopy, canDelete)}`, doneBtn());
   paintSteppers();
 }
 function openRepeat(b){
   target = { b, s:null };
   const rep = () => A.draft.blocks[target.b];
   stepCtx = { get:rep };
-  const i = target.b, canDelete = A.draft.blocks.length > 1;
-  openSheet('Repeat', `${stepperHtml('times')}${moveRow('repeat', i > 0, i < A.draft.blocks.length - 1, canDelete)}`, doneBtn());
+  const i = target.b, n = A.draft.blocks.length;
+  openSheet('Repeat', `${stepperHtml('times')}${actsRow('repeat', i > 0, i < n - 1, n < MAX_BLOCKS, n > 1)}`, doneBtn());
   paintSteppers();
 }
 
 /* ---------- saving ---------- */
-const cleanBlocks = blocks => blocks.map(b => b.kind === 'repeat'
-  ? { kind:'repeat', times:b.times, steps:b.steps.map(s => ({ ph:s.ph, d:s.d, mph:s.mph, inc:s.inc })) }
-  : { ph:b.ph, d:b.d, mph:b.mph, inc:b.inc });
+const cleanStep = s => s.mi != null ? { ph:s.ph, mi:s.mi, mph:s.mph, inc:s.inc } : { ph:s.ph, d:s.d, mph:s.mph, inc:s.inc };
+const cleanBlocks = blocks => blocks.map(b => b.kind === 'repeat' ? { kind:'repeat', times:b.times, steps:b.steps.map(cleanStep) } : cleanStep(b));
 
 async function saveWorkout(next){
   const d = A.draft;
@@ -2729,7 +2884,17 @@ async function saveWorkout(next){
     return false;
   } finally { A.busy = false; }
 }
-function backHome(){ A.draft = null; A.dirty = false; A.why = ''; dropDraft(); goHome(); }
+function backHome(){
+  A.draft = null; A.dirty = false; A.why = ''; dropDraft(); goHome();
+  if(history.state && history.state.v === 'edit' && !popping){ popping = setTimeout(popped, 1500); history.back(); }   // the entry Back would have used
+}
+/* Leaving with changes asks, rather than saving them for you: a new workout you back out of is one you didn't want. */
+function askLeave(){
+  openSheet(A.isNew ? 'Save this workout?' : 'Save your changes?',
+    `<p class="muted" style="margin:0">${A.isNew ? 'It isn’t on the treadmill yet.' : 'The treadmill still has the version from before.'}</p>`,
+    `<button class="cb-btn cb-btn--secondary cb-btn--size-lg is-danger" style="flex:1" type="button" data-act="leave-discard">${A.isNew ? 'Discard' : 'Discard changes'}</button>
+     <button class="cb-btn cb-btn--default cb-btn--size-lg" style="flex:1" type="button" data-act="leave-save">Save</button>`);
+}
 
 function hint(words){
   const el = document.createElement('div');
@@ -2755,13 +2920,10 @@ const ACT = {
   'run-done'(){ const r = runNow(); if(r) runCmd({ cmd:'done', run:r.id }); },
   'view-run'(){ A.view = 'run'; A.runSig = ''; route(); },
   new(){
-    openSheet('New workout', `<div class="cb-list__rows">
-      ${TEMPLATES.map((t, i) => `<div class="cb-list__item"><button class="saved__open" style="width:100%;padding-right:var(--space-3)" type="button" data-act="from-template" data-i="${i}">
-        ${bars(t.blocks, 'profile--mini')}<span class="saved__text"><span class="saved__name">${esc(t.name)}</span><span class="saved__sum tnum">${esc(sumShort(t.blocks))}</span></span>${icon('chevron-right', '', 16)}</button></div>`).join('')}
-      <div class="cb-list__item"><button class="saved__open" style="width:100%;padding-right:var(--space-3)" type="button" data-act="from-template" data-i="-1">
-        <span class="saved__text"><span class="saved__name">Start from nothing</span><span class="saved__sum">One step, then add your own</span></span>${icon('chevron-right', '', 16)}</button></div>
-    </div>`);
+    openSheet('New workout', `<div class="cb-list__rows" role="list">${templateRows('from-template')}</div>`);
   },
+  tpl(b){ ACT['from-template'](b); },
+  'hide-tip'(){ store.set('phone.tipHidden', '1'); A.lastSig = ''; route(); },
   'from-template'(b){
     const i = +b.dataset.i, t = i >= 0 ? TEMPLATES[i] : { name:'', blocks:[Object.assign(stepOf('walk', 5, 3.0, 0), { fresh:true })] };
     const blocks = clone(t.blocks);
@@ -2785,14 +2947,17 @@ const ACT = {
     catch(_){ A.online = false; paint(); }
   },
   back(){ history.back(); },
-  discard(){ backHome(); },
+  'leave-discard'(){ closeSheet(); backHome(); },
+  async 'leave-save'(){ closeSheet(); ACT.save(); },
   async save(){ if(await saveWorkout(false)){ const n = A.draft.name.trim(); backHome(); toast('Saved', n + ' is on the treadmill.'); } },
   async 'send-draft'(){ if(await saveWorkout(true)){ const n = A.draft.name.trim(); backHome(); toast('Sent', n + ' is up next on the treadmill.'); } },
   'add-step'(){
     const b = A.draft.blocks;
     if(b.length >= MAX_BLOCKS){ A.why = 'That’s as many steps as a workout can hold.'; paintEditNotice(); return; }
-    const k = kind('run');
-    b.push(holdLimits({ ph:k.ph, d:k.d, mph:k.mph, inc:k.inc, fresh:true }));
+    // A new step goes by distance if the one before it does.
+    const prev = flatten(b).pop(), st = { ph:'run', fresh:true };
+    if(prev && prev.mi != null) st.mi = 0;
+    b.push(kindNumbers(st, kind('run')));
     touched(); openStep(b.length - 1, null);
   },
   'add-repeat'(){
@@ -2803,8 +2968,9 @@ const ACT = {
   },
   'add-inner'(btn){
     const i = +btn.dataset.b, s = A.draft.blocks[i].steps; if(s.length >= MAX_INNER) return;
-    const k = kind('run');
-    s.push(holdLimits({ ph:k.ph, d:60, mph:k.mph, inc:k.inc, fresh:true }));
+    const prev = s[s.length - 1], st = kindNumbers({ ph:'run', fresh:true }, kind('run'));
+    st.d = 60; if(prev && prev.mi != null){ st.mi = toMiles(st); delete st.d; }
+    s.push(st);
     touched(); openStep(i, s.length - 1);
   },
   'edit-step'(b){ openStep(+b.dataset.b, b.dataset.s == null ? null : +b.dataset.s); },
@@ -2832,6 +2998,24 @@ const ACT = {
     touched(); closeSheet();
   },
   'close-sheet'(){ closeSheet(); },
+  kind(b){
+    const st = stepCtx && stepCtx.get(); if(!st) return;
+    const k = kind(b.dataset.ph);
+    st.ph = k.ph;
+    if(st.fresh) kindNumbers(st, k);
+    segPick('[data-act="kind"]', x => x.dataset.ph === k.ph);
+    paintSteppers(); touched();
+  },
+  // Time or distance: the other one, about as long.
+  len(b){
+    const st = stepCtx && stepCtx.get(); if(!st) return;
+    const dist = b.dataset.len === 'dist'; if(dist === (st.mi != null)) return;
+    if(dist){ st.mi = toMiles(st); delete st.d; } else { st.d = toSecs(st); delete st.mi; }
+    delete st.fresh;
+    segPick('[data-act="len"]', x => (x.dataset.len === 'dist') === dist);
+    $('lenBox').innerHTML = stepperHtml(dist ? 'mi' : 'd');
+    paintSteppers(); touched();
+  },
   'delete-workout'(){
     const n = A.draft.name;
     openSheet('Delete this workout?', `<p class="muted" style="margin:0">${esc(n || 'This workout')} comes off the treadmill. Runs you’ve already done stay in History.</p>`,
@@ -2851,12 +3035,15 @@ document.addEventListener('click', e => {
   if(e.target.classList && e.target.classList.contains('cb-scrim')) return closeSheet();
   const stepper = e.target.closest('[data-step],[data-nudge]');
   if(stepper){
+    const typing = document.querySelector('.numin'); if(typing) typing.blur();   // what was typed first, then the step
     if(justHeld){ justHeld = false; return; }
     if(stepper.disabled) return;
     if(stepper.dataset.nudge) nudge(stepper.dataset.nudge, +stepper.dataset.dir);
     else stepBy(stepper.dataset.step, +stepper.dataset.dir);
     return;
   }
+  const typ = e.target.closest('[data-type]');
+  if(typ) return typeValue(typ.dataset.type);
   const b = e.target.closest('[data-act]');
   if(!b || b.disabled) return;
   const fn = ACT[b.dataset.act];
@@ -2891,14 +3078,14 @@ addEventListener('contextmenu', e => { if(e.target.closest('[data-hold]')) e.pre
 addEventListener('keydown', e => { if((e.key === ' ' || e.key === 'Enter') && !e.repeat && e.target.closest && e.target.closest('[data-hold]') && !e.target.disabled){ e.preventDefault(); holdStart(e.target.closest('[data-hold]')); } });
 addEventListener('keyup', e => { if(e.key === ' ' || e.key === 'Enter') holdEnd(true); });
 
-/* Back, in the page or with the phone's own gesture: a change is saved on the way out if it can be. */
-addEventListener('popstate', async () => {
+/* Back, in the page or with the phone's own gesture. Nothing changed: straight out. Something did: stay, and ask. */
+addEventListener('popstate', () => {
+  if(popped()) return;
   if($('sheet').firstChild){ closeSheet(); if(A.view === 'edit') history.pushState({ v:'edit' }, ''); return; }
   if(A.view !== 'edit') return;
   if(!A.dirty) return backHome();
-  const name = A.draft.name.trim();
-  if(await saveWorkout(false)){ backHome(); toast('Saved', name + ' is on the treadmill.'); }
-  else history.pushState({ v:'edit' }, '');   // couldn't save: stay here, with the reason showing
+  history.pushState({ v:'edit' }, '');
+  askLeave();
 });
 
 /* ---------- away ---------- */
